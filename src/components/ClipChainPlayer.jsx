@@ -1,22 +1,59 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import CopyNotification from './CopyNotification.jsx'
+import { Link } from 'react-router-dom'
 
-const ClipchainPlayer = ({ title, description, clips, id }) => {
+const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tags }) => {
   const playerId = `youtube-player-${id}`
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentClipIndex, setCurrentClipIndex] = useState(-1) // Start with no clip selected
+  const [currentClipIndex, setCurrentClipIndex] = useState(-1)
   const [currentTime, setCurrentTime] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [playerReady, setPlayerReady] = useState(false)
-  const [videoLoaded, setVideoLoaded] = useState(false)
   const [showCopyNotification, setShowCopyNotification] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [visibleClipRange, setVisibleClipRange] = useState({ start: 0, end: 10 })
+  const [isManualNavigation, setIsManualNavigation] = useState(false)
+  
   const iframeRef = useRef(null)
   const timerRef = useRef(null)
   const overlayRef = useRef(null)
   const playerRef = useRef(null)
+  
+  const clipsPerPage = 6 // Show 6 clips per page
+  const totalPages = Math.ceil(clips.length / clipsPerPage)
+  const currentClips = clips.slice(currentPage * clipsPerPage, (currentPage + 1) * clipsPerPage)
+  
+  const currentClip = currentClipIndex >= 0 && currentClipIndex < clips.length ? clips[currentClipIndex] : null
 
-  const currentClip = currentClipIndex >= 0 ? clips[currentClipIndex] : null
+  // Function to update visible clip range
+  const updateVisibleClipRange = useCallback((clipIndex) => {
+    const maxClipsPerView = 10
+    
+    setVisibleClipRange(prevRange => {
+      let start = 0
+      let end = maxClipsPerView
+
+      if (clipIndex >= maxClipsPerView) {
+        // If clip is beyond the first 10, adjust the range
+        start = Math.floor(clipIndex / maxClipsPerView) * maxClipsPerView
+        end = Math.min(start + maxClipsPerView, clips.length)
+      } else if (clipIndex < prevRange.start) {
+        // If clip is before the current range, go back to previous range
+        start = Math.max(0, prevRange.start - maxClipsPerView)
+        end = Math.min(start + maxClipsPerView, clips.length)
+      } else if (clipIndex >= prevRange.end) {
+        // If clip is beyond the current range, go to next range
+        start = Math.floor(clipIndex / maxClipsPerView) * maxClipsPerView
+        end = Math.min(start + maxClipsPerView, clips.length)
+      } else {
+        // If clip is within the current range, don't change anything
+        return prevRange
+      }
+
+      return { start, end }
+    })
+  }, [clips.length])
 
   // Function to format time in MM:SS format
   const formatTime = (seconds) => {
@@ -100,7 +137,6 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
   useEffect(() => {
     if (playerRef.current && playerRef.current.iframe) {
       setPlayerReady(true)
-      setVideoLoaded(true)
     }
   }, [playerRef.current])
 
@@ -117,7 +153,6 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
       // Reset current time to start of clip
       setCurrentTime(currentClip.startTime)
       setIsPlaying(false)
-      setVideoLoaded(false)
       
               // Try to load new video by changing iframe src
         try {
@@ -140,30 +175,50 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
     }
   }, [currentClipIndex, playerReady])
 
-  // Simple timer to track playback time
+  // Effect to handle time updates when playing
   useEffect(() => {
     if (isPlaying && currentClip) {
-      timerRef.current = setInterval(() => {
+      const interval = setInterval(() => {
         setCurrentTime(prevTime => {
           const newTime = prevTime + 1
-          
-          // Check if we've reached the end time
           if (newTime >= currentClip.endTime) {
-            setIsPlaying(false)
-            clearInterval(timerRef.current)
-            // Auto-advance to next clip if available
-            if (currentClipIndex < clips.length - 1) {
-              setTimeout(() => {
-                const nextIndex = currentClipIndex + 1
-                setCurrentClipIndex(nextIndex)
-                setIsPlaying(false)
-              }, 1000)
-            }
+            clearInterval(interval)
             return currentClip.endTime
           }
-          
           return newTime
         })
+      }, 1000)
+
+      return () => clearInterval(interval)
+    }
+  }, [isPlaying, currentClip])
+
+  // Effect to handle clip changes and auto-advance
+  useEffect(() => {
+    if (isPlaying && currentClip && !isManualNavigation) {
+      // Clear any existing timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+      
+      // Set up timer to check if clip has ended
+      timerRef.current = setInterval(() => {
+        if (currentTime >= currentClip.endTime) {
+          console.log('Clip ended, advancing to next')
+          clearInterval(timerRef.current)
+          
+          // Auto-advance to next clip if available
+          if (currentClipIndex < clips.length - 1) {
+            setTimeout(() => {
+              const nextIndex = currentClipIndex + 1
+              setCurrentClipIndex(nextIndex)
+              updateVisibleClipRange(nextIndex)
+            }, 1000)
+          } else {
+            // If we're at the last clip, stop
+            setIsPlaying(false)
+          }
+        }
       }, 1000)
     } else {
       if (timerRef.current) {
@@ -176,7 +231,7 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
         clearInterval(timerRef.current)
       }
     }
-  }, [isPlaying, currentClip?.endTime, currentClipIndex, clips.length])
+  }, [isPlaying, currentClip?.endTime, currentClipIndex, clips, updateVisibleClipRange, isManualNavigation])
 
   // Listen for YouTube player state changes
   useEffect(() => {
@@ -271,30 +326,45 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
   }
 
   const nextClip = useCallback(() => {
-    console.log('Next clip clicked, current index:', currentClipIndex)
-    // Clear any existing timers first
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
+    if (!clips || !clips.length) return
+    
+    setIsManualNavigation(true)
+    
+    if (currentClipIndex >= clips.length - 1) {
+      // If we're at the end, go to the beginning
+      setCurrentClipIndex(0)
+      updateVisibleClipRange(0)
+    } else {
+      const nextIndex = currentClipIndex + 1
+      console.log('Setting next index to:', nextIndex)
+      setCurrentClipIndex(nextIndex)
+      updateVisibleClipRange(nextIndex)
     }
     
-    const nextIndex = (currentClipIndex + 1) % clips.length
-    console.log('Setting next index to:', nextIndex)
-    setCurrentClipIndex(nextIndex)
-    // Don't set isPlaying to false here - let the clip change effect handle it
-  }, [currentClipIndex, clips.length])
+    // Reset the flag after a short delay
+    setTimeout(() => setIsManualNavigation(false), 1000)
+  }, [currentClipIndex, clips, updateVisibleClipRange])
 
   const previousClip = useCallback(() => {
-    console.log('Previous clip clicked, current index:', currentClipIndex)
-    // Clear any existing timers first
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
+    if (!clips || !clips.length) return
+    
+    setIsManualNavigation(true)
+    
+    if (currentClipIndex <= 0) {
+      // If we're at the beginning, go to the end
+      const lastIndex = clips.length - 1
+      setCurrentClipIndex(lastIndex)
+      updateVisibleClipRange(lastIndex)
+    } else {
+      const prevIndex = currentClipIndex - 1
+      console.log('Setting previous index to:', prevIndex)
+      setCurrentClipIndex(prevIndex)
+      updateVisibleClipRange(prevIndex)
     }
     
-    const prevIndex = (currentClipIndex - 1 + clips.length) % clips.length
-    console.log('Setting previous index to:', prevIndex)
-    setCurrentClipIndex(prevIndex)
-    // Don't set isPlaying to false here - let the clip change effect handle it
-  }, [currentClipIndex, clips.length])
+    // Reset the flag after a short delay
+    setTimeout(() => setIsManualNavigation(false), 1000)
+  }, [currentClipIndex, clips, updateVisibleClipRange])
 
   const copyLink = () => {
     const shareUrl = `${window.location.origin}/chain/${id}`
@@ -372,57 +442,89 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
   }, [isDragging, currentClip])
 
   return (
-    <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-200 hover:border-gray-300 transition-all duration-300">
+    <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 group">
       {/* Header with Logo and Copy Link */}
       <div className="flex items-center justify-between p-3 border-b border-gray-300 hover:border-gray-400 transition-colors duration-300">
         {/* Left side - Logo */}
-        <img src="/logo.svg" alt="clipchain" className="h-5" />
+        <div className="flex items-center">
+          <img src="/logo2.svg" alt="clipchain" className="h-5 brightness-110 filter group-hover:brightness-110 transition-all duration-300" />
+        </div>
         
         {/* Right side - Copy Link */}
         <button
           onClick={copyLink}
-          className="flex items-center space-x-1.5 text-xs text-gray-600 hover:text-primary-950 transition-colors"
+          className="flex items-center space-x-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-secondary-950 hover:text-white transition-all duration-200 hover:shadow-md"
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
-          <span>Copy link</span>
+          <span className="text-sm font-semibold">Copy link</span>
         </button>
       </div>
 
       {/* Title and Description */}
       <div className="px-3 pt-4 pb-2">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">
+        <h2 
+          className="text-xl font-bold text-gray-900 mb-1 cursor-help"
+          title={tags && tags.length > 0 ? `Tags: ${tags.join(', ')}` : ''}
+        >
           {title}
         </h2>
-        <p className="text-sm text-gray-600">
-          {description}
-        </p>
+        <div className="min-h-[3rem] flex flex-col justify-center">
+          <p className="text-sm text-gray-600 mb-2">
+            {description}
+          </p>
+          {(author || createdAt) && (
+            <div className="flex items-center space-x-4 text-xs text-gray-500">
+              {author && (
+                <Link 
+                  to={`/user/${author}`} 
+                  className="hover:text-secondary-950 hover:underline transition-colors"
+                >
+                  By {author}
+                </Link>
+              )}
+              {author && createdAt && <span>•</span>}
+              {createdAt && <span>{new Date(createdAt).toLocaleDateString()}</span>}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Video Player */}
       <div className="px-3 pt-3 pb-3">
           {/* Chapter Indicators at the top */}
-          <div className="flex space-x-2 mb-3">
-            {clips.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  console.log('Clicked clip:', index, 'player ready:', playerReady)
-                  setCurrentClipIndex(index)
-                }}
-                className={`px-2 py-1 text-xs font-medium rounded border transition-colors ${
-                  index === currentClipIndex 
-                    ? 'bg-primary-950 text-white border-primary-950' 
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
-                }`}
-              >
-                {index + 1}
-              </button>
-            ))}
+          <div className="flex flex-col space-y-2">
+            {/* Clip indicators */}
+            <div className="flex space-x-2 flex-wrap">
+              {clips && clips.length > 0 ? clips.slice(visibleClipRange.start, visibleClipRange.end).map((_, index) => {
+                const actualIndex = visibleClipRange.start + index
+                return (
+                  <button
+                    key={actualIndex}
+                    onClick={() => {
+                      console.log('Clicked clip:', actualIndex, 'player ready:', playerReady)
+                      setIsManualNavigation(true)
+                      setCurrentClipIndex(actualIndex)
+                      updateVisibleClipRange(actualIndex)
+                      setTimeout(() => setIsManualNavigation(false), 1000)
+                    }}
+                    className={`px-2 py-1 text-xs font-medium rounded border transition-colors ${
+                      actualIndex === currentClipIndex 
+                        ? 'bg-secondary-950 text-white border-secondary-950' 
+                        : 'bg-white text-gray-600 border-gray-300 hover:border-secondary-950 hover:text-secondary-950'
+                    }`}
+                  >
+                    {actualIndex + 1}
+                  </button>
+                )
+              }) : (
+                <span className="text-xs text-gray-500">No clips available</span>
+              )}
+            </div>
           </div>
 
-          <div className="mb-2">
+          <div className="mb-2 mt-4">
             {currentClip ? (
               <>
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -433,7 +535,7 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
                 </p>
               </>
             ) : (
-              <p className="text-sm text-gray-500">Select a clip to start playing</p>
+              <p className="text-xs text-gray-400">Select a clip to start playing</p>
             )}
           </div>
 
@@ -483,13 +585,13 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
             >
               {/* Progress track */}
               <div 
-                className="absolute left-0 top-0 h-full bg-primary-950 rounded-full transition-all duration-300 ease-in-out"
+                className="absolute left-0 top-0 h-full bg-secondary-950 rounded-full transition-all duration-300 ease-in-out"
                 style={{ width: `${getProgressPercentage()}%` }}
               ></div>
               
               {/* Progress handle */}
               <div 
-                className="absolute top-1/2 w-3 h-3 bg-primary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-1.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
+                className="absolute top-1/2 w-3 h-3 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-1.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
                 style={{ left: `${getProgressPercentage()}%` }}
               ></div>
             </div>
@@ -507,7 +609,7 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={previousClip}
-                    className="p-1.5 text-gray-700 hover:text-primary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
+                    className="p-1.5 text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
                     title="Previous clip"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -517,7 +619,7 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
                   
                   <button
                     onClick={togglePlay}
-                    className="p-2 text-gray-700 hover:text-primary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
+                    className="p-2 text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
                     title={isPlaying ? 'Pause' : 'Play'}
                   >
                     {isPlaying ? (
@@ -533,7 +635,7 @@ const ClipchainPlayer = ({ title, description, clips, id }) => {
                   
                   <button
                     onClick={nextClip}
-                    className="p-1.5 text-gray-700 hover:text-primary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
+                    className="p-1.5 text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
                     title="Next clip"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -570,6 +672,9 @@ ClipchainPlayer.propTypes = {
     startTime: PropTypes.number.isRequired,
     endTime: PropTypes.number.isRequired,
   })).isRequired,
+  author: PropTypes.string,
+  createdAt: PropTypes.string,
+  tags: PropTypes.arrayOf(PropTypes.string),
 }
 
 export default ClipchainPlayer

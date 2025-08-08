@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const GettingStartedSection = () => {
   const [steps, setSteps] = useState([
@@ -24,15 +25,67 @@ const GettingStartedSection = () => {
       completed: false
     }
   ])
+  const [isHidden, setIsHidden] = useState(false)
 
   const completedSteps = steps.filter(step => step.completed).length
   const progressPercentage = (completedSteps / steps.length) * 100
+  const allStepsCompleted = completedSteps === steps.length
 
   const toggleStep = (stepId) => {
     setSteps(prevSteps =>
       prevSteps.map(step =>
         step.id === stepId ? { ...step, completed: !step.completed } : step
       )
+    )
+  }
+
+  const toggleVisibility = () => {
+    setIsHidden(!isHidden)
+  }
+
+  // If hidden, show access buttons
+  if (isHidden) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Quick Access
+          </h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Access your dashboard or explore the community library
+          </p>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <Link
+              to="/dashboard"
+              className="flex flex-col items-center justify-center p-6 bg-secondary-950 text-white rounded-xl font-medium hover:bg-secondary-900 transition-all duration-200 hover:shadow-lg hover:scale-105"
+            >
+              <svg className="w-8 h-8 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
+              </svg>
+              <span className="text-sm font-semibold">Dashboard</span>
+            </Link>
+            
+            <Link
+              to="/library"
+              className="flex flex-col items-center justify-center p-6 bg-white text-secondary-950 border-2 border-secondary-950 rounded-xl font-medium hover:bg-secondary-50 transition-all duration-200 hover:shadow-lg hover:scale-105"
+            >
+              <svg className="w-8 h-8 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              <span className="text-sm font-semibold">Library</span>
+            </Link>
+          </div>
+          
+          <button
+            onClick={toggleVisibility}
+            className="mt-6 text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+          >
+            Show onboarding
+          </button>
+        </div>
+      </div>
     )
   }
 
@@ -49,7 +102,7 @@ const GettingStartedSection = () => {
         {/* Progress Bar */}
         <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
           <div 
-            className="bg-primary-950 h-2 rounded-full transition-all duration-300 ease-in-out"
+            className="bg-secondary-950 h-2 rounded-full transition-all duration-300 ease-in-out"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
@@ -63,15 +116,15 @@ const GettingStartedSection = () => {
           <div key={step.id} className="relative">
             <div className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
               step.completed 
-                ? 'bg-green-50 border-green-200' 
+                ? 'bg-green-100 border-green-300' 
                 : 'border-gray-200 hover:bg-gray-50'
             }`}>
               {/* Step Number */}
               <div className="flex-shrink-0">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                   step.completed 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-primary-950 text-white'
+                    ? 'bg-green-700 text-white' 
+                    : 'bg-secondary-950 text-white'
                 }`}>
                   {step.completed ? (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +146,7 @@ const GettingStartedSection = () => {
                       {step.title}
                     </h3>
                     <p className={`text-xs ${
-                      step.completed ? 'text-green-600' : 'text-gray-600'
+                      step.completed ? 'text-green-700' : 'text-gray-600'
                     }`}>
                       {step.description}
                     </p>
@@ -105,7 +158,7 @@ const GettingStartedSection = () => {
                       type="checkbox"
                       checked={step.completed}
                       onChange={() => toggleStep(step.id)}
-                      className="w-4 h-4 text-primary-950 focus:ring-primary-950 border-gray-300 rounded"
+                      className="w-4 h-4 text-secondary-950 focus:ring-secondary-950 border-gray-300 rounded"
                     />
                   </div>
                 </div>
@@ -114,6 +167,18 @@ const GettingStartedSection = () => {
           </div>
         ))}
       </div>
+
+      {/* Hide Onboarding Button - Only show when all steps are completed */}
+      {allStepsCompleted && (
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <button
+            onClick={toggleVisibility}
+            className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200"
+          >
+            Hide onboarding
+          </button>
+        </div>
+      )}
     </div>
   )
 }
