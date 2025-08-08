@@ -29,12 +29,12 @@ const Header = () => {
                 to="/dashboard" 
                 className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                   location.pathname === '/dashboard' 
-                    ? 'text-primary-950' 
+                    ? 'text-secondary-950' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 Dashboard
-                <span className={`absolute bottom-0 left-0 h-0.5 bg-primary-950 transition-all duration-200 ${
+                <span className={`absolute bottom-0 left-0 h-0.5 bg-secondary-950 transition-all duration-200 ${
                   location.pathname === '/dashboard' ? 'w-full' : 'w-0'
                 }`}></span>
               </Link>
@@ -43,12 +43,12 @@ const Header = () => {
                 to="/library" 
                 className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                   location.pathname === '/library' 
-                    ? 'text-primary-950' 
+                    ? 'text-secondary-950' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 Library
-                <span className={`absolute bottom-0 left-0 h-0.5 bg-primary-950 transition-all duration-200 ${
+                <span className={`absolute bottom-0 left-0 h-0.5 bg-secondary-950 transition-all duration-200 ${
                   location.pathname === '/library' ? 'w-full' : 'w-0'
                 }`}></span>
               </Link>
@@ -64,6 +64,13 @@ const Header = () => {
                 </svg>
               </Link>
             </nav>
+          )}
+          
+          {/* Register for free button - only on launchpad pages */}
+          {isLaunchpadPage && (
+            <button className="bg-secondary-950 hover:bg-secondary-900 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm">
+              Register for free
+            </button>
           )}
         </div>
       </div>

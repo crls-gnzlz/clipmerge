@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { mockCollections } from '../data/mockData.js'
+import CopyNotification from '../components/CopyNotification.jsx'
 
 const Dashboard = () => {
   const collections = mockCollections
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [emails, setEmails] = useState([''])
   const [shareLink] = useState('https://clipchain.com/invite/abc123def456')
+  const [showCopyNotification, setShowCopyNotification] = useState(false)
 
   const addEmail = () => {
     setEmails([...emails, ''])
@@ -35,8 +37,7 @@ const Dashboard = () => {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(shareLink)
-      // You could add a toast notification here
-      alert('Link copied to clipboard!')
+      setShowCopyNotification(true)
     } catch (err) {
       console.error('Failed to copy: ', err)
     }
@@ -60,9 +61,9 @@ const Dashboard = () => {
               </p>
               
               <div className="space-y-4">
-                <div className="flex items-center space-x-3 p-3 bg-primary-50 rounded-lg cursor-pointer hover:bg-primary-100 transition-colors" onClick={() => setShowEmailModal(true)}>
-                  <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-primary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center space-x-3 p-3 bg-secondary-50 rounded-lg cursor-pointer hover:bg-secondary-100 transition-colors" onClick={() => setShowEmailModal(true)}>
+                  <div className="w-8 h-8 bg-secondary-100 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-secondary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
@@ -70,17 +71,17 @@ const Dashboard = () => {
                     <p className="text-sm font-medium text-gray-900">Invite via email</p>
                     <p className="text-xs text-gray-500">Send personalized invitations</p>
                   </div>
-                  <div className="text-primary-950">
+                  <div className="text-secondary-950">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
                 </div>
                 
-                <div className="p-3 bg-primary-50 rounded-lg">
+                <div className="p-3 bg-secondary-50 rounded-lg">
                   <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-primary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 bg-secondary-100 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-secondary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                       </svg>
                     </div>
@@ -90,7 +91,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1 text-primary-950 hover:text-primary-700 cursor-pointer overflow-hidden" onClick={copyToClipboard}>
+                    <div className="flex items-center space-x-1 text-secondary-950 hover:text-secondary-700 cursor-pointer overflow-hidden" onClick={copyToClipboard}>
                       <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
@@ -98,7 +99,7 @@ const Dashboard = () => {
                     </div>
                     <button 
                       onClick={copyToClipboard}
-                      className="ml-2 flex-shrink-0 text-primary-950 hover:text-primary-700 text-xs font-medium px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                      className="ml-2 flex-shrink-0 text-secondary-950 hover:text-secondary-700 text-xs font-medium px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                     >
                       Copy
                     </button>
@@ -116,7 +117,7 @@ const Dashboard = () => {
                   <h2 className="text-xl font-semibold text-gray-900">Your Collections</h2>
                   <Link 
                     to="/create" 
-                    className="btn-primary text-sm px-4 py-2"
+                    className="bg-secondary-950 hover:bg-secondary-900 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
                   >
                     Create Collection
                   </Link>
@@ -206,7 +207,7 @@ const Dashboard = () => {
                     </p>
                     <Link 
                       to="/create" 
-                      className="btn-primary"
+                      className="bg-secondary-950 hover:bg-secondary-900 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
                     >
                       Create your first collection
                     </Link>
@@ -249,7 +250,7 @@ const Dashboard = () => {
                       value={email}
                       onChange={(e) => updateEmail(index, e.target.value)}
                       placeholder="Enter email address"
-                      className="flex-1 text-sm border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-primary-950 focus:border-transparent"
+                      className="flex-1 text-sm border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-secondary-950 focus:border-transparent"
                     />
                     {emails.length > 1 && (
                       <button
@@ -266,7 +267,7 @@ const Dashboard = () => {
                 
                 <button
                   onClick={addEmail}
-                  className="flex items-center space-x-2 text-primary-950 hover:text-primary-700 text-sm font-medium"
+                  className="flex items-center space-x-2 text-secondary-950 hover:text-secondary-700 text-sm font-medium"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -285,7 +286,7 @@ const Dashboard = () => {
               </button>
               <button
                 onClick={handleSendInvites}
-                className="btn-primary text-sm px-4 py-2"
+                className="bg-secondary-950 hover:bg-secondary-900 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
               >
                 Send Invites
               </button>
@@ -293,6 +294,12 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Copy Notification */}
+      <CopyNotification 
+        isVisible={showCopyNotification} 
+        onClose={() => setShowCopyNotification(false)} 
+      />
     </div>
   )
 }

@@ -81,3 +81,17 @@ export const notionTutorialClips = [
     endTime: 780     // 13:00
   }
 ]
+
+// Chain metadata
+export const chainMetadata = {
+  'llm-tutorial': {
+    author: 'AI_Explorer',
+    createdAt: '2024-01-15T10:30:00Z',
+    tags: ['AI', 'Machine Learning', 'LLMs', 'Tutorial']
+  },
+  'notion-tutorial': {
+    author: 'ProductivityPro',
+    createdAt: '2024-01-20T14:15:00Z',
+    tags: ['Notion', 'Productivity', 'Tutorial', 'Organization']
+  }
+}

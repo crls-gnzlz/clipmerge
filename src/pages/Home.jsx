@@ -1,7 +1,7 @@
 import React from 'react'
 import ClipchainPlayer from '../components/ClipChainPlayer.jsx'
 import GettingStartedSection from '../components/GettingStartedSection.jsx'
-import { llmClips, notionTutorialClips } from '../data/exampleClips.js'
+import { llmClips, notionTutorialClips, chainMetadata } from '../data/exampleClips.js'
 
 const Home = () => {
   return (
@@ -25,12 +25,18 @@ const Home = () => {
                   title="Learn about LLMs"
                   description="A collection of key concepts about Large Language Models"
                   clips={llmClips}
+                  author={chainMetadata['llm-tutorial'].author}
+                  createdAt={chainMetadata['llm-tutorial'].createdAt}
+                  tags={chainMetadata['llm-tutorial'].tags}
                 />
                 <ClipchainPlayer 
                   id="notion-tutorial"
                   title="Master Notion Basics"
                   description="Learn how to use Notion effectively with clips from different tutorials combined in one place"
                   clips={notionTutorialClips}
+                  author={chainMetadata['notion-tutorial'].author}
+                  createdAt={chainMetadata['notion-tutorial'].createdAt}
+                  tags={chainMetadata['notion-tutorial'].tags}
                 />
               </div>
             </div>

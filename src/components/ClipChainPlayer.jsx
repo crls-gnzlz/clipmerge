@@ -80,7 +80,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       // Create a simple iframe with YouTube embed URL
       const iframe = document.createElement('iframe')
       iframe.width = '100%'
-      iframe.height = '256'
+      iframe.height = '100%'
       iframe.frameBorder = '0'
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
       iframe.allowFullscreen = true
@@ -466,7 +466,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       <div className="px-3 pt-4 pb-2">
         <h2 
           className="text-xl font-bold text-gray-900 mb-1 cursor-help"
-          title={tags && tags.length > 0 ? `Tags: ${tags.join(', ')}` : ''}
+          title={tags && tags.length > 0 ? tags.join(', ') : ''}
         >
           {title}
         </h2>
@@ -477,12 +477,9 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           {(author || createdAt) && (
             <div className="flex items-center space-x-4 text-xs text-gray-500">
               {author && (
-                <Link 
-                  to={`/user/${author}`} 
-                  className="hover:text-secondary-950 hover:underline transition-colors"
-                >
+                <span className="hover:text-secondary-950 transition-colors">
                   By {author}
-                </Link>
+                </span>
               )}
               {author && createdAt && <span>•</span>}
               {createdAt && <span>{new Date(createdAt).toLocaleDateString()}</span>}
@@ -542,7 +539,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           <div className="relative bg-black rounded-lg overflow-hidden mb-3">
             <div
               ref={iframeRef}
-              className="w-full h-64"
+              className="w-full aspect-video"
             />
             
             {/* Custom Play Button Overlay */}
@@ -550,10 +547,10 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
                 <button
                   onClick={togglePlay}
-                  className="p-4 bg-white bg-opacity-90 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-200 transform hover:scale-110"
+                  className="p-4 bg-secondary-950 bg-opacity-90 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-200 transform hover:scale-110"
                   title={currentClip ? 'Play' : 'Select a clip to play'}
                 >
-                  <svg className="w-8 h-8 text-gray-800" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z"/>
                   </svg>
                 </button>
