@@ -47,8 +47,18 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage your collections and invite friends to clipchain</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600 mt-2">Manage your collections and invite friends to clipchain</p>
+            </div>
+            <Link 
+              to="/create" 
+              className="bg-secondary-950 hover:bg-secondary-900 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 text-lg"
+            >
+              Add Clip
+            </Link>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">
@@ -117,7 +127,7 @@ const Dashboard = () => {
                   <h2 className="text-xl font-semibold text-gray-900">Your Collections</h2>
                   <Link 
                     to="/create" 
-                    className="bg-secondary-950 hover:bg-secondary-900 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+                    className="bg-gray-100 hover:bg-gray-200 text-secondary-950 border-2 border-secondary-950 hover:border-secondary-900 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
                   >
                     Create Collection
                   </Link>

@@ -2,80 +2,275 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import ClipchainPlayer from '../components/ClipChainPlayer.jsx'
 import Footer from '../components/Footer.jsx'
-import { llmClips, notionTutorialClips } from '../data/exampleClips.js'
 
 const Library = () => {
-  // Create 15 clips for the example
-  const createExtendedClips = (baseClips, count = 15) => {
-    const extendedClips = []
-    for (let i = 0; i < count; i++) {
-      const baseClip = baseClips[i % baseClips.length]
-      extendedClips.push({
-        ...baseClip,
-        id: `${baseClip.id}-${i}`,
-        title: `${baseClip.title} ${i + 1}`,
-        startTime: baseClip.startTime + (i * 30),
-        endTime: baseClip.endTime + (i * 30)
-      })
-    }
-    return extendedClips
-  }
-
   // Mock data for library examples - in a real app, this would come from an API
   const libraryExamples = [
     {
-      id: 'llm-tutorial',
-      title: 'Learn about LLMs',
-      description: 'A comprehensive collection of key concepts about Large Language Models, covering everything from basics to advanced topics.',
-      clips: createExtendedClips(llmClips, 15),
-      author: 'AI Enthusiast',
-      createdAt: '2024-01-15',
-      tags: ['Education', 'AI', 'Technology']
+      id: 'football-highlights',
+      title: 'Football Match Highlights',
+      description: 'Relive the most exciting moments from this thrilling football match with 4 spectacular goals.',
+      clips: [
+        {
+          id: 1,
+          title: "First Goal - Spectacular Strike",
+          videoId: "19s1_a0wFmE",
+          startTime: 4,
+          endTime: 24
+        },
+        {
+          id: 2,
+          title: "Second Goal - Team Play",
+          videoId: "19s1_a0wFmE",
+          startTime: 310,
+          endTime: 341
+        },
+        {
+          id: 3,
+          title: "Third Goal - Amazing Finish",
+          videoId: "19s1_a0wFmE",
+          startTime: 386,
+          endTime: 417
+        },
+        {
+          id: 4,
+          title: "Fourth Goal - Match Winner",
+          videoId: "19s1_a0wFmE",
+          startTime: 428,
+          endTime: 461
+        }
+      ],
+      author: 'Sports Fan',
+      createdAt: '2024-01-18',
+      tags: ['Football', 'Sports', 'Highlights', 'Goals']
     },
     {
-      id: 'notion-tutorial',
-      title: 'Master Notion Basics',
-      description: 'Learn how to use Notion effectively with clips from different tutorials combined in one place.',
-      clips: notionTutorialClips,
-      author: 'Productivity Pro',
-      createdAt: '2024-01-10',
-      tags: ['Productivity', 'Tutorial']
-    },
-    {
-      id: 'react-basics',
+      id: 'react-fundamentals',
       title: 'React Fundamentals',
-      description: 'Essential React concepts for beginners and intermediate developers.',
-      clips: llmClips, // Reusing for demo
-      author: 'Code Master',
+      description: 'Master the basics of React with this comprehensive collection covering hooks, components, and modern patterns.',
+      clips: [
+        {
+          id: 1,
+          title: "React Hooks Explained",
+          videoId: "7xTGNNLPyMI",
+          startTime: 120,
+          endTime: 300
+        },
+        {
+          id: 2,
+          title: "useState Hook Deep Dive",
+          videoId: "7xTGNNLPyMI",
+          startTime: 300,
+          endTime: 480
+        },
+        {
+          id: 3,
+          title: "useEffect Best Practices",
+          videoId: "7xTGNNLPyMI",
+          startTime: 480,
+          endTime: 660
+        },
+        {
+          id: 4,
+          title: "Custom Hooks",
+          videoId: "7xTGNNLPyMI",
+          startTime: 660,
+          endTime: 840
+        }
+      ],
+      author: 'React Master',
+      createdAt: '2024-01-15',
+      tags: ['React', 'JavaScript', 'Frontend', 'Hooks']
+    },
+    {
+      id: 'python-data-science',
+      title: 'Python Data Science',
+      description: 'Learn data science with Python through practical examples and real-world applications.',
+      clips: [
+        {
+          id: 1,
+          title: "Pandas Basics",
+          videoId: "dcqPhpY7tWk",
+          startTime: 60,
+          endTime: 240
+        },
+        {
+          id: 2,
+          title: "Data Visualization with Matplotlib",
+          videoId: "dcqPhpY7tWk",
+          startTime: 240,
+          endTime: 420
+        },
+        {
+          id: 3,
+          title: "NumPy Arrays",
+          videoId: "dcqPhpY7tWk",
+          startTime: 420,
+          endTime: 600
+        },
+        {
+          id: 4,
+          title: "Data Cleaning Techniques",
+          videoId: "dcqPhpY7tWk",
+          startTime: 600,
+          endTime: 780
+        }
+      ],
+      author: 'Data Scientist',
+      createdAt: '2024-01-12',
+      tags: ['Python', 'Data Science', 'Pandas', 'NumPy']
+    },
+    {
+      id: 'economics-basics',
+      title: 'Economics Fundamentals',
+      description: 'Understand the core principles of economics through engaging explanations and real-world examples.',
+      clips: [
+        {
+          id: 1,
+          title: "Supply and Demand",
+          videoId: "V0tIOqU7m-c",
+          startTime: 45,
+          endTime: 225
+        },
+        {
+          id: 2,
+          title: "Market Equilibrium",
+          videoId: "V0tIOqU7m-c",
+          startTime: 225,
+          endTime: 405
+        },
+        {
+          id: 3,
+          title: "Elasticity of Demand",
+          videoId: "V0tIOqU7m-c",
+          startTime: 405,
+          endTime: 585
+        },
+        {
+          id: 4,
+          title: "Price Controls",
+          videoId: "V0tIOqU7m-c",
+          startTime: 585,
+          endTime: 765
+        }
+      ],
+      author: 'Economics Professor',
+      createdAt: '2024-01-10',
+      tags: ['Economics', 'Education', 'Finance', 'Business']
+    },
+    {
+      id: 'javascript-modern',
+      title: 'Modern JavaScript',
+      description: 'Explore modern JavaScript features including ES6+, async/await, and functional programming.',
+      clips: [
+        {
+          id: 1,
+          title: "ES6+ Features",
+          videoId: "W6NZfCO5SIk",
+          startTime: 180,
+          endTime: 360
+        },
+        {
+          id: 2,
+          title: "Async/Await Patterns",
+          videoId: "W6NZfCO5SIk",
+          startTime: 360,
+          endTime: 540
+        },
+        {
+          id: 3,
+          title: "Promises Deep Dive",
+          videoId: "W6NZfCO5SIk",
+          startTime: 540,
+          endTime: 720
+        },
+        {
+          id: 4,
+          title: "Functional Programming",
+          videoId: "W6NZfCO5SIk",
+          startTime: 720,
+          endTime: 900
+        }
+      ],
+      author: 'JS Expert',
       createdAt: '2024-01-08',
-      tags: ['Coding', 'React', 'JavaScript']
+      tags: ['JavaScript', 'ES6', 'Async', 'Programming']
     },
     {
-      id: 'javascript-essentials',
-      title: 'JavaScript Essentials',
-      description: 'Core JavaScript concepts and best practices for modern web development.',
-      clips: notionTutorialClips, // Reusing for demo
-      author: 'JS Developer',
+      id: 'machine-learning-intro',
+      title: 'Machine Learning Basics',
+      description: 'Introduction to machine learning concepts, algorithms, and practical applications.',
+      clips: [
+        {
+          id: 1,
+          title: "What is Machine Learning?",
+          videoId: "KNAWp2S3w94",
+          startTime: 30,
+          endTime: 210
+        },
+        {
+          id: 2,
+          title: "Supervised vs Unsupervised Learning",
+          videoId: "KNAWp2S3w94",
+          startTime: 210,
+          endTime: 390
+        },
+        {
+          id: 3,
+          title: "Linear Regression",
+          videoId: "KNAWp2S3w94",
+          startTime: 390,
+          endTime: 570
+        },
+        {
+          id: 4,
+          title: "Classification Algorithms",
+          videoId: "KNAWp2S3w94",
+          startTime: 570,
+          endTime: 750
+        }
+      ],
+      author: 'ML Engineer',
       createdAt: '2024-01-05',
-      tags: ['Coding', 'JavaScript']
+      tags: ['Machine Learning', 'AI', 'Data Science', 'Python']
     },
     {
-      id: 'css-mastery',
-      title: 'CSS Mastery',
-      description: 'Advanced CSS techniques and modern layouts for professional web design.',
-      clips: llmClips, // Reusing for demo
-      author: 'Design Expert',
+      id: 'web-development',
+      title: 'Web Development',
+      description: 'Complete web development course covering HTML, CSS, and JavaScript fundamentals.',
+      clips: [
+        {
+          id: 1,
+          title: "HTML Structure",
+          videoId: "UB1O30fR-EE",
+          startTime: 60,
+          endTime: 240
+        },
+        {
+          id: 2,
+          title: "CSS Styling",
+          videoId: "UB1O30fR-EE",
+          startTime: 240,
+          endTime: 420
+        },
+        {
+          id: 3,
+          title: "JavaScript Basics",
+          videoId: "UB1O30fR-EE",
+          startTime: 420,
+          endTime: 600
+        },
+        {
+          id: 4,
+          title: "Responsive Design",
+          videoId: "UB1O30fR-EE",
+          startTime: 600,
+          endTime: 780
+        }
+      ],
+      author: 'Web Developer',
       createdAt: '2024-01-03',
-      tags: ['Design', 'CSS', 'Frontend']
-    },
-    {
-      id: 'python-basics',
-      title: 'Python Basics',
-      description: 'Introduction to Python programming language with practical examples.',
-      clips: notionTutorialClips, // Reusing for demo
-      author: 'Python Guru',
-      createdAt: '2024-01-01',
-      tags: ['Coding', 'Python', 'Education']
+      tags: ['Web Development', 'HTML', 'CSS', 'JavaScript']
     }
   ]
 
