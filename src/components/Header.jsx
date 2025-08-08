@@ -8,13 +8,8 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-primary-950 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">cM</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-gray-900">clipMerge</span>
-                <span className="text-sm text-gray-600">Curate the content that really matters</span>
-              </div>
+              <img src="/logo.svg" alt="clipchain" className="h-6" />
+              <span className="text-sm text-gray-600">Video moments, meaningful collections</span>
             </Link>
           </div>
           

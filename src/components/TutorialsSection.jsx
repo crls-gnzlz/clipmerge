@@ -37,7 +37,7 @@ const TutorialsSection = () => {
           Learn More with Tutorials
         </h2>
         <p className="text-gray-600">
-          Master clipMerge with our step-by-step video tutorials
+          Master clipchain with our step-by-step video tutorials
         </p>
       </div>
 

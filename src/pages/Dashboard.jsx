@@ -6,7 +6,7 @@ const Dashboard = () => {
   const collections = mockCollections
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [emails, setEmails] = useState([''])
-  const [shareLink] = useState('https://clipmerge.com/invite/abc123def456')
+  const [shareLink] = useState('https://clipchain.com/invite/abc123def456')
 
   const addEmail = () => {
     setEmails([...emails, ''])
@@ -47,23 +47,23 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage your collections and invite friends to clipMerge</p>
+          <p className="text-gray-600 mt-2">Manage your collections and invite friends to clipchain</p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-4 gap-8">
           {/* Left side - Invite component */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Invite Friends</h2>
               <p className="text-gray-600 mb-6">
-                Share clipMerge with your friends and start creating amazing collections together.
+                Share clipchain with your friends and start creating amazing collections together.
               </p>
               
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 p-3 bg-primary-50 rounded-lg cursor-pointer hover:bg-primary-100 transition-colors" onClick={() => setShowEmailModal(true)}>
                   <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                     <svg className="w-4 h-4 text-primary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div className="flex-1">
@@ -89,16 +89,16 @@ const Dashboard = () => {
                       <p className="text-xs text-gray-500">Generate shareable links</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1 text-primary-950 hover:text-primary-700 cursor-pointer" onClick={copyToClipboard}>
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1 text-primary-950 hover:text-primary-700 cursor-pointer overflow-hidden" onClick={copyToClipboard}>
+                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
-                      <span className="text-xs underline">clipmerge.com/invite/abc123def456</span>
+                      <span className="text-xs underline truncate">clipchain.com/invite/abc123def456</span>
                     </div>
                     <button 
                       onClick={copyToClipboard}
-                      className="text-primary-950 hover:text-primary-700 text-xs font-medium px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                      className="ml-2 flex-shrink-0 text-primary-950 hover:text-primary-700 text-xs font-medium px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
                     >
                       Copy
                     </button>
@@ -109,7 +109,7 @@ const Dashboard = () => {
           </div>
 
           {/* Right side - Collections table */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">

@@ -203,7 +203,7 @@ const TestPlayerSection = () => {
   }, [currentClipIndex])
 
   const copyLink = () => {
-    const shareUrl = `https://clipmerge.com/share/collection/123`
+    const shareUrl = `https://clipchain.com/share/collection/123`
     navigator.clipboard.writeText(shareUrl)
     alert('Link copied to clipboard!')
   }
@@ -280,7 +280,7 @@ const TestPlayerSection = () => {
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Test how clipMerge actually works!
+          Test how clipchain actually works!
         </h2>
         <p className="text-gray-600">
           Try our player below to see it in action. Here you can see a collection of clips merged with our platform
@@ -289,150 +289,141 @@ const TestPlayerSection = () => {
 
       {/* Embed-style Player Card */}
       <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-200 hover:border-gray-300 transition-all duration-300">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-300 hover:border-gray-400 transition-colors duration-300">
-          {/* Left side - User Avatar, Alias and Follow Link */}
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">U</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-900">@username</span>
-              <button className="text-sm text-primary-950 hover:text-primary-700 font-medium transition-colors text-left">
-                Follow
-              </button>
-            </div>
-          </div>
-          
-          {/* Right side - Logo */}
-          <div className="w-8 h-8 bg-primary-950 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">cM</span>
-          </div>
-        </div>
+                          {/* Header with Logo and Copy Link */}
+                    <div className="flex items-center justify-between p-3 border-b border-gray-300 hover:border-gray-400 transition-colors duration-300">
+                      {/* Left side - Logo */}
+                      <img src="/logo.svg" alt="clipchain" className="h-5" />
+                      
+                      {/* Right side - Copy Link */}
+                      <button
+                        onClick={copyLink}
+                        className="flex items-center space-x-1.5 text-xs text-gray-600 hover:text-primary-950 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        <span>Copy link</span>
+                      </button>
+                    </div>
 
-        {/* Video Player */}
-        <div className="p-4">
-          <div className="mb-3">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {currentClip.title} <span className="text-sm text-gray-500 font-normal">({currentClipIndex + 1}/{clips.length})</span>
-            </h3>
-            <p className="text-sm text-gray-500">
-              {formatTime(currentClip.startTime)} - {formatTime(currentClip.endTime)} ({formatTime(currentClip.endTime - currentClip.startTime)} duration)
-            </p>
-          </div>
-          
-          <div className="relative bg-black rounded-lg overflow-hidden mb-4">
-            <div
-              ref={iframeRef}
-              className="w-full h-64"
-            />
-          </div>
+                    {/* Video Player */}
+                    <div className="px-3 pt-3 pb-3">
+                      {/* Chapter Indicators at the top */}
+                      <div className="flex space-x-2 mb-3">
+                        {clips.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              if (timerRef.current) {
+                                clearInterval(timerRef.current)
+                              }
+                              setCurrentClipIndex(index)
+                              setIsPlaying(false)
+                            }}
+                            className={`px-2 py-1 text-xs font-medium rounded border transition-colors ${
+                              index === currentClipIndex 
+                                ? 'bg-primary-950 text-white border-primary-950' 
+                                : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                            }`}
+                          >
+                            {index + 1}
+                          </button>
+                        ))}
+                      </div>
 
-          {/* Custom Timeline below video */}
-          <div className="mb-4">
-            {/* Clip Timeline */}
-            <div 
-              ref={overlayRef}
-              className="relative w-full h-2 bg-gray-300 rounded-full cursor-pointer"
-              onClick={handleTimelineClick}
-              onMouseDown={handleMouseDown}
-            >
-              {/* Progress track */}
+                      <div className="mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {currentClip.title} <span className="text-sm text-gray-500 font-normal">({currentClipIndex + 1}/{clips.length})</span>
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {formatTime(currentClip.startTime)} - {formatTime(currentClip.endTime)} ({formatTime(currentClip.endTime - currentClip.startTime)} duration)
+                        </p>
+                      </div>
+            
+            <div className="relative bg-black rounded-lg overflow-hidden mb-3">
+              <div
+                ref={iframeRef}
+                className="w-full h-64"
+              />
+            </div>
+
+            {/* Controls Section - More compact */}
+            <div className="space-y-2">
+              {/* Custom Timeline */}
               <div 
-                className="absolute left-0 top-0 h-full bg-primary-950 rounded-full transition-all duration-300 ease-in-out"
-                style={{ width: `${getProgressPercentage()}%` }}
-              ></div>
-              
-              {/* Progress handle */}
-              <div 
-                className="absolute top-1/2 w-4 h-4 bg-primary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-2 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
-                style={{ left: `${getProgressPercentage()}%` }}
-              ></div>
-            </div>
-            
-            {/* Time display */}
-            <div className="flex justify-between text-gray-600 text-xs mt-2">
-              <span>{formatTime(currentTime - currentClip.startTime)}</span>
-              <span>-{formatTime(getRemainingTime())}</span>
+                ref={overlayRef}
+                className="relative w-full h-1.5 bg-gray-300 rounded-full cursor-pointer"
+                onClick={handleTimelineClick}
+                onMouseDown={handleMouseDown}
+              >
+                {/* Progress track */}
+                <div 
+                  className="absolute left-0 top-0 h-full bg-primary-950 rounded-full transition-all duration-300 ease-in-out"
+                  style={{ width: `${getProgressPercentage()}%` }}
+                ></div>
+                
+                {/* Progress handle */}
+                <div 
+                  className="absolute top-1/2 w-3 h-3 bg-primary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-1.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
+                  style={{ left: `${getProgressPercentage()}%` }}
+                ></div>
+              </div>
+
+              {/* Time display and controls in one row */}
+              <div className="flex items-center justify-between">
+                {/* Fixed-width container for current time */}
+                <div className="w-14 text-right">
+                  <span className="text-xs text-gray-600">{formatTime(currentTime - currentClip.startTime)}</span>
+                </div>
+
+                {/* Playback Controls */}
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={previousClip}
+                    className="p-1.5 text-gray-700 hover:text-primary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
+                    title="Previous clip"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                    </svg>
+                  </button>
+                  
+                  <button
+                    onClick={togglePlay}
+                    className="p-2 text-gray-700 hover:text-primary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
+                    title={isPlaying ? 'Pause' : 'Play'}
+                  >
+                    {isPlaying ? (
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={nextClip}
+                    className="p-1.5 text-gray-700 hover:text-primary-950 hover:bg-gray-100 rounded-full transition-all duration-200"
+                    title="Next clip"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Fixed-width container for remaining time */}
+                <div className="w-14 text-left">
+                  <span className="text-xs text-gray-600">-{formatTime(getRemainingTime())}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Large Visual Controls */}
-          <div className="flex items-center justify-center space-x-6">
-            <button
-              onClick={previousClip}
-              className="p-3 text-gray-700 hover:text-gray-900 transition-colors"
-              title="Previous clip"
-            >
-              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-            </button>
-            
-            <button
-              onClick={togglePlay}
-              className="p-4 text-gray-700 hover:text-gray-900 transition-colors"
-              title={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? (
-                <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-                </svg>
-              ) : (
-                <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              )}
-            </button>
-            
-            <button
-              onClick={nextClip}
-              className="p-3 text-gray-700 hover:text-gray-900 transition-colors"
-              title="Next clip"
-            >
-              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
 
-          {/* Clip Indicators */}
-          <div className="flex justify-center mt-4">
-            <div className="flex space-x-2">
-              {clips.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    // Clear any existing timers first
-                    if (timerRef.current) {
-                      clearInterval(timerRef.current)
-                    }
-                    setCurrentClipIndex(index)
-                    setIsPlaying(false)
-                  }}
-                  className={`w-3 h-3 rounded-full transition-colors ${
-                    index === currentClipIndex ? 'bg-primary-950' : 'bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom section with copy link */}
-        <div className="border-t border-gray-300 hover:border-gray-400 transition-colors duration-300 p-4">
-          <div className="flex justify-end">
-            <button
-              onClick={copyLink}
-              className="flex items-center space-x-2 text-sm text-gray-600 hover:text-primary-950 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-              <span>Copy link</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   )

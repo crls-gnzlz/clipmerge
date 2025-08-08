@@ -1,4 +1,4 @@
-# clipMerge
+# clipchain
 
 Una aplicación web que permite a los usuarios guardar y reproducir clips de vídeo seleccionando intervalos de tiempo dentro de vídeos y agrupándolos en colecciones compartibles.
 

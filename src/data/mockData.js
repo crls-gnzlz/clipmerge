@@ -85,7 +85,7 @@ export const mockCollections = [
 export const mockUser = {
   id: '1',
   name: 'Demo User',
-  email: 'demo@clipmerge.com',
+  email: 'demo@clipchain.com',
   avatar: 'https://via.placeholder.com/40x40',
   collections: ['1', '2', '3']
 }
