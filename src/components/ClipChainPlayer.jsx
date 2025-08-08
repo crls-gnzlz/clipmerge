@@ -447,7 +447,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       <div className="flex items-center justify-between p-3 border-b border-gray-300 hover:border-gray-400 transition-colors duration-300">
         {/* Left side - Logo */}
         <div className="flex items-center">
-          <img src="/logo2.svg" alt="clipchain" className="h-5 brightness-110 filter group-hover:brightness-110 transition-all duration-300" />
+          <img src="/logo-blue.svg" alt="clipchain" className="h-5 brightness-110 filter group-hover:brightness-110 transition-all duration-300" />
         </div>
         
         {/* Right side - Copy Link */}

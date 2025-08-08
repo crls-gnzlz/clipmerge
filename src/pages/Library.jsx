@@ -45,44 +45,6 @@ const Library = () => {
       tags: ['Football', 'Sports', 'Highlights', 'Goals']
     },
     {
-      id: 'react-fundamentals',
-      title: 'React Fundamentals',
-      description: 'Master the basics of React with this comprehensive collection covering hooks, components, and modern patterns.',
-      clips: [
-        {
-          id: 1,
-          title: "React Hooks Explained",
-          videoId: "7xTGNNLPyMI",
-          startTime: 120,
-          endTime: 300
-        },
-        {
-          id: 2,
-          title: "useState Hook Deep Dive",
-          videoId: "7xTGNNLPyMI",
-          startTime: 300,
-          endTime: 480
-        },
-        {
-          id: 3,
-          title: "useEffect Best Practices",
-          videoId: "7xTGNNLPyMI",
-          startTime: 480,
-          endTime: 660
-        },
-        {
-          id: 4,
-          title: "Custom Hooks",
-          videoId: "7xTGNNLPyMI",
-          startTime: 660,
-          endTime: 840
-        }
-      ],
-      author: 'React Master',
-      createdAt: '2024-01-15',
-      tags: ['React', 'JavaScript', 'Frontend', 'Hooks']
-    },
-    {
       id: 'python-data-science',
       title: 'Python Data Science',
       description: 'Learn data science with Python through practical examples and real-world applications.',

@@ -75,6 +75,11 @@ const Footer = () => {
                   Dashboard
                 </Link>
               </li>
+              <li>
+                <Link to="/landing" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                  Visit our website
+                </Link>
+              </li>
             </ul>
           </div>
           

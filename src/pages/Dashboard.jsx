@@ -4,7 +4,7 @@ import { mockCollections } from '../data/mockData.js'
 import CopyNotification from '../components/CopyNotification.jsx'
 
 const Dashboard = () => {
-  const collections = mockCollections
+  const chains = mockCollections
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [emails, setEmails] = useState([''])
   const [shareLink] = useState('https://clipchain.com/invite/abc123def456')
@@ -50,7 +50,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600 mt-2">Manage your collections and invite friends to clipchain</p>
+              <p className="text-gray-600 mt-2">Manage your chains and invite friends to clipchain</p>
             </div>
             <Link 
               to="/create" 
@@ -67,7 +67,7 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Invite Friends</h2>
               <p className="text-gray-600 mb-6">
-                Share clipchain with your friends and start creating amazing collections together.
+                Share clipchain with your friends and start creating amazing chains together.
               </p>
               
               <div className="space-y-4">
@@ -119,28 +119,28 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Right side - Collections table */}
+          {/* Right side - Chains table */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900">Your Collections</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Your Chains</h2>
                   <Link 
                     to="/create" 
                     className="bg-gray-100 hover:bg-gray-200 text-secondary-950 border-2 border-secondary-950 hover:border-secondary-900 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
                   >
-                    Create Collection
+                    Create Chain
                   </Link>
                 </div>
               </div>
               
               <div className="overflow-hidden">
-                {collections.length > 0 ? (
+                {chains.length > 0 ? (
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Collection
+                          Chain
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Clips
@@ -157,44 +157,44 @@ const Dashboard = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {collections.map((collection) => (
-                        <tr key={collection.id} className="hover:bg-gray-50">
+                      {chains.map((chain) => (
+                        <tr key={chain.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
                               <div className="text-sm font-medium text-gray-900">
-                                {collection.name}
+                                {chain.name}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {collection.description}
+                                {chain.description}
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                              {collection.clips.length} clips
+                              {chain.clips.length} clips
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(collection.createdAt).toLocaleDateString()}
+                            {new Date(chain.createdAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              collection.isPublic 
+                              chain.isPublic 
                                 ? 'bg-green-100 text-green-800' 
                                 : 'bg-gray-100 text-gray-800'
                             }`}>
-                              {collection.isPublic ? 'Public' : 'Private'}
+                              {chain.isPublic ? 'Public' : 'Private'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <Link 
-                              to={`/collections/${collection.id}`}
+                              to={`/chains/${chain.id}`}
                               className="text-primary-950 hover:text-primary-700 mr-4"
                             >
                               View
                             </Link>
                             <Link 
-                              to={`/collections/${collection.id}/edit`}
+                              to={`/chains/${chain.id}/edit`}
                               className="text-primary-950 hover:text-primary-700"
                             >
                               Edit
@@ -211,15 +211,15 @@ const Dashboard = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No collections yet</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No chains yet</h3>
                     <p className="text-gray-500 mb-6">
-                      Start by creating your first collection to organize your clips.
+                      Start by creating your first chain to organize your clips.
                     </p>
                     <Link 
                       to="/create" 
                       className="bg-secondary-950 hover:bg-secondary-900 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
                     >
-                      Create your first collection
+                      Create your first chain
                     </Link>
                   </div>
                 )}
