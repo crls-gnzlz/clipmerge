@@ -1,63 +1,63 @@
 # clipchain
 
-Una aplicación web que permite a los usuarios guardar y reproducir clips de vídeo seleccionando intervalos de tiempo dentro de vídeos y agrupándolos en colecciones compartibles.
+A web application that allows users to save and play video clips by selecting time intervals within videos and grouping them into shareable collections.
 
-## Tecnologías
+## Technologies
 
-- **React** con Vite
-- **Tailwind CSS** para estilos
-- **React Router** para navegación
+- **React** with Vite
+- **Tailwind CSS** for styling
+- **React Router** for navigation
 - **JavaScript** (no TypeScript)
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 src/
-├── components/          # Componentes reutilizables
-│   └── Header.jsx      # Header con navegación
-├── pages/              # Vistas principales
-│   └── Home.jsx        # Página de inicio
-├── lib/                # Lógica auxiliar
-│   └── urlParser.js    # Utilidades para parsear URLs
-├── data/               # Datos mockeados
-│   └── mockData.js     # Datos de ejemplo
-├── App.jsx             # Componente principal
-├── main.jsx            # Punto de entrada
-└── index.css           # Estilos globales
+├── components/          # Reusable components
+│   └── Header.jsx      # Header with navigation
+├── pages/              # Main views
+│   └── Home.jsx        # Home page
+├── lib/                # Helper logic
+│   └── urlParser.js    # URL parsing utilities
+├── data/               # Mock data
+│   └── mockData.js     # Example data
+├── App.jsx             # Main component
+├── main.jsx            # Entry point
+└── index.css           # Global styles
 ```
 
-## Características
+## Features
 
-- ✅ Navegación con React Router
-- ✅ Diseño responsive con Tailwind CSS
-- ✅ Estructura escalable de carpetas
-- ✅ Componentes reutilizables
-- ✅ Utilidades para parsear URLs de YouTube
-- ✅ Datos mockeados para desarrollo
+- ✅ Navigation with React Router
+- ✅ Responsive design with Tailwind CSS
+- ✅ Scalable folder structure
+- ✅ Reusable components
+- ✅ YouTube URL parsing utilities
+- ✅ Mock data for development
 
-## Instalación
+## Installation
 
-1. Clona el repositorio
-2. Instala las dependencias:
+1. Clone the repository
+2. Install dependencies:
    ```bash
    npm install
    ```
-3. Ejecuta el servidor de desarrollo:
+3. Run the development server:
    ```bash
    npm run dev
    ```
 
-## Scripts Disponibles
+## Available Scripts
 
-- `npm run dev` - Inicia el servidor de desarrollo
-- `npm run build` - Construye la aplicación para producción
-- `npm run preview` - Previsualiza la build de producción
-- `npm run lint` - Ejecuta el linter
+- `npm run dev` - Starts the development server
+- `npm run build` - Builds the application for production
+- `npm run preview` - Previews the production build
+- `npm run lint` - Runs the linter
 
-## Próximas Funcionalidades
+## Upcoming Features
 
-- [ ] Creación de clips con selección de tiempo
-- [ ] Gestión de colecciones
-- [ ] Reproducción de clips
-- [ ] Sistema de usuarios
-- [ ] Compartir colecciones
+- [ ] Clip creation with time selection
+- [ ] Collection management
+- [ ] Clip playback
+- [ ] User system
+- [ ] Share collections

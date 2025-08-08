@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
+import CopyNotification from './CopyNotification.jsx'
 
-const ClipChainPlayer = ({ title, description, clips, id }) => {
+const ClipchainPlayer = ({ title, description, clips, id }) => {
   const playerId = `youtube-player-${id}`
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentClipIndex, setCurrentClipIndex] = useState(-1) // Start with no clip selected
@@ -9,6 +10,7 @@ const ClipChainPlayer = ({ title, description, clips, id }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [playerReady, setPlayerReady] = useState(false)
   const [videoLoaded, setVideoLoaded] = useState(false)
+  const [showCopyNotification, setShowCopyNotification] = useState(false)
   const iframeRef = useRef(null)
   const timerRef = useRef(null)
   const overlayRef = useRef(null)
@@ -176,6 +178,73 @@ const ClipChainPlayer = ({ title, description, clips, id }) => {
     }
   }, [isPlaying, currentClip?.endTime, currentClipIndex, clips.length])
 
+  // Listen for YouTube player state changes
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Only handle messages from our iframe
+      if (playerRef.current && playerRef.current.iframe && event.source === playerRef.current.iframe.contentWindow) {
+        try {
+          const data = JSON.parse(event.data)
+          console.log('Received message from YouTube:', data)
+          
+          // Handle different message formats
+          if (data.event === 'onStateChange') {
+            // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
+            if (data.info === 2) { // Paused
+              console.log('YouTube player paused')
+              setIsPlaying(false)
+            } else if (data.info === 1) { // Playing
+              console.log('YouTube player playing')
+              setIsPlaying(true)
+            }
+          } else if (data.event === 'command' && data.func === 'pauseVideo') {
+            // Handle pause command response
+            console.log('Pause command executed')
+            setIsPlaying(false)
+          } else if (data.event === 'command' && data.func === 'playVideo') {
+            // Handle play command response
+            console.log('Play command executed')
+            setIsPlaying(true)
+          }
+        } catch (error) {
+          // Ignore non-JSON messages
+        }
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [])
+
+  // Additional effect to handle iframe load and set up event listeners
+  useEffect(() => {
+    if (playerRef.current && playerRef.current.iframe) {
+      const iframe = playerRef.current.iframe
+      
+      // Add event listener for iframe load
+      const handleIframeLoad = () => {
+        console.log('Iframe loaded, setting up player state detection')
+        // Send a message to enable state change events
+        const message = {
+          event: 'listening',
+          func: 'addEventListener',
+          args: ['onStateChange']
+        }
+        setTimeout(() => {
+          iframe.contentWindow.postMessage(JSON.stringify(message), '*')
+        }, 1000)
+      }
+
+      iframe.addEventListener('load', handleIframeLoad)
+      
+      return () => {
+        iframe.removeEventListener('load', handleIframeLoad)
+      }
+    }
+  }, [playerRef.current])
+
   const togglePlay = () => {
     if (playerRef.current && playerRef.current.iframe) {
       if (!currentClip) {
@@ -228,9 +297,9 @@ const ClipChainPlayer = ({ title, description, clips, id }) => {
   }, [currentClipIndex, clips.length])
 
   const copyLink = () => {
-    const shareUrl = `https://clipchain.com/share/collection/123`
+    const shareUrl = `${window.location.origin}/chain/${id}`
     navigator.clipboard.writeText(shareUrl)
-    alert('Link copied to clipboard!')
+    setShowCopyNotification(true)
   }
 
   // Calculate progress percentage for the clip
@@ -388,6 +457,19 @@ const ClipChainPlayer = ({ title, description, clips, id }) => {
                 </button>
               </div>
             )}
+            
+            {/* Transparent overlay to detect clicks when video is playing */}
+            {isPlaying && currentClip && (
+              <div 
+                className="absolute inset-0 cursor-pointer hover:bg-black hover:bg-opacity-10 transition-all duration-200"
+                onClick={() => {
+                  console.log('User clicked on video overlay - pausing video')
+                  setIsPlaying(false)
+                  sendPostMessage('pauseVideo')
+                }}
+                title="Click to pause"
+              />
+            )}
           </div>
 
           {/* Controls Section - More compact */}
@@ -468,12 +550,16 @@ const ClipChainPlayer = ({ title, description, clips, id }) => {
                 </div>
               </div>
           </div>
-        </div>
       </div>
+      <CopyNotification
+        isVisible={showCopyNotification}
+        onClose={() => setShowCopyNotification(false)}
+      />
+    </div>
   )
 }
 
-ClipChainPlayer.propTypes = {
+ClipchainPlayer.propTypes = {
   id: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
@@ -486,4 +572,4 @@ ClipChainPlayer.propTypes = {
   })).isRequired,
 }
 
-export default ClipChainPlayer
+export default ClipchainPlayer

@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header.jsx'
 import Home from './pages/Home.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import ClipchainLaunchpad from './pages/ClipchainLaunchpad.jsx'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/chain/:chainId" element={<ClipchainLaunchpad />} />
           <Route path="/collections" element={
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
               <h1 className="text-3xl font-bold text-gray-900 mb-8">Collections</h1>
