@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embed Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        iframe { border: 1px solid #ccc; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Embed Page Test</h1>
+    
+    <h2>LLM Tutorial Embed:</h2>
+    <iframe 
+        src="http://localhost:5174/embed/llm-tutorial" 
+        width="800" 
+        height="600" 
+        frameborder="0">
+    </iframe>
+    
+    <h2>Notion Tutorial Embed:</h2>
+    <iframe 
+        src="http://localhost:5174/embed/notion-tutorial" 
+        width="800" 
+        height="600" 
+        frameborder="0">
+    </iframe>
+    
+    <h2>Dark Theme Embed:</h2>
+    <iframe 
+        src="http://localhost:5174/embed/llm-tutorial?theme=dark" 
+        width="800" 
+        height="600" 
+        frameborder="0">
+    </iframe>
+    
+    <script>
+        // Check if iframes load properly
+        document.querySelectorAll('iframe').forEach((iframe, index) => {
+            iframe.onload = () => {
+                console.log(`Iframe ${index + 1} loaded successfully`);
+            };
+            iframe.onerror = () => {
+                console.error(`Iframe ${index + 1} failed to load`);
+            };
+        });
+    </script>
+</body>
+</html>

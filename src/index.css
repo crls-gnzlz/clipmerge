@@ -21,3 +21,62 @@
     @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
   }
 }
+
+@layer utilities {
+  /* Custom slider styles */
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: #0F4C81;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .slider::-moz-range-thumb {
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: #0F4C81;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .slider::-webkit-slider-track {
+    background: transparent;
+  }
+
+  .slider::-moz-range-track {
+    background: transparent;
+  }
+
+  /* YouTube embed cleanup styles */
+  .youtube-embed-clean {
+    /* Hide YouTube branding and user avatars */
+    & iframe {
+      /* Ensure clean embedding */
+      border: none;
+      outline: none;
+    }
+  }
+
+  /* Hide YouTube elements that might still appear */
+  .youtube-embed-clean iframe {
+    /* Remove any remaining YouTube branding */
+    &::before,
+    &::after {
+      display: none !important;
+    }
+  }
+
+  /* Compact player styles */
+  .compact-player {
+    /* Reduce overall spacing and sizing for compact mode */
+    .compact-player .aspect-video {
+      min-height: 200px !important;
+    }
+  }
+}
