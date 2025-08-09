@@ -71,75 +71,9 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   // Handle fullscreen toggle - move iframe between containers
   const toggleFullscreen = () => {
     const newFullscreenState = !isFullscreen
-    
     console.log('Toggle fullscreen:', { newFullscreenState, isPlaying, currentTime })
-    
-    // If exiting fullscreen, pause the video first
-    if (isFullscreen && isPlaying) {
-      console.log('Exiting fullscreen, pausing video')
-      sendPostMessage('pauseVideo')
-      setIsPlaying(false)
-    }
-    
-    // Move iframe to appropriate container
-    let iframe = iframeRef.current && iframeRef.current.firstChild
-    
-    // If not found in normal container, check fullscreen container
-    if (!iframe && fullscreenRef.current) {
-      const fullscreenContainer = fullscreenRef.current.querySelector('.fullscreen-video-container')
-      iframe = fullscreenContainer && fullscreenContainer.firstChild
-    }
-    
-    console.log('Found iframe:', !!iframe)
-    
-    if (iframe) {
-      if (newFullscreenState) {
-        // Move to fullscreen container
-        const fullscreenContainer = fullscreenRef.current?.querySelector('.fullscreen-video-container')
-        console.log('Found fullscreen container:', !!fullscreenContainer)
-        
-        if (fullscreenContainer) {
-          // Clear the container first
-          fullscreenContainer.innerHTML = ''
-          // Move the iframe
-          fullscreenContainer.appendChild(iframe)
-          // Set iframe to fill the container
-          iframe.style.width = '100%'
-          iframe.style.height = '100%'
-          iframe.style.border = 'none'
-          iframe.style.position = 'absolute'
-          iframe.style.top = '0'
-          iframe.style.left = '0'
-          iframe.style.zIndex = '1'
-          console.log('Moved iframe to fullscreen container')
-        }
-      } else {
-        // Move back to normal container
-        const normalContainer = iframeRef.current
-        if (normalContainer) {
-          // Clear the container first
-          normalContainer.innerHTML = ''
-          // Move the iframe back
-          normalContainer.appendChild(iframe)
-          // Reset iframe styles
-          iframe.style.width = '100%'
-          iframe.style.height = '100%'
-          iframe.style.border = 'none'
-          iframe.style.position = 'relative'
-          iframe.style.top = 'auto'
-          iframe.style.left = 'auto'
-          iframe.style.zIndex = 'auto'
-          console.log('Moved iframe back to normal container')
-        }
-      }
-    } else {
-      console.error('No iframe found to move')
-    }
-    
-    // Switch fullscreen state
     setIsFullscreen(newFullscreenState)
   }
-
   // Handle ESC key to exit fullscreen
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -209,18 +143,18 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
   // Helper function to send postMessage to YouTube iframe
   const sendPostMessage = (command, args = []) => {
+    console.log('Sending command to iframe:', command, args)
+    
     // Look for iframe in both containers
-    let iframe = iframeRef.current && iframeRef.current.firstChild
+    let iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
     
     if (!iframe && fullscreenRef.current) {
       const fullscreenContainer = fullscreenRef.current.querySelector('.fullscreen-video-container')
-      iframe = fullscreenContainer && fullscreenContainer.firstChild
+      iframe = fullscreenContainer && fullscreenContainer.querySelector('iframe')
     }
     
     if (iframe && iframe.contentWindow) {
       try {
-        console.log('Sending command to iframe:', command, args)
-        
         const message = {
           event: 'command',
           func: command,
@@ -229,17 +163,24 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         
         // Send immediately without delay for better responsiveness
         iframe.contentWindow.postMessage(JSON.stringify(message), '*')
+        console.log('Command sent successfully to iframe')
       } catch (error) {
         console.error('Error sending postMessage:', error)
       }
     } else {
-      console.error('No iframe available for command:', command)
+      console.error('No iframe available for command:', command, {
+        iframeRef: !!iframeRef.current,
+        fullscreenRef: !!fullscreenRef.current,
+        normalIframe: !!(iframeRef.current && iframeRef.current.querySelector('iframe')),
+        fullscreenContainer: !!(fullscreenRef.current && fullscreenRef.current.querySelector('.fullscreen-video-container')),
+        fullscreenIframe: !!(fullscreenRef.current && fullscreenRef.current.querySelector('.fullscreen-video-container')?.querySelector('iframe'))
+      })
     }
   }
 
   // Set player as ready when iframe is created
   useEffect(() => {
-    const hasIframe = iframeRef.current && iframeRef.current.firstChild
+    const hasIframe = iframeRef.current && iframeRef.current.querySelector('iframe')
     
     if (hasIframe) {
       setPlayerReady(true)
@@ -266,11 +207,11 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         
         // Find the iframe in either container
         let iframe = null
-        if (iframeRef.current && iframeRef.current.firstChild) {
-          iframe = iframeRef.current.firstChild
+        if (iframeRef.current && iframeRef.current.querySelector('iframe')) {
+          iframe = iframeRef.current.querySelector('iframe')
         } else if (fullscreenRef.current) {
           const fullscreenContainer = fullscreenRef.current.querySelector('.fullscreen-video-container')
-          iframe = fullscreenContainer && fullscreenContainer.firstChild
+          iframe = fullscreenContainer && fullscreenContainer.querySelector('iframe')
         }
         
         if (iframe) {
@@ -297,7 +238,69 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         console.error('Error loading video:', error)
       }
     }
-  }, [currentClipIndex, currentClip])
+    }, [currentClipIndex, currentClip])
+
+  // Effect to handle iframe movement when entering fullscreen
+  // Effect to handle iframe movement and video sync when entering/exiting fullscreen
+  useEffect(() => {
+    const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
+    const fullscreenContainer = fullscreenRef.current?.querySelector('.fullscreen-video-container')
+    
+    if (iframe && fullscreenContainer) {
+      if (isFullscreen) {
+        console.log('Fullscreen effect triggered, moving iframe to fullscreen')
+        // Move iframe to fullscreen container
+        fullscreenContainer.appendChild(iframe)
+        // Apply fullscreen styles
+        iframe.style.position = 'absolute'
+        iframe.style.top = '0'
+        iframe.style.left = '0'
+        iframe.style.width = '100%'
+        iframe.style.height = '100%'
+        iframe.style.border = 'none'
+        iframe.style.zIndex = '1'
+        iframe.style.display = 'block'
+        console.log('Iframe moved to fullscreen container successfully')
+        
+        // If video was playing, ensure it continues in fullscreen
+        if (isPlaying) {
+          console.log('Video was playing, ensuring it continues in fullscreen')
+          setTimeout(() => {
+            sendPostMessage('seekTo', [currentTime, true])
+            setTimeout(() => {
+              sendPostMessage('playVideo')
+              console.log('Video resumed in fullscreen mode')
+            }, 200)
+          }, 300)
+        }
+      } else {
+        console.log('Normal mode effect triggered, moving iframe back to normal container')
+        // Move iframe back to normal container
+        iframeRef.current.appendChild(iframe)
+        // Reset styles
+        iframe.style.position = ''
+        iframe.style.top = ''
+        iframe.style.left = ''
+        iframe.style.width = ''
+        iframe.style.height = ''
+        iframe.style.border = ''
+        iframe.style.zIndex = ''
+        console.log('Iframe moved back to normal container successfully')
+        
+        // If video was playing, ensure it continues in normal mode
+        if (isPlaying) {
+          console.log('Video was playing, ensuring it continues in normal mode')
+          setTimeout(() => {
+            sendPostMessage('seekTo', [currentTime, true])
+            setTimeout(() => {
+              sendPostMessage('playVideo')
+              console.log('Video resumed in normal mode')
+            }, 100)
+          }, 200)
+        }
+      }
+    }
+  }, [isFullscreen, isPlaying])
 
   // Effect to handle time updates when playing
   useEffect(() => {
@@ -361,13 +364,17 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   useEffect(() => {
     const handleMessage = (event) => {
       // Check if the message is from our iframe in either container
-      const isFromNormalIframe = iframeRef.current && iframeRef.current.firstChild && event.source === iframeRef.current.firstChild.contentWindow
-      const isFromFullscreenIframe = fullscreenRef.current && fullscreenRef.current.querySelector('.fullscreen-video-container')?.firstChild && event.source === fullscreenRef.current.querySelector('.fullscreen-video-container').firstChild.contentWindow
+      const normalIframe = iframeRef.current && iframeRef.current.firstChild
+      const fullscreenIframe = fullscreenRef.current && fullscreenRef.current.querySelector('.fullscreen-video-container')?.firstChild
+      
+      const isFromNormalIframe = normalIframe && event.source === normalIframe.contentWindow
+      const isFromFullscreenIframe = fullscreenIframe && event.source === fullscreenIframe.contentWindow
       
       if (isFromNormalIframe || isFromFullscreenIframe) {
         try {
           const data = JSON.parse(event.data)
-          console.log('Received message from YouTube:', data, 'from:', isFromFullscreenIframe ? 'fullscreen' : 'normal')
+          const messageSource = isFromFullscreenIframe ? 'fullscreen' : 'normal'
+          console.log('Received message from YouTube:', data, 'from:', messageSource, 'isFullscreen:', isFullscreen)
           
           // Handle different message formats
           if (data.event === 'onStateChange') {
@@ -417,7 +424,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
     return () => {
       window.removeEventListener('message', handleMessage)
     }
-  }, [])
+  }, [isFullscreen])
 
   // Additional effect to handle iframe load and set up event listeners
   useEffect(() => {
@@ -460,9 +467,13 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       setIsPlaying(false)
       console.log('Pausing video')
     } else {
-      sendPostMessage('playVideo')
-      setIsPlaying(true)
-      console.log('Playing video')
+      // Seek to current time before playing to maintain sync
+      sendPostMessage('seekTo', [currentTime, true])
+      setTimeout(() => {
+        sendPostMessage('playVideo')
+        setIsPlaying(true)
+        console.log('Playing video from time:', currentTime)
+      }, 100)
     }
   }
 
@@ -1009,9 +1020,9 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                   </div>
                 )}
 
-                {/* Large video player */}
-                <div className="relative bg-black rounded-lg overflow-hidden shadow-2xl flex-1 min-h-0 fullscreen-video-container youtube-embed-clean" style={{ minHeight: '400px' }}>
-                  {/* The iframe will be moved here when in fullscreen mode */}
+                                {/* Large video player */}
+                <div className="relative bg-black rounded-lg overflow-hidden shadow-2xl flex-1 min-h-0 fullscreen-video-container youtube-embed-clean" style={{ minHeight: '400px', height: '60vh', position: 'relative' }}>
+                  {/* The iframe will be moved here when entering fullscreen */}
                   
                   {/* Custom Play Button Overlay */}
                   {(!currentClip || !isPlaying) && (
@@ -1040,7 +1051,6 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                     />
                   )}
                 </div>
-
                 {/* Fullscreen Controls */}
                 <div className="mt-4 lg:mt-6 space-y-3 lg:space-y-4 flex-shrink-0">
                   {/* Timeline */}
@@ -1217,3 +1227,4 @@ ClipchainPlayer.propTypes = {
 }
 
 export default ClipchainPlayer
+

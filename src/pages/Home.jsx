@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import ClipchainPlayer from '../components/ClipChainPlayer.jsx'
 import GettingStartedSection from '../components/GettingStartedSection.jsx'
+import RecentChainsSection from '../components/RecentChainsSection.jsx'
 import { llmClips, notionTutorialClips, chainMetadata } from '../data/exampleClips.js'
 
 const Home = () => {
@@ -56,9 +57,12 @@ const Home = () => {
             </div>
           </div>
           
-          {/* Right Column - Getting Started Section */}
+          {/* Right Column - Getting Started Section + Recent Chains */}
           <div className="order-1 lg:order-2">
-            <GettingStartedSection />
+            <div className="space-y-6">
+              <GettingStartedSection />
+              <RecentChainsSection />
+            </div>
           </div>
         </div>
       </div>
