@@ -104,6 +104,10 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           sendPostMessage('pauseVideo')
         }
         document.exitFullscreen()
+      } else if (e.key === ' ' && currentClip) {
+        // Spacebar toggles play/pause (both in normal and fullscreen mode)
+        e.preventDefault() // Prevent page scroll
+        togglePlay()
       }
     }
     
@@ -262,14 +266,23 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       
       // Set initial video (first clip) - disable captions initially, disable other controls
       const initialVideoId = clips[0].videoId
-              const iframeSrc = `https://www.youtube.com/embed/${initialVideoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${clips[0].startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${initialVideoId}`
-      console.log('🔤 createPlayer: Setting iframe src with cc_load_policy=0:', iframeSrc)
+      // Enhanced parameters to remove "More videos" and other unwanted elements
+      const iframeSrc = `https://www.youtube.com/embed/${initialVideoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${clips[0].startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${initialVideoId}&host=https://www.youtube-nocookie.com&wmode=transparent&vq=hd1080&autohide=1&egm=0&hd=1&t=0&version=3&enablejsapi=1&playerapiid=ytplayer`
+      console.log('🔤 createPlayer: Setting iframe src with enhanced parameters:', iframeSrc)
       console.log('🔤 createPlayer: Captions initially disabled (cc_load_policy=0)')
       console.log('🔤 createPlayer: YouTube embed URL parameters:', {
         videoId: initialVideoId,
         cc_load_policy: '0 (disabled)',
         enablejsapi: '1 (enabled)',
-        origin: window.location.origin
+        origin: window.location.origin,
+        rel: '0 (no related videos)',
+        modestbranding: '1 (minimal branding)',
+        controls: '0 (no native controls)',
+        showinfo: '0 (no video info)',
+        iv_load_policy: '3 (no annotations)',
+        autohide: '1 (hide controls when not needed)',
+        egm: '0 (no end game)',
+        host: 'youtube-nocookie.com (privacy enhanced)'
       })
       iframe.src = iframeSrc
       
@@ -363,17 +376,25 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
         
         if (iframe) {
-          // Update the iframe with the new video - disable captions initially, disable other controls
-          const newSrc = `https://www.youtube.com/embed/${currentClip.videoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${currentClip.startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${currentClip.videoId}`
+          // Update the iframe with the new video - enhanced parameters to remove "More videos" and other unwanted elements
+          const newSrc = `https://www.youtube.com/embed/${currentClip.videoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${currentClip.startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${currentClip.videoId}&host=https://www.youtube-nocookie.com&wmode=transparent&vq=hd1080&autohide=1&egm=0&hd=1&t=0&version=3&enablejsapi=1&playerapiid=ytplayer`
           iframe.src = newSrc
           console.log('Updated iframe src to:', newSrc)
-          console.log('🔤 Clip change: Updated iframe with cc_load_policy=0 (captions disabled)')
+          console.log('🔤 Clip change: Updated iframe with enhanced parameters (captions disabled)')
           console.log('🔤 Clip change: New video parameters:', {
             videoId: currentClip.videoId,
             startTime: currentClip.startTime,
             endTime: currentClip.endTime,
             cc_load_policy: '0 (disabled)',
-            isCaptionsEnabled
+            isCaptionsEnabled,
+            rel: '0 (no related videos)',
+            modestbranding: '1 (minimal branding)',
+            controls: '0 (no native controls)',
+            showinfo: '0 (no video info)',
+            iv_load_policy: '3 (no annotations)',
+            autohide: '1 (hide controls when not needed)',
+            egm: '0 (no end game)',
+            host: 'youtube-nocookie.com (privacy enhanced)'
           })
           
           // Additional resize if in fullscreen mode to prevent pixelation
@@ -439,6 +460,12 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       }, 1000)
 
       return () => clearInterval(interval)
+    } else {
+      // Clear any existing timer when not playing
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
     }
   }, [isPlaying, currentClip])
 
@@ -482,6 +509,64 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
     }
   }, [isPlaying, currentClip?.endTime, currentClipIndex, clips, updateVisibleClipRange, isManualNavigation])
 
+  // Effect to periodically clean YouTube elements (especially when paused)
+  useEffect(() => {
+    if (!playerReady || !currentClip) return
+
+    // Set up periodic cleanup to remove YouTube elements that appear dynamically
+    const cleanupInterval = setInterval(() => {
+      if (!isPlaying && playerRef.current?.iframe) {
+        console.log('🔧 Periodic YouTube cleanup - video is paused, applying cleanup commands...')
+        
+        try {
+          const iframe = playerRef.current.iframe
+          
+          // Command 1: Ensure annotations are hidden
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setOption',
+            args: ['annotations', 'show', false]
+          }), '*')
+          
+          // Command 2: Set player size to maintain clean appearance
+          const { offsetWidth, offsetHeight } = playerContainerRef.current
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setSize',
+            args: [offsetWidth, offsetHeight]
+          }), '*')
+          
+          // Command 3: Additional cleanup for related content
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setOption',
+            args: ['captions', 'track', null]
+          }), '*')
+          
+          // NEW: Inject CSS to hide YouTube elements directly
+          injectYouTubeCleanupCSS(iframe)
+          
+          console.log('🔧 Periodic cleanup completed')
+        } catch (error) {
+          console.log('🔧 Periodic cleanup error:', error)
+        }
+      }
+    }, 2000) // Run every 2 seconds when video is paused
+
+    return () => {
+      clearInterval(cleanupInterval)
+    }
+  }, [playerReady, currentClip, isPlaying])
+
+  // Effect to ensure timer is stopped when video is paused
+  useEffect(() => {
+    if (!isPlaying && timerRef.current) {
+      console.log('🔧 Video paused - stopping timer to sync timeline')
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+  }, [isPlaying])
+
   // Listen for YouTube player state changes
   useEffect(() => {
     const handleMessage = (event) => {
@@ -502,6 +587,48 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
             if (data.info === 2) { // Paused
               console.log('YouTube player paused')
               setIsPlaying(false)
+              
+              // Stop the time tracking when YouTube detects pause to sync timeline
+              if (timerRef.current) {
+                clearInterval(timerRef.current)
+                timerRef.current = null
+              }
+              
+              // Apply cleanup when YouTube detects pause to remove "More videos" and other elements
+              setTimeout(() => {
+                console.log('🔧 YouTube state change pause detected - applying cleanup...')
+                if (playerRef.current?.iframe) {
+                  try {
+                    const iframe = playerRef.current.iframe
+                    
+                    // Command 1: Hide annotations
+                    iframe.contentWindow.postMessage(JSON.stringify({
+                      event: 'command',
+                      func: 'setOption',
+                      args: ['annotations', 'show', false]
+                    }), '*')
+                    
+                    // Command 2: Set player size
+                    const { offsetWidth, offsetHeight } = playerContainerRef.current
+                    iframe.contentWindow.postMessage(JSON.stringify({
+                      event: 'command',
+                      func: 'setSize',
+                      args: [offsetWidth, offsetHeight]
+                    }), '*')
+                    
+                    // Command 3: Additional cleanup
+                    iframe.contentWindow.postMessage(JSON.stringify({
+                      event: 'command',
+                      func: 'setOption',
+                      args: ['captions', 'track', null]
+                    }), '*')
+                    
+                    console.log('🔧 YouTube state change cleanup completed')
+                  } catch (error) {
+                    console.log('🔧 YouTube state change cleanup error:', error)
+                  }
+                }
+              }, 300) // Wait 300ms for YouTube to process the state change
             } else if (data.info === 1) { // Playing
               console.log('YouTube player playing')
               setIsPlaying(true)
@@ -591,6 +718,35 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           iframe.contentWindow.postMessage(JSON.stringify(message), '*')
           console.log('🔤 Added onStateChange listener to iframe')
         }, 1000)
+        
+        // Additional commands to remove unwanted YouTube elements
+        setTimeout(() => {
+          console.log('🔧 Applying additional YouTube cleanup commands...')
+          
+          // Command 1: Set player options to minimize UI elements
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setOption',
+            args: ['captions', 'track', null]
+          }), '*')
+          
+          // Command 2: Set additional options to hide elements
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setOption',
+            args: ['annotations', 'show', false]
+          }), '*')
+          
+          // Command 3: Set player size to ensure proper rendering
+          const { offsetWidth, offsetHeight } = playerContainerRef.current
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setSize',
+            args: [offsetWidth, offsetHeight]
+          }), '*')
+          
+          console.log('🔧 YouTube cleanup commands applied')
+        }, 1500)
       }
 
       iframe.addEventListener('load', handleIframeLoad)
@@ -614,6 +770,48 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       sendPostMessage('pauseVideo')
       setIsPlaying(false)
       console.log('Pausing video')
+      
+      // Stop the time tracking when pausing to sync timeline
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+      
+      // Apply immediate cleanup when pausing to remove "More videos" and other elements
+      setTimeout(() => {
+        console.log('🔧 Immediate cleanup after pausing video...')
+        if (playerRef.current?.iframe) {
+          try {
+            const iframe = playerRef.current.iframe
+            
+            // Command 1: Hide annotations immediately
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setOption',
+              args: ['annotations', 'show', false]
+            }), '*')
+            
+            // Command 2: Set player size to maintain clean appearance
+            const { offsetWidth, offsetHeight } = playerContainerRef.current
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setSize',
+              args: [offsetWidth, offsetHeight]
+            }), '*')
+            
+            // Command 3: Additional cleanup for related content
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setOption',
+              args: ['captions', 'track', null]
+            }), '*')
+            
+            console.log('🔧 Immediate cleanup completed after pause')
+          } catch (error) {
+            console.log('🔧 Immediate cleanup error:', error)
+          }
+        }
+      }, 500) // Wait 500ms for YouTube to process the pause
     } else {
       // Seek to current time before playing to maintain sync
       sendPostMessage('seekTo', [currentTime, true])
@@ -926,9 +1124,9 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                 )}
               </div>
               
-              {/* Select clip message - Reduced size and positioned closer to clips */}
+              {/* Select clip message - Aligned to the left below clips */}
               {!currentClip && (
-                <div className="text-center py-2 text-gray-500">
+                <div className="text-left py-2 text-gray-500">
                   <p className="text-sm">Select a clip to start playing</p>
                 </div>
               )}
@@ -953,7 +1151,14 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
             {/* Player Container - This will be the target for fullscreen */}
             <div ref={playerContainerRef} className="relative">
-              <div className={`relative bg-black rounded-lg overflow-hidden ${isFullscreen ? 'h-full' : 'mb-3'} youtube-embed-clean`}>
+              <div 
+                className={`relative bg-black rounded-lg overflow-hidden ${isFullscreen ? 'h-full' : 'mb-3'} youtube-embed-clean`} 
+                style={{
+                  // Custom CSS to hide YouTube elements including "More videos"
+                  '--youtube-clean': 'true'
+                }}
+                data-state={isPlaying ? 'playing' : 'paused'}
+              >
                 <div
                   ref={iframeRef}
                   className={`w-full ${isFullscreen ? 'h-full' : 'aspect-video'}`}
@@ -992,6 +1197,48 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                       setIsPlaying(false)
                       sendPostMessage('pauseVideo')
                       
+                      // Stop the time tracking when pausing to sync timeline
+                      if (timerRef.current) {
+                        clearInterval(timerRef.current)
+                        timerRef.current = null
+                      }
+                      
+                      // Apply immediate cleanup when pausing via overlay click
+                      setTimeout(() => {
+                        console.log('🔧 Immediate cleanup after overlay pause...')
+                        if (playerRef.current?.iframe) {
+                          try {
+                            const iframe = playerRef.current.iframe
+                            
+                            // Command 1: Hide annotations immediately
+                            iframe.contentWindow.postMessage(JSON.stringify({
+                              event: 'command',
+                              func: 'setOption',
+                              args: ['annotations', 'show', false]
+                            }), '*')
+                            
+                            // Command 2: Set player size to maintain clean appearance
+                            const { offsetWidth, offsetHeight } = playerContainerRef.current
+                            iframe.contentWindow.postMessage(JSON.stringify({
+                              event: 'command',
+                              func: 'setSize',
+                              args: [offsetWidth, offsetHeight]
+                            }), '*')
+                            
+                            // Command 3: Additional cleanup for related content
+                            iframe.contentWindow.postMessage(JSON.stringify({
+                              event: 'command',
+                              func: 'setOption',
+                              args: ['captions', 'track', null]
+                            }), '*')
+                            
+                            console.log('🔧 Overlay pause cleanup completed')
+                          } catch (error) {
+                            console.log('🔧 Overlay pause cleanup error:', error)
+                          }
+                        }
+                      }, 500) // Wait 500ms for YouTube to process the pause
+                      
                       // Additional resize in fullscreen mode to improve quality
                       if (isFullscreen) {
                         const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
@@ -1005,13 +1252,66 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                         }
                       }
                     }}
-                    title="Click to pause"
                   />
                 )}
 
                 {/* Fullscreen Overlay */}
                 {isFullscreen && (
                   <div className="absolute inset-0 pointer-events-none z-20">
+                    {/* Transparent overlay to detect clicks when video is playing in fullscreen */}
+                    {isPlaying && currentClip && (
+                      <div 
+                        className="absolute inset-0 cursor-pointer pointer-events-auto"
+                        onClick={() => {
+                          console.log('User clicked on fullscreen video overlay - pausing video')
+                          setIsPlaying(false)
+                          sendPostMessage('pauseVideo')
+                          
+                          // Stop the time tracking when pausing to sync timeline
+                          if (timerRef.current) {
+                            clearInterval(timerRef.current)
+                            timerRef.current = null
+                          }
+                          
+                          // Apply immediate cleanup when pausing via fullscreen overlay click
+                          setTimeout(() => {
+                            console.log('🔧 Immediate cleanup after fullscreen overlay pause...')
+                            if (playerRef.current?.iframe) {
+                              try {
+                                const iframe = playerRef.current.iframe
+                                
+                                // Command 1: Hide annotations immediately
+                                iframe.contentWindow.postMessage(JSON.stringify({
+                                  event: 'command',
+                                  func: 'setOption',
+                                  args: ['annotations', 'show', false]
+                                }), '*')
+                                
+                                // Command 2: Set player size to maintain clean appearance
+                                const { offsetWidth, offsetHeight } = playerContainerRef.current
+                                iframe.contentWindow.postMessage(JSON.stringify({
+                                  event: 'command',
+                                  func: 'setSize',
+                                  args: [offsetWidth, offsetHeight]
+                                }), '*')
+                                
+                                // Command 3: Additional cleanup for related content
+                                iframe.contentWindow.postMessage(JSON.stringify({
+                                  event: 'command',
+                                  func: 'setOption',
+                                  args: ['captions', 'track', null]
+                                }), '*')
+                                
+                                console.log('🔧 Fullscreen overlay pause cleanup completed')
+                              } catch (error) {
+                                console.log('🔧 Fullscreen overlay pause cleanup error:', error)
+                              }
+                            }
+                          }, 500) // Wait 500ms for YouTube to process the pause
+                        }}
+                      />
+                    )}
+
                     {/* Top Bar - Title and Exit */}
                     <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-4 pointer-events-auto">
                       <div className="flex items-center justify-between">
@@ -1043,7 +1343,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                     {/* Bottom Control Panel - Fixed height, no overlap with video */}
                     <div 
                       className={`absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm pointer-events-auto transition-all duration-300 ease-in-out ${
-                        showFullscreenControls ? 'translate-y-0' : 'translate-y-full'
+                        showFullscreenControls || !isPlaying ? 'translate-y-0' : 'translate-y-full'
                       }`}
                       onMouseEnter={() => {
                         // Clear timeout when entering controls area
@@ -1053,8 +1353,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                         }
                       }}
                       onMouseLeave={() => {
-                        // Start timeout only when leaving controls area
-                        if (showFullscreenControls) {
+                        // Start timeout only when leaving controls area AND video is playing
+                        if (showFullscreenControls && isPlaying) {
                           const newTimeout = setTimeout(() => {
                             setShowFullscreenControls(false)
                           }, 500)
@@ -1239,8 +1539,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                       </div>
                     </div>
 
-                    {/* Subtle indicator that controls are available */}
-                    {!showFullscreenControls && (
+                    {/* Subtle indicator that controls are available - only show when video is playing */}
+                    {!showFullscreenControls && isPlaying && (
                       <div 
                         className="absolute bottom-20 left-1/2 transform -translate-x-1/2 pointer-events-auto"
                         onMouseEnter={() => {

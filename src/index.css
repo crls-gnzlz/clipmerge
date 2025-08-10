@@ -81,6 +81,137 @@
     }
   }
 
+  /* Advanced YouTube element hiding - targets specific YouTube components */
+  .youtube-embed-clean {
+    /* Hide "More videos" section and related content */
+    & iframe[src*="youtube.com"],
+    & iframe[src*="youtube-nocookie.com"] {
+      /* Target YouTube iframe specifically */
+    }
+  }
+
+  /* CSS to hide YouTube elements that appear when video is paused */
+  .youtube-embed-clean iframe {
+    /* Hide related videos overlay */
+    &[src*="youtube"] {
+      /* Apply custom styles to YouTube iframes */
+    }
+  }
+
+  /* Additional YouTube cleanup for fullscreen mode */
+  .youtube-embed-clean[style*="--youtube-clean: true"] {
+    /* Enhanced cleanup when custom attribute is set */
+    & iframe {
+      /* Force clean appearance */
+      filter: contrast(1.1) brightness(1.05);
+    }
+  }
+
+  /* Advanced YouTube element hiding with CSS injection */
+  .youtube-embed-clean {
+    /* Target YouTube iframe and inject custom styles */
+    & iframe[src*="youtube"] {
+      /* Apply custom styles to hide unwanted elements */
+      position: relative;
+    }
+  }
+
+  /* CSS to hide specific YouTube elements that appear when paused */
+  .youtube-embed-clean iframe[src*="youtube"] {
+    /* Hide related videos section */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: transparent;
+      pointer-events: none;
+      z-index: 1000;
+    }
+  }
+
+  /* Additional YouTube cleanup styles */
+  .youtube-embed-clean {
+    /* Ensure clean appearance in all states */
+    & iframe {
+      /* Remove any YouTube branding or overlays */
+      &[src*="youtube"] {
+        /* Target YouTube specifically */
+        filter: contrast(1.05) brightness(1.02);
+      }
+    }
+  }
+
+  /* Hide YouTube elements that appear on pause */
+  .youtube-embed-clean[data-state="paused"] iframe {
+    /* Additional cleanup when video is paused */
+    &[src*="youtube"] {
+      /* Force clean appearance when paused */
+      filter: contrast(1.1) brightness(1.05) saturate(1.02);
+    }
+  }
+
+  /* Aggressive YouTube element hiding - targets specific YouTube components */
+  .youtube-embed-clean {
+    /* Hide all YouTube overlays and related content */
+    & iframe[src*="youtube"] {
+      /* Force clean appearance */
+      filter: contrast(1.05) brightness(1.02);
+      
+      /* Hide any YouTube branding or overlays */
+      &::before,
+      &::after {
+        display: none !important;
+        content: none !important;
+      }
+    }
+  }
+
+  /* CSS injection to hide YouTube elements that appear dynamically */
+  .youtube-embed-clean iframe[src*="youtube"] {
+    /* Target YouTube iframe specifically */
+    position: relative;
+    
+    /* Hide related videos section and "More videos" */
+    &[src*="youtube"] {
+      /* Apply aggressive hiding */
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;
+        pointer-events: none;
+        z-index: 9999;
+      }
+    }
+  }
+
+  /* Additional YouTube cleanup with higher specificity */
+  .youtube-embed-clean.youtube-embed-clean iframe[src*="youtube"] {
+    /* Double class specificity to override YouTube styles */
+    &::before,
+    &::after {
+      display: none !important;
+      content: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+  }
+
+  /* Hide YouTube elements in all states */
+  .youtube-embed-clean iframe[src*="youtube"] {
+    /* Global YouTube cleanup */
+    &[src*="youtube"] {
+      /* Remove any remaining YouTube elements */
+      filter: contrast(1.05) brightness(1.02) saturate(1.01);
+    }
+  }
+
   /* Compact player styles */
   .compact-player {
     /* Reduce overall spacing and sizing for compact mode */
