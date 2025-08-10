@@ -18,12 +18,17 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   const [volume, setVolume] = useState(100) // Volume state (0-100)
   const [isMuted, setIsMuted] = useState(false) // Mute state
   const [showVolumeSlider, setShowVolumeSlider] = useState(false) // Volume slider visibility
+  const [isCaptionsEnabled, setIsCaptionsEnabled] = useState(false) // Captions state - starts disabled
+  const [hasUserInteractedWithCaptions, setHasUserInteractedWithCaptions] = useState(false) // Track if user has clicked CC button
+  const [showFullscreenControls, setShowFullscreenControls] = useState(false) // Control panel visibility in fullscreen
+  const [controlsTimeout, setControlsTimeout] = useState(null) // Timeout for auto-hiding controls
   
+  console.log('🔤 Component initialized with isCaptionsEnabled:', false)
   const iframeRef = useRef(null)
-  const fullscreenRef = useRef(null)
-  const overlayRef = useRef(null)
-  const fullscreenOverlayRef = useRef(null)
+  const playerContainerRef = useRef(null) // New ref for the player container
+  const overlayRef = useRef(null) // Ref for timeline overlay
   const timerRef = useRef(null)
+  const volumeSliderRef = useRef(null)
   const playerRef = useRef(null)
   
   const clipsPerPage = 6 // Show 6 clips per page
@@ -31,6 +36,19 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   const currentClips = clips.slice(currentPage * clipsPerPage, (currentPage + 1) * clipsPerPage)
   
   const currentClip = currentClipIndex >= 0 && currentClipIndex < clips.length ? clips[currentClipIndex] : null
+
+  // Effect to monitor captions state changes
+  useEffect(() => {
+    console.log('🔤 Captions state changed:', { 
+      isCaptionsEnabled, 
+      currentClip: currentClip?.title,
+      currentTime,
+      playerReady,
+      currentClipIndex,
+      hasClips: !!clips.length,
+      hasUserInteractedWithCaptions
+    })
+  }, [isCaptionsEnabled, currentClip, currentTime, playerReady, currentClipIndex, clips.length, hasUserInteractedWithCaptions])
 
   // Function to update visible clip range
   const updateVisibleClipRange = useCallback((clipIndex) => {
@@ -70,9 +88,11 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
   // Handle fullscreen toggle - move iframe between containers
   const toggleFullscreen = () => {
-    const newFullscreenState = !isFullscreen
-    console.log('Toggle fullscreen:', { newFullscreenState, isPlaying, currentTime })
-    setIsFullscreen(newFullscreenState)
+    if (!document.fullscreenElement) {
+      playerContainerRef.current.requestFullscreen()
+    } else {
+      document.exitFullscreen()
+    }
   }
   // Handle ESC key to exit fullscreen
   useEffect(() => {
@@ -80,27 +100,142 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       if (e.key === 'Escape' && isFullscreen) {
         // Pause video before exiting fullscreen
         if (isPlaying) {
-          console.log('ESC pressed, pausing video before exiting fullscreen')
-          sendPostMessage('pauseVideo')
           setIsPlaying(false)
+          sendPostMessage('pauseVideo')
         }
-        setIsFullscreen(false)
+        document.exitFullscreen()
+      }
+    }
+    
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isFullscreen, isPlaying])
+
+  // Handle mouse movement for fullscreen controls dock
+  useEffect(() => {
+    if (!isFullscreen) return
+
+    const handleMouseLeave = () => {
+      // Hide controls when mouse leaves the window
+      setShowFullscreenControls(false)
+      if (controlsTimeout) {
+        clearTimeout(controlsTimeout)
       }
     }
 
-    if (isFullscreen) {
-      document.addEventListener('keydown', handleKeyDown)
-      // Prevent body scroll when in fullscreen
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-
+    document.addEventListener('mouseleave', handleMouseLeave)
+    
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = 'unset'
+      document.removeEventListener('mouseleave', handleMouseLeave)
+      if (controlsTimeout) {
+        clearTimeout(controlsTimeout)
+      }
     }
-  }, [isFullscreen, isPlaying])
+  }, [isFullscreen, controlsTimeout])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (controlsTimeout) {
+        clearTimeout(controlsTimeout)
+      }
+    }
+  }, [controlsTimeout])
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const fs = !!document.fullscreenElement
+      console.log('Fullscreen change detected:', { fs, isPlaying, currentTime })
+      setIsFullscreen(fs)
+
+      if (fs && playerRef.current) {
+        // Forzar resize usando la API de YouTube
+        const { offsetWidth, offsetHeight } = playerContainerRef.current
+        
+        // Enviar comando de resize a YouTube
+        if (playerRef.current.iframe && playerRef.current.iframe.contentWindow) {
+          try {
+            // Comando 1: setSize para forzar el redimensionamiento
+            playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setSize',
+              args: [offsetWidth, offsetHeight]
+            }), '*')
+            console.log('✅ YouTube setSize command sent:', { width: offsetWidth, height: offsetHeight })
+            
+            // Comando 2: setPlaybackQuality para forzar alta calidad
+            setTimeout(() => {
+              playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setPlaybackQuality',
+                args: ['hd1080']
+              }), '*')
+              console.log('✅ YouTube setPlaybackQuality command sent: hd1080')
+            }, 100)
+            
+            // Comando 3: Resize adicional para asegurar
+            setTimeout(() => {
+              playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setSize',
+                args: [offsetWidth, offsetHeight]
+              }), '*')
+              console.log('✅ YouTube setSize command sent again for quality assurance')
+            }, 300)
+            
+          } catch (e) {
+            console.log('❌ Could not send YouTube commands:', e)
+          }
+        }
+        
+        // También forzar resize del iframe por CSS
+        const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
+        if (iframe) {
+          iframe.style.width = '100%'
+          iframe.style.height = '100%'
+          iframe.style.minHeight = '100vh'
+          iframe.style.objectFit = 'cover'
+          iframe.offsetHeight // Force reflow
+          console.log('✅ Iframe CSS resize applied for fullscreen')
+        }
+      } else if (!fs && playerRef.current) {
+        // Restaurar tamaño normal cuando se sale del fullscreen
+        const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
+        if (iframe) {
+          // Restaurar estilos normales
+          iframe.style.width = '100%'
+          iframe.style.height = '100%'
+          iframe.style.minHeight = compact ? '200px' : '300px'
+          iframe.style.objectFit = 'contain'
+          iframe.offsetHeight // Force reflow
+          console.log('✅ Iframe CSS restored to normal size')
+          
+          // Enviar comando de resize a YouTube para el tamaño normal
+          if (playerRef.current.iframe && playerRef.current.iframe.contentWindow) {
+            try {
+              const { offsetWidth, offsetHeight } = playerContainerRef.current
+              playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setSize',
+                args: [offsetWidth, offsetHeight]
+              }), '*')
+              console.log('✅ YouTube setSize command sent for normal mode:', { width: offsetWidth, height: offsetHeight })
+            } catch (e) {
+              console.log('❌ Could not send YouTube resize command for normal mode:', e)
+            }
+          }
+        }
+      }
+    }
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [isPlaying, currentTime, compact])
 
   // Create player on mount only
   useEffect(() => {
@@ -125,9 +260,18 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
       iframe.allowFullscreen = true
       
-      // Set initial video (first clip) - disable controls, branding, and user info
+      // Set initial video (first clip) - disable captions initially, disable other controls
       const initialVideoId = clips[0].videoId
-      iframe.src = `https://www.youtube.com/embed/${initialVideoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${clips[0].startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${initialVideoId}`
+              const iframeSrc = `https://www.youtube.com/embed/${initialVideoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${clips[0].startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${initialVideoId}`
+      console.log('🔤 createPlayer: Setting iframe src with cc_load_policy=0:', iframeSrc)
+      console.log('🔤 createPlayer: Captions initially disabled (cc_load_policy=0)')
+      console.log('🔤 createPlayer: YouTube embed URL parameters:', {
+        videoId: initialVideoId,
+        cc_load_policy: '0 (disabled)',
+        enablejsapi: '1 (enabled)',
+        origin: window.location.origin
+      })
+      iframe.src = iframeSrc
       
       iframeRef.current.appendChild(iframe)
       
@@ -143,15 +287,10 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
   // Helper function to send postMessage to YouTube iframe
   const sendPostMessage = (command, args = []) => {
-    console.log('Sending command to iframe:', command, args)
+    console.log('📤 sendPostMessage:', { command, args, isCaptionsEnabled })
     
-    // Look for iframe in both containers
-    let iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
-    
-    if (!iframe && fullscreenRef.current) {
-      const fullscreenContainer = fullscreenRef.current.querySelector('.fullscreen-video-container')
-      iframe = fullscreenContainer && fullscreenContainer.querySelector('iframe')
-    }
+    // Look for iframe in the player container
+    const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
     
     if (iframe && iframe.contentWindow) {
       try {
@@ -161,19 +300,34 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           args: args
         }
         
+        console.log('📤 Sending message to iframe:', message)
+        console.log('📤 Iframe details:', {
+          src: iframe.src,
+          contentWindow: !!iframe.contentWindow,
+          readyState: iframe.contentDocument?.readyState,
+          isFullscreen: isFullscreen
+        })
+        
         // Send immediately without delay for better responsiveness
         iframe.contentWindow.postMessage(JSON.stringify(message), '*')
-        console.log('Command sent successfully to iframe')
+        console.log('✅ Command sent successfully to iframe')
+        
+        // Log the exact message sent for debugging
+        if (command === 'setOption' && args[0] === 'captions') {
+          console.log('🔤 Captions command sent:', {
+            command,
+            args,
+            message: JSON.stringify(message),
+            iframeSrc: iframe.src
+          })
+        }
       } catch (error) {
-        console.error('Error sending postMessage:', error)
+        console.error('❌ Error sending postMessage:', error)
       }
     } else {
-      console.error('No iframe available for command:', command, {
+      console.error('❌ No iframe available for command:', command, {
         iframeRef: !!iframeRef.current,
-        fullscreenRef: !!fullscreenRef.current,
-        normalIframe: !!(iframeRef.current && iframeRef.current.querySelector('iframe')),
-        fullscreenContainer: !!(fullscreenRef.current && fullscreenRef.current.querySelector('.fullscreen-video-container')),
-        fullscreenIframe: !!(fullscreenRef.current && fullscreenRef.current.querySelector('.fullscreen-video-container')?.querySelector('iframe'))
+        normalIframe: !!(iframeRef.current && iframeRef.current.querySelector('iframe'))
       })
     }
   }
@@ -205,20 +359,34 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       try {
         console.log('Loading video:', currentClip.videoId, 'for clip:', currentClip.title)
         
-        // Find the iframe in either container
-        let iframe = null
-        if (iframeRef.current && iframeRef.current.querySelector('iframe')) {
-          iframe = iframeRef.current.querySelector('iframe')
-        } else if (fullscreenRef.current) {
-          const fullscreenContainer = fullscreenRef.current.querySelector('.fullscreen-video-container')
-          iframe = fullscreenContainer && fullscreenContainer.querySelector('iframe')
-        }
+        // Find the iframe in the player container
+        const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
         
         if (iframe) {
-          // Update the iframe with the new video - disable controls, branding, and user info
+          // Update the iframe with the new video - disable captions initially, disable other controls
           const newSrc = `https://www.youtube.com/embed/${currentClip.videoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${currentClip.startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${currentClip.videoId}`
           iframe.src = newSrc
           console.log('Updated iframe src to:', newSrc)
+          console.log('🔤 Clip change: Updated iframe with cc_load_policy=0 (captions disabled)')
+          console.log('🔤 Clip change: New video parameters:', {
+            videoId: currentClip.videoId,
+            startTime: currentClip.startTime,
+            endTime: currentClip.endTime,
+            cc_load_policy: '0 (disabled)',
+            isCaptionsEnabled
+          })
+          
+          // Additional resize if in fullscreen mode to prevent pixelation
+          if (isFullscreen) {
+            setTimeout(() => {
+              console.log('Additional resize after clip change in fullscreen mode')
+              iframe.style.width = '100%'
+              iframe.style.height = '100%'
+              iframe.style.minHeight = '100vh'
+              iframe.style.objectFit = 'cover'
+              iframe.offsetHeight
+            }, 100)
+          }
         }
         
         // Start playing the video after a short delay
@@ -226,6 +394,22 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           if (currentClip) {
             // First seek to the start time
             sendPostMessage('seekTo', [currentClip.startTime, true])
+            
+            // Apply captions state if enabled
+            if (isCaptionsEnabled && hasUserInteractedWithCaptions) {
+              console.log('🔤 Clip changed, captions were enabled AND user has interacted, re-applying...')
+              console.log('🔤 Re-applying captions after clip change - current state:', { isCaptionsEnabled, currentClip: currentClip?.title, hasUserInteractedWithCaptions })
+              setTimeout(() => {
+                console.log('🔤 Re-applying captions after clip change delay')
+                console.log('🔤 Sending setOption captions track {} command')
+                sendPostMessage('setOption', ['captions', 'track', {}])
+                console.log('🔤 Captions re-enabled after clip change')
+              }, 1000)
+            } else if (isCaptionsEnabled && !hasUserInteractedWithCaptions) {
+              console.log('🔤 Clip changed, captions were enabled BUT user has NOT interacted, NOT re-applying automatically')
+            } else {
+              console.log('🔤 Clip changed, captions were disabled, no need to re-apply')
+            }
             
             // Then start playing
             setTimeout(() => {
@@ -238,69 +422,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         console.error('Error loading video:', error)
       }
     }
-    }, [currentClipIndex, currentClip])
-
-  // Effect to handle iframe movement when entering fullscreen
-  // Effect to handle iframe movement and video sync when entering/exiting fullscreen
-  useEffect(() => {
-    const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
-    const fullscreenContainer = fullscreenRef.current?.querySelector('.fullscreen-video-container')
-    
-    if (iframe && fullscreenContainer) {
-      if (isFullscreen) {
-        console.log('Fullscreen effect triggered, moving iframe to fullscreen')
-        // Move iframe to fullscreen container
-        fullscreenContainer.appendChild(iframe)
-        // Apply fullscreen styles
-        iframe.style.position = 'absolute'
-        iframe.style.top = '0'
-        iframe.style.left = '0'
-        iframe.style.width = '100%'
-        iframe.style.height = '100%'
-        iframe.style.border = 'none'
-        iframe.style.zIndex = '1'
-        iframe.style.display = 'block'
-        console.log('Iframe moved to fullscreen container successfully')
-        
-        // If video was playing, ensure it continues in fullscreen
-        if (isPlaying) {
-          console.log('Video was playing, ensuring it continues in fullscreen')
-          setTimeout(() => {
-            sendPostMessage('seekTo', [currentTime, true])
-            setTimeout(() => {
-              sendPostMessage('playVideo')
-              console.log('Video resumed in fullscreen mode')
-            }, 200)
-          }, 300)
-        }
-      } else {
-        console.log('Normal mode effect triggered, moving iframe back to normal container')
-        // Move iframe back to normal container
-        iframeRef.current.appendChild(iframe)
-        // Reset styles
-        iframe.style.position = ''
-        iframe.style.top = ''
-        iframe.style.left = ''
-        iframe.style.width = ''
-        iframe.style.height = ''
-        iframe.style.border = ''
-        iframe.style.zIndex = ''
-        console.log('Iframe moved back to normal container successfully')
-        
-        // If video was playing, ensure it continues in normal mode
-        if (isPlaying) {
-          console.log('Video was playing, ensuring it continues in normal mode')
-          setTimeout(() => {
-            sendPostMessage('seekTo', [currentTime, true])
-            setTimeout(() => {
-              sendPostMessage('playVideo')
-              console.log('Video resumed in normal mode')
-            }, 100)
-          }, 200)
-        }
-      }
-    }
-  }, [isFullscreen, isPlaying])
+  }, [currentClipIndex, currentClip, hasUserInteractedWithCaptions])
 
   // Effect to handle time updates when playing
   useEffect(() => {
@@ -363,17 +485,15 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   // Listen for YouTube player state changes
   useEffect(() => {
     const handleMessage = (event) => {
-      // Check if the message is from our iframe in either container
+      // Check if the message is from our iframe
       const normalIframe = iframeRef.current && iframeRef.current.firstChild
-      const fullscreenIframe = fullscreenRef.current && fullscreenRef.current.querySelector('.fullscreen-video-container')?.firstChild
       
       const isFromNormalIframe = normalIframe && event.source === normalIframe.contentWindow
-      const isFromFullscreenIframe = fullscreenIframe && event.source === fullscreenIframe.contentWindow
       
-      if (isFromNormalIframe || isFromFullscreenIframe) {
+      if (isFromNormalIframe) {
         try {
           const data = JSON.parse(event.data)
-          const messageSource = isFromFullscreenIframe ? 'fullscreen' : 'normal'
+          const messageSource = 'normal'
           console.log('Received message from YouTube:', data, 'from:', messageSource, 'isFullscreen:', isFullscreen)
           
           // Handle different message formats
@@ -413,6 +533,31 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
             // Handle seek command response
             console.log('Seek command executed')
             // The time will be updated by our own time tracking
+          } else if (data.event === 'command' && data.func === 'setOption') {
+            // Handle setOption command response (including captions)
+            console.log('🔤 setOption command response received:', data)
+            if (data.args && data.args[0] === 'captions') {
+              console.log('🔤 Captions setOption response:', {
+                option: data.args[0],
+                value: data.args[1],
+                messageSource,
+                isFullscreen
+              })
+            }
+          } else if (data.event === 'infoDelivery') {
+            // Handle info delivery messages (may contain captions info)
+            console.log('🔍 YouTube infoDelivery received:', data, 'from:', messageSource)
+            if (data.info && typeof data.info === 'object') {
+              console.log('🔍 infoDelivery details:', {
+                hasCaptions: 'captions' in data.info,
+                captionsInfo: data.info.captions,
+                playerState: data.info.playerState,
+                videoData: data.info.videoData
+              })
+            }
+          } else {
+            // Log any other messages for debugging
+            console.log('🔍 Other YouTube message received:', data, 'from:', messageSource)
           }
         } catch (error) {
           // Ignore non-JSON messages
@@ -434,6 +579,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       // Add event listener for iframe load
       const handleIframeLoad = () => {
         console.log('Iframe loaded, setting up player state detection')
+        console.log('🔤 Iframe loaded - checking if captions are available with cc_load_policy=1')
+        
         // Send a message to enable state change events
         const message = {
           event: 'listening',
@@ -442,6 +589,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         }
         setTimeout(() => {
           iframe.contentWindow.postMessage(JSON.stringify(message), '*')
+          console.log('🔤 Added onStateChange listener to iframe')
         }, 1000)
       }
 
@@ -505,6 +653,71 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       setIsMuted(true)
       sendPostMessage('mute')
       console.log('Muted')
+    }
+  }
+
+  const toggleCaptions = () => {
+    console.log('🔤 === toggleCaptions function called ===')
+    console.log('🔤 toggleCaptions called from:', new Error().stack?.split('\n')[2] || 'unknown location')
+    const newState = !isCaptionsEnabled
+    console.log('🔤 toggleCaptions called:', { 
+      currentState: isCaptionsEnabled, 
+      newState, 
+      currentClip: currentClip?.title,
+      currentTime,
+      playerReady,
+      isPlaying,
+      hasIframe: !!(iframeRef.current && iframeRef.current.querySelector('iframe')),
+    })
+
+    // Mark that user has interacted with captions
+    setHasUserInteractedWithCaptions(true)
+    console.log('🔤 User has now interacted with captions, setting hasUserInteractedWithCaptions to true')
+    
+    // Check if player is in a valid state to receive commands
+    if (!playerReady) {
+      console.log('🔤 Player not ready, cannot toggle captions')
+      return
+    }
+    
+    if (!currentClip) {
+      console.log('🔤 No current clip, cannot toggle captions')
+      return
+    }
+    
+    setIsCaptionsEnabled(newState)
+    
+    if (newState) {
+      // Enable captions by setting track to empty object (default track)
+      console.log('🔤 Enabling captions, sending setOption command...')
+      console.log('🔤 Command details: setOption captions track {}')
+      
+      // Add a small delay to ensure player is ready
+      setTimeout(() => {
+        console.log('🔤 Sending enable captions command after delay...')
+        sendPostMessage('setOption', ['captions', 'track', {}])
+        console.log('🔤 Captions enabled command sent')
+      }, 200)
+      
+      // Add additional logging to verify iframe state
+      setTimeout(() => {
+        const normalIframe = iframeRef.current && iframeRef.current.querySelector('iframe')
+        console.log('🔤 Post-enable iframe check:', {
+          normalIframe: !!normalIframe,
+          normalIframeSrc: normalIframe?.src
+        })
+      }, 500)
+    } else {
+      // Disable captions by setting track to null
+      console.log('🔤 Disabling captions, sending setOption command...')
+      console.log('🔤 Command details: setOption captions track null')
+      
+      // Add a small delay to ensure player is ready
+      setTimeout(() => {
+        console.log('🔤 Sending disable captions command after delay...')
+        sendPostMessage('setOption', ['captions', 'track', null])
+        console.log('🔤 Captions disabled command sent')
+      }, 200)
     }
   }
 
@@ -577,9 +790,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
   // Handle timeline click and drag
   const handleTimelineClick = (e) => {
-    const targetRef = isFullscreen ? fullscreenOverlayRef : overlayRef
-    if (targetRef.current && currentClip) {
-      const rect = targetRef.current.getBoundingClientRect()
+    if (overlayRef.current && currentClip) {
+      const rect = overlayRef.current.getBoundingClientRect()
       const clickX = e.clientX - rect.left
       const width = rect.width
       const percentage = (clickX / width) * 100
@@ -591,7 +803,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       
       // Use postMessage to seek
       sendPostMessage('seekTo', [clampedTime, true])
-      console.log('Seeking to time:', clampedTime, 'in', isFullscreen ? 'fullscreen' : 'normal', 'mode')
+      console.log('Seeking to time:', clampedTime, 'in normal mode')
     }
   }
 
@@ -601,9 +813,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   }
 
   const handleMouseMove = (e) => {
-    const targetRef = isFullscreen ? fullscreenOverlayRef : overlayRef
-    if (isDragging && targetRef.current && currentClip) {
-      const rect = targetRef.current.getBoundingClientRect()
+    if (isDragging && overlayRef.current && currentClip) {
+      const rect = overlayRef.current.getBoundingClientRect()
       const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
       const width = rect.width
       const percentage = (clickX / width) * 100
@@ -714,6 +925,13 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                   <span className="text-xs text-gray-500">No clips available</span>
                 )}
               </div>
+              
+              {/* Select clip message - Reduced size and positioned closer to clips */}
+              {!currentClip && (
+                <div className="text-center py-2 text-gray-500">
+                  <p className="text-sm">Select a clip to start playing</p>
+                </div>
+              )}
             </div>
 
             <div className="mb-2 mt-4">
@@ -728,372 +946,369 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                         {formatTime(currentClip.startTime)} - {formatTime(currentClip.endTime)} ({formatTime(currentClip.endTime - currentClip.startTime)} duration)
                       </p>
                     </div>
-                    <button
-                      onClick={toggleFullscreen}
-                      className="flex items-center justify-center p-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-secondary-950 hover:text-white transition-all duration-200 hover:shadow-md"
-                      title="Toggle fullscreen"
-                    >
-                      {isFullscreen ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                        </svg>
-                      )}
-                    </button>
                   </div>
                 </>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-400">Select a clip to start playing</p>
-                  <button
-                    onClick={toggleFullscreen}
-                    className="flex items-center justify-center p-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-secondary-950 hover:text-white transition-all duration-200 hover:shadow-md"
-                    title="Toggle fullscreen"
-                  >
-                    {isFullscreen ? (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              )}
+              ) : null}
             </div>
 
-            <div className={`relative bg-black rounded-lg overflow-hidden mb-3 youtube-embed-clean ${isFullscreen ? 'hidden' : ''}`}>
-              <div
-                ref={iframeRef}
-                className="w-full aspect-video"
-                style={{ 
-                  aspectRatio: '16/9',
-                  minHeight: compact ? '200px' : '300px' // More compact height for library view
-                }}
-              />
-              
-              {/* Custom Play Button Overlay */}
-              {(!currentClip || !isPlaying) && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                  <button
-                    onClick={togglePlay}
-                    className="p-4 bg-secondary-950 bg-opacity-90 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-200 transform hover:scale-110"
-                    title={currentClip ? 'Play' : 'Select a clip to play'}
-                  >
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </button>
-                </div>
-              )}
-              
-              {/* Transparent overlay to detect clicks when video is playing */}
-              {isPlaying && currentClip && (
-                <div 
-                  className="absolute inset-0 cursor-pointer hover:bg-black hover:bg-opacity-10 transition-all duration-200"
-                  onClick={() => {
-                    console.log('User clicked on video overlay - pausing video')
-                    setIsPlaying(false)
-                    sendPostMessage('pauseVideo')
+            {/* Player Container - This will be the target for fullscreen */}
+            <div ref={playerContainerRef} className="relative">
+              <div className={`relative bg-black rounded-lg overflow-hidden ${isFullscreen ? 'h-full' : 'mb-3'} youtube-embed-clean`}>
+                <div
+                  ref={iframeRef}
+                  className={`w-full ${isFullscreen ? 'h-full' : 'aspect-video'}`}
+                  style={{ 
+                    aspectRatio: isFullscreen ? 'auto' : '16/9',
+                    minHeight: isFullscreen ? '100vh' : (compact ? '200px' : '300px'),
+                    // Better fullscreen sizing
+                    width: '100%',
+                    height: isFullscreen ? '100%' : 'auto',
+                    // Ensure video fills the fullscreen container properly
+                    objectFit: isFullscreen ? 'cover' : 'contain'
                   }}
-                  title="Click to pause"
                 />
-              )}
-            </div>
-
-            {/* Controls Section */}
-            <div className={`space-y-2 ${compact ? 'space-y-1' : ''}`}>
-              {/* Custom Timeline */}
-              <div 
-                ref={overlayRef}
-                className={`relative w-full bg-gray-300 rounded-full cursor-pointer ${compact ? 'h-1' : 'h-1.5'}`}
-                onClick={handleTimelineClick}
-                onMouseDown={handleMouseDown}
-              >
-                {/* Progress track */}
-                <div 
-                  className="absolute left-0 top-0 h-full bg-secondary-950 rounded-full transition-all duration-300 ease-in-out"
-                  style={{ width: `${getProgressPercentage()}%` }}
-                ></div>
                 
-                {/* Progress handle */}
-                <div 
-                  className={`absolute top-1/2 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-1.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white ${compact ? 'w-2 h-2' : 'w-3 h-3'}`}
-                  style={{ left: `${getProgressPercentage()}%` }}
-                ></div>
-              </div>
-
-              {/* Controls row */}
-              <div className="flex items-center justify-between">
-                {/* Playback Controls */}
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={previousClip}
-                    className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1' : 'p-1.5'}`}
-                    title="Previous clip"
-                  >
-                    <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                    </svg>
-                  </button>
-                  
-                  <button
-                    onClick={togglePlay}
-                    className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1.5' : 'p-2'}`}
-                    title={isPlaying ? 'Pause' : 'Play'}
-                  >
-                    {isPlaying ? (
-                      <svg className={`${compact ? 'w-5 h-5' : 'w-6 h-6'}`} fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-                      </svg>
-                    ) : (
-                      <svg className={`${compact ? 'w-5 h-5' : 'w-6 h-6'}`} fill="currentColor" viewBox="0 0 24 24">
+                {/* Custom Play Button Overlay */}
+                {(!currentClip || !isPlaying) && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
+                    <button
+                      onClick={togglePlay}
+                      className="p-4 bg-secondary-950 bg-opacity-90 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-200 transform hover:scale-110"
+                      title={currentClip ? 'Play' : 'Select a clip to play'}
+                    >
+                      <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z"/>
                       </svg>
-                    )}
-                  </button>
-                  
-                  <button
-                    onClick={nextClip}
-                    className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1' : 'p-1.5'}`}
-                    title="Next clip"
-                  >
-                    <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Volume Controls */}
-                <div 
-                  className="flex items-center space-x-2 relative"
-                  onMouseEnter={() => setShowVolumeSlider(true)}
-                  onMouseLeave={() => setShowVolumeSlider(false)}
-                >
-                  {/* Mute/Unmute button */}
-                  <button
-                    onClick={toggleMute}
-                    className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1' : 'p-1.5'}`}
-                    title={isMuted ? 'Unmute' : 'Mute'}
-                  >
-                    {isMuted || volume === 0 ? (
-                      <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-                      </svg>
-                    ) : volume < 50 ? (
-                      <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>
-                      </svg>
-                    ) : (
-                      <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                      </svg>
-                    )}
-                  </button>
-                  
-                  {/* Volume slider - inline with the button */}
-                  <div 
-                    className={`flex items-center space-x-2 transition-all duration-300 ease-in-out ${
-                      showVolumeSlider 
-                        ? 'opacity-100 max-w-32' 
-                        : 'opacity-0 max-w-0 overflow-hidden'
-                    }`}
-                  >
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={isMuted ? 0 : volume}
-                      onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
-                      className={`bg-gray-300 rounded-full appearance-none cursor-pointer slider ${compact ? 'w-12 h-1' : 'w-16 h-1.5'}`}
-                      style={{
-                        background: `linear-gradient(to right, #0F4C81 0%, #0F4C81 ${isMuted ? 0 : volume}%, #e5e7eb ${isMuted ? 0 : volume}%, #e5e7eb 100%)`
-                      }}
-                      title={`Volume: ${isMuted ? 0 : volume}%`}
-                    />
-                    {!compact && (
-                      <span className="text-xs text-gray-600 w-8">
-                        {isMuted ? 0 : volume}%
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Time info - only show remaining time */}
-                <div className="flex-1 text-right">
-                  <span className={`text-gray-600 ${compact ? 'text-xs' : 'text-xs'}`}>
-                    {currentClip ? formatTime(getRemainingTime()) : '00:00'}
-                  </span>
-                </div>
-              </div>
-            </div>
-        </div>
-        <CopyNotification
-          isVisible={showCopyNotification}
-          onClose={() => setShowCopyNotification(false)}
-        />
-      </div>
-
-      {/* Fullscreen Overlay */}
-      {isFullscreen && (
-        <div 
-          ref={fullscreenRef}
-          className="fixed inset-0 z-50 bg-black flex flex-col"
-        >
-          {/* Fullscreen Header */}
-          <div className="flex items-center justify-between p-4 bg-gray-900 text-white border-b border-gray-700">
-            <div className="flex items-center space-x-4">
-              <img src="/logo-blue.svg" alt="clipchain" className="h-6 brightness-110 filter" />
-              <div>
-                <h1 className="text-xl font-bold">{title}</h1>
-                <p className="text-sm text-gray-300">{description}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={copyLink}
-                className="flex items-center space-x-2 px-3 py-1.5 bg-gray-700 text-white rounded-lg font-medium hover:bg-gray-600 transition-all duration-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                <span className="text-sm font-semibold">Copy link</span>
-              </button>
-              <button
-                onClick={toggleFullscreen}
-                className="flex items-center space-x-2 px-3 py-1.5 bg-gray-700 text-white rounded-lg font-medium hover:bg-gray-600 transition-all duration-200"
-                title="Exit fullscreen (ESC)"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span className="text-sm font-semibold">Exit</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Fullscreen Content */}
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-            {/* Video Section - Large and centered */}
-            <div className="flex-1 flex flex-col justify-center items-center p-4 lg:p-6 bg-black min-h-0">
-              <div className="w-full max-w-6xl h-full flex flex-col">
-                {/* Clip indicators for fullscreen */}
-                <div className="flex justify-center mb-3 lg:mb-4 flex-shrink-0">
-                  <div className="flex space-x-2 flex-wrap justify-center">
-                    {clips && clips.length > 0 ? clips.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setIsManualNavigation(true)
-                          setCurrentClipIndex(index)
-                          updateVisibleClipRange(index)
-                          setTimeout(() => setIsManualNavigation(false), 1000)
-                        }}
-                        className={`px-3 py-1 text-sm font-medium rounded border transition-colors ${
-                          index === currentClipIndex 
-                            ? 'bg-secondary-950 text-white border-secondary-950' 
-                            : 'bg-gray-700 text-gray-300 border-gray-600 hover:border-secondary-950 hover:text-secondary-950'
-                        }`}
-                      >
-                        {index + 1}
-                      </button>
-                    )) : (
-                      <span className="text-sm text-gray-500">No clips available</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Current clip info */}
-                {currentClip && (
-                  <div className="text-center mb-3 lg:mb-4 flex-shrink-0">
-                    <h3 className="text-lg lg:text-xl font-semibold text-white mb-1">
-                      {currentClip.title}
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      {formatTime(currentClip.startTime)} - {formatTime(currentClip.endTime)} ({formatTime(currentClip.endTime - currentClip.startTime)} duration)
-                    </p>
+                    </button>
                   </div>
                 )}
-
-                                {/* Large video player */}
-                <div className="relative bg-black rounded-lg overflow-hidden shadow-2xl flex-1 min-h-0 fullscreen-video-container youtube-embed-clean" style={{ minHeight: '400px', height: '60vh', position: 'relative' }}>
-                  {/* The iframe will be moved here when entering fullscreen */}
-                  
-                  {/* Custom Play Button Overlay */}
-                  {(!currentClip || !isPlaying) && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
-                      <button
-                        onClick={togglePlay}
-                        className="p-6 bg-secondary-950 bg-opacity-90 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-200 transform hover:scale-110"
-                        title={currentClip ? 'Play' : 'Select a clip to play'}
-                      >
-                        <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* Transparent overlay to detect clicks when video is playing */}
-                  {isPlaying && currentClip && (
-                    <div 
-                      className="absolute inset-0 cursor-pointer hover:bg-black hover:bg-opacity-10 transition-all duration-200 z-10"
-                      onClick={() => {
-                        setIsPlaying(false)
-                        sendPostMessage('pauseVideo')
-                      }}
-                      title="Click to pause"
-                    />
-                  )}
-                </div>
-                {/* Fullscreen Controls */}
-                <div className="mt-4 lg:mt-6 space-y-3 lg:space-y-4 flex-shrink-0">
-                  {/* Timeline */}
+                
+                {/* Transparent overlay to detect clicks when video is playing */}
+                {isPlaying && currentClip && !isFullscreen && (
                   <div 
-                    ref={fullscreenOverlayRef}
-                    className="relative w-full h-2 bg-gray-700 rounded-full cursor-pointer"
+                    className="absolute inset-0 cursor-pointer hover:bg-black hover:bg-opacity-10 transition-all duration-200 z-10"
+                    onClick={() => {
+                      console.log('User clicked on video overlay - pausing video')
+                      setIsPlaying(false)
+                      sendPostMessage('pauseVideo')
+                      
+                      // Additional resize in fullscreen mode to improve quality
+                      if (isFullscreen) {
+                        const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
+                        if (iframe) {
+                          setTimeout(() => {
+                            console.log('Additional resize after user interaction in fullscreen')
+                            iframe.style.width = '100%'
+                            iframe.style.height = '100%'
+                            iframe.offsetHeight
+                          }, 100)
+                        }
+                      }
+                    }}
+                    title="Click to pause"
+                  />
+                )}
+
+                {/* Fullscreen Overlay */}
+                {isFullscreen && (
+                  <div className="absolute inset-0 pointer-events-none z-20">
+                    {/* Top Bar - Title and Exit */}
+                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-4 pointer-events-auto">
+                      <div className="flex items-center justify-between">
+                        {/* Left side - Title */}
+                        <div className="flex-1">
+                          <h2 className="text-white text-lg font-semibold truncate">
+                            {title}
+                          </h2>
+                          {description && (
+                            <p className="text-white/80 text-sm truncate">
+                              {description}
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Right side - Exit fullscreen button */}
+                        <button
+                          onClick={toggleFullscreen}
+                          className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-lg transition-all duration-200"
+                          title="Exit fullscreen (ESC)"
+                        >
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Bottom Control Panel - Fixed height, no overlap with video */}
+                    <div 
+                      className={`absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm pointer-events-auto transition-all duration-300 ease-in-out ${
+                        showFullscreenControls ? 'translate-y-0' : 'translate-y-full'
+                      }`}
+                      onMouseEnter={() => {
+                        // Clear timeout when entering controls area
+                        if (controlsTimeout) {
+                          clearTimeout(controlsTimeout)
+                          setControlsTimeout(null)
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        // Start timeout only when leaving controls area
+                        if (showFullscreenControls) {
+                          const newTimeout = setTimeout(() => {
+                            setShowFullscreenControls(false)
+                          }, 500)
+                          setControlsTimeout(newTimeout)
+                        }
+                      }}
+                    >
+                      {/* Main Controls Section */}
+                      <div className="p-4">
+                        {/* Timeline - Large and prominent */}
+                        <div 
+                          ref={overlayRef}
+                          className="relative w-full h-3 bg-gray-600 rounded-full cursor-pointer mb-4"
+                          onClick={handleTimelineClick}
+                          onMouseDown={handleMouseDown}
+                        >
+                          {/* Progress track */}
+                          <div 
+                            className="absolute left-0 top-0 h-full bg-secondary-950 rounded-full transition-all duration-300 ease-in-out"
+                            style={{ width: `${getProgressPercentage()}%` }}
+                          ></div>
+                          
+                          {/* Progress handle */}
+                          <div 
+                            className="absolute top-1/2 w-5 h-5 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-2.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
+                            style={{ left: `${getProgressPercentage()}%` }}
+                          ></div>
+                        </div>
+
+                        {/* Controls Row */}
+                        <div className="flex items-center justify-between mb-3">
+                          {/* Left side - Playback controls */}
+                          <div className="flex items-center space-x-3">
+                            <button
+                              onClick={previousClip}
+                              className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
+                              title="Previous clip"
+                            >
+                              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                              </svg>
+                            </button>
+                            
+                            <button
+                              onClick={togglePlay}
+                              className="p-3 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
+                              title={isPlaying ? 'Pause' : 'Play'}
+                            >
+                              {isPlaying ? (
+                                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                                </svg>
+                              ) : (
+                                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z"/>
+                                </svg>
+                              )}
+                            </button>
+                            
+                            <button
+                              onClick={nextClip}
+                              className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
+                              title="Next clip"
+                            >
+                              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+                              </svg>
+                            </button>
+
+                            {/* Volume Controls - Just after playback controls */}
+                            <div 
+                              className="flex items-center space-x-3 relative"
+                              onMouseEnter={() => setShowVolumeSlider(true)}
+                              onMouseLeave={() => setShowVolumeSlider(false)}
+                            >
+                              {/* Mute/Unmute button */}
+                              <button
+                                onClick={toggleMute}
+                                className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
+                                title={isMuted ? 'Unmute' : 'Mute'}
+                              >
+                                {isMuted || volume === 0 ? (
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                                  </svg>
+                                ) : volume < 50 ? (
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>
+                                  </svg>
+                                ) : (
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                                  </svg>
+                                )}
+                              </button>
+                              
+                              {/* Volume slider */}
+                              <div 
+                                className={`flex items-center space-x-3 transition-all duration-300 ease-in-out ${
+                                  showVolumeSlider 
+                                    ? 'opacity-100 max-w-48' 
+                                    : 'opacity-0 max-w-0 overflow-hidden'
+                                }`}
+                              >
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="100"
+                                  value={isMuted ? 0 : volume}
+                                  onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
+                                  className="w-28 h-2 bg-gray-600 rounded-full appearance-none cursor-pointer slider"
+                                  style={{
+                                    background: `linear-gradient(to right, #0F4C81 0%, #0F4C81 ${isMuted ? 0 : volume}%, #6b7280 ${isMuted ? 0 : volume}%, #6b7280 100%)`
+                                  }}
+                                  title={`Volume: ${isMuted ? 0 : volume}%`}
+                                />
+                                <span className="text-sm text-white w-10">
+                                  {isMuted ? 0 : volume}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right side - Captions and time */}
+                          <div className="flex items-center space-x-4">
+                            {/* Captions Control */}
+                            <div className="w-16 flex justify-center">
+                              <button
+                                onClick={() => {
+                                  console.log('🔤 Fullscreen CC button clicked!')
+                                  toggleCaptions()
+                                }}
+                                className={`${isCaptionsEnabled ? 'text-white bg-secondary-950 border-secondary-950' : 'text-white hover:text-secondary-950 hover:bg-white/20 border-white/30'} border rounded-lg transition-all duration-200 px-2 py-1`}
+                                title={isCaptionsEnabled ? 'Disable captions' : 'Enable captions'}
+                              >
+                                <span className="font-bold text-xs">CC</span>
+                              </button>
+                            </div>
+
+                            {/* Time info */}
+                            <div className="w-16 text-right">
+                              <span className="text-base text-white font-mono">
+                                {currentClip ? formatTime(getRemainingTime()) : '00:00'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Clip Navigation - Integrated in the control panel */}
+                        <div className="flex flex-col items-center space-y-2">
+                          {/* Current Clip Title */}
+                          <div className="text-center">
+                            <span className="text-white/90 text-sm font-medium">
+                              {currentClip ? currentClip.title : 'No clip selected'}
+                            </span>
+                          </div>
+                          
+                          {/* Clip Navigation Pills */}
+                          <div className="flex space-x-1 flex-wrap justify-center">
+                            {clips && clips.length > 0 ? clips.map((_, index) => (
+                              <button
+                                key={index}
+                                onClick={() => {
+                                  setIsManualNavigation(true)
+                                  setCurrentClipIndex(index)
+                                  updateVisibleClipRange(index)
+                                  setTimeout(() => setIsManualNavigation(false), 1000)
+                                }}
+                                className={`px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                                  index === currentClipIndex 
+                                    ? 'bg-secondary-950 text-white border-secondary-950 shadow-lg' 
+                                    : 'bg-white/10 text-white border-white/30 hover:border-secondary-950 hover:text-secondary-950 hover:bg-white/20'
+                                }`}
+                              >
+                                {index + 1}
+                              </button>
+                            )) : (
+                              <span className="text-xs text-white/70">No clips available</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Subtle indicator that controls are available */}
+                    {!showFullscreenControls && (
+                      <div 
+                        className="absolute bottom-20 left-1/2 transform -translate-x-1/2 pointer-events-auto"
+                        onMouseEnter={() => {
+                          setShowFullscreenControls(true)
+                        }}
+                      >
+                        <div className="bg-black/20 backdrop-blur-sm rounded-full px-4 py-2 hover:bg-black/30 transition-colors duration-200">
+                          <div className="flex items-center space-x-2 text-white/60 text-sm">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                            <span>Hover here for controls</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Controls Section - Only visible when NOT in fullscreen */}
+              {!isFullscreen && (
+                <div className={`space-y-2 ${compact ? 'space-y-1' : ''}`}>
+                  {/* Custom Timeline */}
+                  <div 
+                    ref={overlayRef}
+                    className={`relative w-full bg-gray-300 rounded-full cursor-pointer ${compact ? 'h-1' : 'h-1.5'}`}
                     onClick={handleTimelineClick}
                     onMouseDown={handleMouseDown}
                   >
+                    {/* Progress track */}
                     <div 
                       className="absolute left-0 top-0 h-full bg-secondary-950 rounded-full transition-all duration-300 ease-in-out"
                       style={{ width: `${getProgressPercentage()}%` }}
                     ></div>
+                    
+                    {/* Progress handle */}
                     <div 
-                      className="absolute top-1/2 w-4 h-4 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-2 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
+                      className={`absolute top-1/2 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-1.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white ${compact ? 'w-2 h-2' : 'w-3 h-3'}`}
                       style={{ left: `${getProgressPercentage()}%` }}
                     ></div>
                   </div>
 
-                  {/* Clip navigation controls */}
-                  <div className="flex items-center justify-between text-white">
-                    <div className="flex items-center space-x-3 lg:space-x-4">
+                  {/* Controls row */}
+                  <div className="flex items-center justify-between">
+                    {/* Playback Controls */}
+                    <div className="flex items-center space-x-3">
                       <button
                         onClick={previousClip}
-                        className="p-2 text-white hover:text-secondary-950 hover:bg-gray-700 rounded-full transition-all duration-200"
+                        className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1' : 'p-1.5'}`}
                         title="Previous clip"
                       >
-                        <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
                           <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
                         </svg>
                       </button>
                       
                       <button
                         onClick={togglePlay}
-                        className="p-2 lg:p-3 text-white hover:text-secondary-950 hover:bg-gray-700 rounded-full transition-all duration-200"
+                        className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1.5' : 'p-2'}`}
                         title={isPlaying ? 'Pause' : 'Play'}
                       >
                         {isPlaying ? (
-                          <svg className="w-6 h-6 lg:w-8 lg:h-8" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className={`${compact ? 'w-5 h-5' : 'w-6 h-6'}`} fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
                           </svg>
                         ) : (
-                          <svg className="w-6 h-6 lg:w-8 lg:h-8" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className={`${compact ? 'w-5 h-5' : 'w-6 h-6'}`} fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z"/>
                           </svg>
                         )}
@@ -1101,10 +1316,10 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                       
                       <button
                         onClick={nextClip}
-                        className="p-2 text-white hover:text-secondary-950 hover:bg-gray-700 rounded-full transition-all duration-200"
+                        className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1' : 'p-1.5'}`}
                         title="Next clip"
                       >
-                        <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
                           <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
                         </svg>
                       </button>
@@ -1119,19 +1334,19 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                       {/* Mute/Unmute button */}
                       <button
                         onClick={toggleMute}
-                        className="p-2 text-white hover:text-secondary-950 hover:bg-gray-700 rounded-full transition-all duration-200"
+                        className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1' : 'p-1.5'}`}
                         title={isMuted ? 'Unmute' : 'Mute'}
                       >
                         {isMuted || volume === 0 ? (
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
                             <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
                           </svg>
                         ) : volume < 50 ? (
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
                             <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>
                           </svg>
                         ) : (
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
                             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                           </svg>
                         )}
@@ -1141,7 +1356,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                       <div 
                         className={`flex items-center space-x-2 transition-all duration-300 ease-in-out ${
                           showVolumeSlider 
-                            ? 'opacity-100 max-w-40' 
+                            ? 'opacity-100 max-w-32' 
                             : 'opacity-0 max-w-0 overflow-hidden'
                         }`}
                       >
@@ -1151,61 +1366,66 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                           max="100"
                           value={isMuted ? 0 : volume}
                           onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
-                          className="w-20 h-2 bg-gray-700 rounded-full appearance-none cursor-pointer slider"
+                          className={`bg-gray-300 rounded-full appearance-none cursor-pointer slider ${compact ? 'w-12 h-1' : 'w-16 h-1.5'}`}
                           style={{
-                            background: `linear-gradient(to right, #0F4C81 0%, #0F4C81 ${isMuted ? 0 : volume}%, #4b5563 ${isMuted ? 0 : volume}%, #4b5563 100%)`
+                            background: `linear-gradient(to right, #0F4C81 0%, #0F4C81 ${isMuted ? 0 : volume}%, #e5e7eb ${isMuted ? 0 : volume}%, #e5e7eb 100%)`
                           }}
                           title={`Volume: ${isMuted ? 0 : volume}%`}
                         />
-                        <span className="text-sm text-white w-8">
-                          {isMuted ? 0 : volume}%
-                        </span>
+                        {!compact && (
+                          <span className="text-xs text-gray-600 w-8">
+                            {isMuted ? 0 : volume}%
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Time info - only show remaining time */}
-                    <div className="flex-1 text-right">
-                      <span className="text-sm text-white">
-                        {currentClip ? formatTime(getRemainingTime()) : '00:00'}
-                      </span>
+                    {/* Time info and Captions Control */}
+                    <div className="flex-1 flex items-center justify-end space-x-2">
+                      {/* Fullscreen button */}
+                      <button
+                        onClick={toggleFullscreen}
+                        className={`text-gray-700 hover:text-secondary-950 hover:bg-gray-100 rounded-full transition-all duration-200 ${compact ? 'p-1' : 'p-1.5'}`}
+                        title="Enter fullscreen"
+                      >
+                        <svg className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                        </svg>
+                      </button>
+
+                      {/* Captions Control - Fixed width to prevent jumping */}
+                      <div className="w-16 flex justify-center">
+                        {console.log('🔤 Rendering CC button:', { isCaptionsEnabled, currentClip: !!currentClip, playerReady })}
+                        <button
+                          onClick={() => {
+                            console.log('🔤 CC button clicked!')
+                            console.log('🔤 CC button state:', { isCaptionsEnabled, currentClip: !!currentClip, playerReady })
+                            toggleCaptions()
+                          }}
+                          className={`${isCaptionsEnabled ? 'text-secondary-950 bg-gray-100 border-secondary-950' : 'text-gray-700 hover:text-secondary-950 hover:bg-gray-100 border-gray-300'} border rounded transition-all duration-200 ${compact ? 'px-1 py-0.5' : 'px-1 py-0.5'}`}
+                          title={isCaptionsEnabled ? 'Disable captions' : 'Enable captions'}
+                        >
+                          <span className={`font-bold ${compact ? 'text-xs' : 'text-xs'}`} style={{ lineHeight: 'normal', fontSize: '11px', display: 'block' }}>CC</span>
+                        </button>
+                      </div>
+                      
+                      {/* Time info - Fixed width to prevent jumping */}
+                      <div className="w-12 text-right">
+                        <span className={`text-gray-600 ${compact ? 'text-xs' : 'text-xs'}`} style={{ lineHeight: '1', marginTop: '1px' }}>
+                          {currentClip ? formatTime(getRemainingTime()) : '00:00'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
-
-            {/* Sidebar with clips list */}
-            <div className="w-full lg:w-80 bg-gray-900 p-4 overflow-y-auto flex-shrink-0">
-              <h3 className="text-lg font-semibold text-white mb-4">Clips</h3>
-              <div className="space-y-2">
-                {clips && clips.length > 0 ? clips.map((clip, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setIsManualNavigation(true)
-                      setCurrentClipIndex(index)
-                      updateVisibleClipRange(index)
-                      setTimeout(() => setIsManualNavigation(false), 1000)
-                    }}
-                    className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                      index === currentClipIndex 
-                        ? 'bg-secondary-950 text-white' 
-                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    <div className="font-medium">{clip.title}</div>
-                    <div className="text-sm opacity-75">
-                      {formatTime(clip.startTime)} - {formatTime(clip.endTime)}
-                    </div>
-                  </button>
-                )) : (
-                  <p className="text-gray-500">No clips available</p>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
-      )}
+        <CopyNotification
+          isVisible={showCopyNotification}
+          onClose={() => setShowCopyNotification(false)}
+        />
+      </div>
     </>
   )
 }

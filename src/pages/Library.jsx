@@ -7,44 +7,6 @@ const Library = () => {
   // Mock data for library examples - in a real app, this would come from an API
   const libraryExamples = [
     {
-      id: 'football-highlights',
-      title: 'Football Match Highlights',
-      description: 'Relive the most exciting moments from this thrilling football match with 4 spectacular goals.',
-      clips: [
-        {
-          id: 1,
-          title: "First Goal - Spectacular Strike",
-          videoId: "19s1_a0wFmE",
-          startTime: 4,
-          endTime: 24
-        },
-        {
-          id: 2,
-          title: "Second Goal - Team Play",
-          videoId: "19s1_a0wFmE",
-          startTime: 310,
-          endTime: 341
-        },
-        {
-          id: 3,
-          title: "Third Goal - Amazing Finish",
-          videoId: "19s1_a0wFmE",
-          startTime: 386,
-          endTime: 417
-        },
-        {
-          id: 4,
-          title: "Fourth Goal - Match Winner",
-          videoId: "19s1_a0wFmE",
-          startTime: 428,
-          endTime: 461
-        }
-      ],
-      author: 'Sports Fan',
-      createdAt: '2024-01-18',
-      tags: ['Football', 'Sports', 'Highlights', 'Goals']
-    },
-    {
       id: 'python-data-science',
       title: 'Python Data Science',
       description: 'Learn data science with Python through practical examples and real-world applications.',

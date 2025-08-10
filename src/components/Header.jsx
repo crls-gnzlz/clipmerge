@@ -12,12 +12,12 @@ const Header = () => {
           <div className="flex items-center">
             {isLaunchpadPage ? (
               <div className="flex flex-col items-start">
-                <img src="/logo.svg" alt="clipchain" className="h-6" />
+                <img src="/logo2.svg" alt="clipchain" className="h-8" />
                 <span className="text-xs text-gray-600 mt-1">Turn video moments into powerful collections</span>
               </div>
             ) : (
               <Link to="/" className="flex flex-col items-start">
-                <img src="/logo.svg" alt="clipchain" className="h-6" />
+                <img src="/logo2.svg" alt="clipchain" className="h-8" />
                 <span className="text-xs text-gray-600 mt-1">Turn video moments into powerful collections</span>
               </Link>
             )}

@@ -9,15 +9,17 @@ import LandingPage from './pages/LandingPage.jsx'
 import CreateClip from './pages/CreateClip.jsx'
 import EmbedPage from './pages/EmbedPage.jsx'
 import EditChain from './pages/EditChain.jsx'
+import CustomPage from './pages/CustomPage.jsx'
 
 function App() {
   const location = useLocation()
   const isLandingPage = location.pathname === '/landing'
   const isEmbedPage = location.pathname.startsWith('/embed/')
+  const isCustomPage = location.pathname === '/custom'
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {!isLandingPage && !isEmbedPage && <Header />}
+      {!isLandingPage && !isEmbedPage && !isCustomPage && <Header />}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -25,6 +27,7 @@ function App() {
           <Route path="/library" element={<Library />} />
           <Route path="/chain/:chainId" element={<ClipchainLaunchpad />} />
           <Route path="/landing" element={<LandingPage />} />
+          <Route path="/custom" element={<CustomPage />} />
           <Route path="/embed/:chainId" element={<EmbedPage />} />
           <Route path="/edit-chain/:chainId" element={<EditChain />} />
           <Route path="/collections" element={

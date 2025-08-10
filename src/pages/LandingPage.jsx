@@ -59,44 +59,7 @@ const LandingPage = () => {
       createdAt: chainMetadata['llm-tutorial'].createdAt,
       tags: chainMetadata['llm-tutorial'].tags
     },
-    {
-      id: 'football-highlights',
-      title: 'Football Match Highlights',
-      description: 'Relive the most exciting moments from this thrilling football match with 4 spectacular goals.',
-      clips: [
-        {
-          id: 1,
-          title: "First Goal - Spectacular Strike",
-          videoId: "19s1_a0wFmE",
-          startTime: 4,
-          endTime: 24
-        },
-        {
-          id: 2,
-          title: "Second Goal - Team Play",
-          videoId: "19s1_a0wFmE",
-          startTime: 310,
-          endTime: 341
-        },
-        {
-          id: 3,
-          title: "Third Goal - Amazing Finish",
-          videoId: "19s1_a0wFmE",
-          startTime: 386,
-          endTime: 417
-        },
-        {
-          id: 4,
-          title: "Fourth Goal - Match Winner",
-          videoId: "19s1_a0wFmE",
-          startTime: 428,
-          endTime: 461
-        }
-      ],
-      author: 'Sports Fan',
-      createdAt: '2024-01-18',
-      tags: ['Football', 'Sports', 'Highlights', 'Goals']
-    },
+
     {
       id: 'python-data-science',
       title: 'Python Data Science',
@@ -224,6 +187,49 @@ const LandingPage = () => {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Custom Page Showcase */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Crea tu propia página de contenido personalizada
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              Posiciónate como experto o curador de contenido. Organiza chains relacionadas en una landing page temática perfecta para cursos, guías o recopilaciones.
+            </p>
+            <div className="flex items-center justify-center space-x-8 text-sm text-gray-500 mb-8">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-secondary-950" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+                <span>Profesores que comparten clases</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-secondary-950" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+                <span>Periodistas que organizan clips</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-secondary-950" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+                <span>Creadores que venden cursos</span>
+              </div>
+            </div>
+            <Link
+              to="/custom"
+              className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-white bg-secondary-950 hover:bg-secondary-900 transition-colors duration-200 shadow-lg hover:shadow-xl"
+            >
+              Ver ejemplo de página personalizada
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>
