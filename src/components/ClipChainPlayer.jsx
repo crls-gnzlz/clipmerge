@@ -1048,26 +1048,26 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
     <>
       <div className={`bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 group ${compact ? 'compact-player' : ''}`}>
         {/* Header with Logo and Copy Link */}
-        <div className={`flex items-center justify-between border-b border-gray-300 hover:border-gray-400 transition-colors duration-300 ${compact ? 'p-2' : 'p-3'}`}>
+        <div className={`flex items-center justify-between border-b border-gray-300 hover:border-gray-400 transition-colors duration-300 ${compact ? 'p-1.5' : 'p-2'}`}>
           {/* Left side - Logo */}
           <div className="flex items-center">
-            <img src="/logo-blue.svg" alt="clipchain" className={`brightness-110 filter group-hover:brightness-110 transition-all duration-300 ${compact ? 'h-4' : 'h-5'}`} />
+            <img src="/logo-blue.svg" alt="clipchain" className={`brightness-110 filter group-hover:brightness-110 transition-all duration-300 ${compact ? 'h-3' : 'h-4'}`} />
           </div>
           
           {/* Right side - Copy Link */}
           <button
             onClick={copyLink}
-            className={`flex items-center space-x-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-secondary-950 hover:text-white transition-all duration-200 hover:shadow-md ${compact ? 'px-2 py-1' : 'px-3 py-1.5'}`}
+            className={`flex items-center space-x-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-secondary-950 hover:text-white transition-all duration-200 hover:shadow-md ${compact ? 'px-1.5 py-0.5' : 'px-2.5 py-1'}`}
           >
-            <svg className={`${compact ? 'w-3 h-3' : 'w-4 h-4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
-            {!compact && <span className="text-sm font-semibold">Copy link</span>}
+            {!compact && <span className="text-xs font-semibold">Copy link</span>}
           </button>
         </div>
 
         {/* Title and Description */}
-        <div className={`${compact ? 'px-2 pt-2 pb-1' : 'px-3 pt-4 pb-2'}`}>
+        <div className={`${compact ? 'px-2 pt-2 pb-1' : 'px-3 pt-3 pb-2'}`}>
           <h2 
             className={`font-bold text-gray-900 mb-1 cursor-help ${compact ? 'text-base' : 'text-xl'}`}
             title={tags && tags.length > 0 ? tags.join(', ') : ''}
@@ -1092,61 +1092,63 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           </div>
         </div>
 
-        {/* Video Player */}
-        <div className={`${compact ? 'px-2 pt-2 pb-2' : 'px-3 pt-3 pb-3'}`}>
-            {/* Chapter Indicators at the top */}
-            <div className="flex flex-col space-y-2">
-              {/* Clip indicators */}
-              <div className="flex space-x-2 flex-wrap">
-                {clips && clips.length > 0 ? clips.slice(visibleClipRange.start, visibleClipRange.end).map((_, index) => {
-                  const actualIndex = visibleClipRange.start + index
-                  return (
-                    <button
-                      key={actualIndex}
-                      onClick={() => {
-                        console.log('Clicked clip:', actualIndex, 'player ready:', playerReady)
-                        setIsManualNavigation(true)
-                        setCurrentClipIndex(actualIndex)
-                        updateVisibleClipRange(actualIndex)
-                        setTimeout(() => setIsManualNavigation(false), 1000)
-                      }}
-                      className={`px-2 py-1 text-xs font-medium rounded border transition-colors ${
-                        actualIndex === currentClipIndex 
-                          ? 'bg-secondary-950 text-white border-secondary-950' 
-                          : 'bg-white text-gray-600 border-gray-300 hover:border-secondary-950 hover:text-secondary-950'
-                      } ${compact ? 'text-xs px-1.5 py-0.5' : ''}`}
-                    >
-                      {actualIndex + 1}
-                    </button>
-                  )
-                }) : (
-                  <span className="text-xs text-gray-500">No clips available</span>
-                )}
-              </div>
-              
-              {/* Select clip message - Aligned to the left below clips */}
-              {!currentClip && (
-                <div className="text-left py-2 text-gray-500">
-                  <p className="text-sm">Select a clip to start playing</p>
-                </div>
+        {/* Chapter Indicators - Moved to area above video player (pink rectangle area) */}
+        <div className={`${compact ? 'px-2' : 'px-3'}`}>
+          <div className="flex flex-col space-y-1">
+            {/* Clip indicators */}
+            <div className="flex space-x-2 flex-wrap">
+              {clips && clips.length > 0 ? clips.slice(visibleClipRange.start, visibleClipRange.end).map((_, index) => {
+                const actualIndex = visibleClipRange.start + index
+                return (
+                  <button
+                    key={actualIndex}
+                    onClick={() => {
+                      console.log('Clicked clip:', actualIndex, 'player ready:', playerReady)
+                      setIsManualNavigation(true)
+                      setCurrentClipIndex(actualIndex)
+                      updateVisibleClipRange(actualIndex)
+                      setTimeout(() => setIsManualNavigation(false), 1000)
+                    }}
+                    className={`px-2 py-1 text-xs font-medium rounded border transition-colors ${
+                      actualIndex === currentClipIndex 
+                        ? 'bg-secondary-950 text-white border-secondary-950' 
+                        : 'bg-white text-gray-600 border-gray-300 hover:border-secondary-950 hover:text-secondary-950'
+                    } ${compact ? 'text-xs px-1.5 py-0.5' : ''}`}
+                  >
+                    {actualIndex + 1}
+                  </button>
+                )
+              }) : (
+                <span className="text-xs text-gray-500">No clips available</span>
               )}
             </div>
+            
 
-            <div className="mb-2 mt-4">
+          </div>
+        </div>
+
+        {/* Video Player */}
+        <div className={`${compact ? 'px-2 pt-2 pb-2' : 'px-3 pt-3 pb-3'}`}>
+
+            <div className="mb-2 mt-2">
               {currentClip ? (
                 <>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-base font-semibold text-gray-900">
                         {currentClip.title}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-gray-500">
                         {formatTime(currentClip.startTime)} - {formatTime(currentClip.endTime)} ({formatTime(currentClip.endTime - currentClip.startTime)} duration)
                       </p>
                     </div>
                   </div>
                 </>
-              ) : null}
+              ) : (
+                <div className="text-left py-1 text-gray-500">
+                  <p className="text-xs">Select a clip to start playing</p>
+                </div>
+              )}
             </div>
 
             {/* Player Container - This will be the target for fullscreen */}
@@ -1362,12 +1364,12 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                         }
                       }}
                     >
-                      {/* Main Controls Section */}
+                      {/* Main Controls Section - Timeline, Controls, Clips (centered in height) */}
                       <div className="p-4">
-                        {/* Timeline - Large and prominent */}
+                        {/* Timeline - At the top */}
                         <div 
                           ref={overlayRef}
-                          className="relative w-full h-3 bg-gray-600 rounded-full cursor-pointer mb-4"
+                          className="relative w-full h-2.5 bg-gray-600 rounded-full cursor-pointer mb-3"
                           onClick={handleTimelineClick}
                           onMouseDown={handleMouseDown}
                         >
@@ -1379,54 +1381,57 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                           
                           {/* Progress handle */}
                           <div 
-                            className="absolute top-1/2 w-5 h-5 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-2.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
+                            className="absolute top-1/2 w-4 h-4 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-2 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
                             style={{ left: `${getProgressPercentage()}%` }}
                           ></div>
                         </div>
 
-                        {/* Controls Row */}
+                        {/* Controls Row - All elements in one line: Timeline + Controls + Volume + Clips + CC + Time */}
                         <div className="flex items-center justify-between mb-3">
-                          {/* Left side - Playback controls */}
-                          <div className="flex items-center space-x-3">
-                            <button
-                              onClick={previousClip}
-                              className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
-                              title="Previous clip"
-                            >
-                              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                              </svg>
-                            </button>
-                            
-                            <button
-                              onClick={togglePlay}
-                              className="p-3 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
-                              title={isPlaying ? 'Pause' : 'Play'}
-                            >
-                              {isPlaying ? (
-                                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                          {/* Left side - Playback controls + Volume */}
+                          <div className="flex items-center space-x-4">
+                            {/* Playback controls */}
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={previousClip}
+                                className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
+                                title="Previous clip"
+                              >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
                                 </svg>
-                              ) : (
-                                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M8 5v14l11-7z"/>
+                              </button>
+                              
+                              <button
+                                onClick={togglePlay}
+                                className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
+                                title={isPlaying ? 'Pause' : 'Play'}
+                              >
+                                {isPlaying ? (
+                                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                                  </svg>
+                                ) : (
+                                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                )}
+                              </button>
+                              
+                              <button
+                                onClick={nextClip}
+                                className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
+                                title="Next clip"
+                              >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
                                 </svg>
-                              )}
-                            </button>
-                            
-                            <button
-                              onClick={nextClip}
-                              className="p-2 text-white hover:text-secondary-950 hover:bg-white/20 rounded-full transition-all duration-200"
-                              title="Next clip"
-                            >
-                              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-                              </svg>
-                            </button>
+                              </button>
+                            </div>
 
-                            {/* Volume Controls - Just after playback controls */}
+                            {/* Volume Controls */}
                             <div 
-                              className="flex items-center space-x-3 relative"
+                              className="relative"
                               onMouseEnter={() => setShowVolumeSlider(true)}
                               onMouseLeave={() => setShowVolumeSlider(false)}
                             >
@@ -1437,26 +1442,26 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                                 title={isMuted ? 'Unmute' : 'Mute'}
                               >
                                 {isMuted || volume === 0 ? (
-                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
                                   </svg>
                                 ) : volume < 50 ? (
-                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>
                                   </svg>
                                 ) : (
-                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                                   </svg>
                                 )}
                               </button>
                               
-                              {/* Volume slider */}
+                              {/* Volume slider - Absolute positioned to avoid layout shifts */}
                               <div 
-                                className={`flex items-center space-x-3 transition-all duration-300 ease-in-out ${
+                                className={`absolute left-full top-1/2 transform -translate-y-1/2 ml-2 flex items-center space-x-2 transition-all duration-300 ease-in-out ${
                                   showVolumeSlider 
-                                    ? 'opacity-100 max-w-48' 
-                                    : 'opacity-0 max-w-0 overflow-hidden'
+                                    ? 'opacity-100 visible' 
+                                    : 'opacity-0 invisible'
                                 }`}
                               >
                                 <input
@@ -1465,21 +1470,52 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                                   max="100"
                                   value={isMuted ? 0 : volume}
                                   onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
-                                  className="w-28 h-2 bg-gray-600 rounded-full appearance-none cursor-pointer slider"
+                                  className="w-20 h-2 bg-gray-600 rounded-full appearance-none cursor-pointer slider"
                                   style={{
                                     background: `linear-gradient(to right, #0F4C81 0%, #0F4C81 ${isMuted ? 0 : volume}%, #6b7280 ${isMuted ? 0 : volume}%, #6b7280 100%)`
                                   }}
                                   title={`Volume: ${isMuted ? 0 : volume}%`}
                                 />
-                                <span className="text-sm text-white w-10">
-                                  {isMuted ? 0 : volume}%
-                                </span>
                               </div>
                             </div>
                           </div>
 
-                          {/* Right side - Captions and time */}
-                          <div className="flex items-center space-x-4">
+                          {/* Center - Clip Navigation */}
+                          <div className="flex flex-col items-center space-y-1">
+                            {/* Current Clip Title */}
+                            <div className="text-center">
+                              <span className="text-white/90 text-sm font-medium">
+                                {currentClip ? currentClip.title : 'Select clip to start'}
+                              </span>
+                            </div>
+                            
+                            {/* Clip Navigation Pills */}
+                            <div className="flex space-x-1 flex-wrap justify-center">
+                              {clips && clips.length > 0 ? clips.map((_, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => {
+                                    setIsManualNavigation(true)
+                                    setCurrentClipIndex(index)
+                                    updateVisibleClipRange(index)
+                                    setTimeout(() => setIsManualNavigation(false), 1000)
+                                  }}
+                                  className={`px-2 py-1 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                                    index === currentClipIndex 
+                                      ? 'bg-secondary-950 text-white border-secondary-950 shadow-lg' 
+                                      : 'bg-white/10 text-white border-white/30 hover:border-secondary-950 hover:text-secondary-950 hover:bg-white/20'
+                                  }`}
+                                >
+                                  {index + 1}
+                                </button>
+                              )) : (
+                                <span className="text-xs text-white/70">No clips available</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right side - CC and Time */}
+                          <div className="flex items-center space-x-3">
                             {/* Captions Control */}
                             <div className="w-16 flex justify-center">
                               <button
@@ -1503,39 +1539,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                           </div>
                         </div>
 
-                        {/* Clip Navigation - Integrated in the control panel */}
-                        <div className="flex flex-col items-center space-y-2">
-                          {/* Current Clip Title */}
-                          <div className="text-center">
-                            <span className="text-white/90 text-sm font-medium">
-                              {currentClip ? currentClip.title : 'No clip selected'}
-                            </span>
-                          </div>
-                          
-                          {/* Clip Navigation Pills */}
-                          <div className="flex space-x-1 flex-wrap justify-center">
-                            {clips && clips.length > 0 ? clips.map((_, index) => (
-                              <button
-                                key={index}
-                                onClick={() => {
-                                  setIsManualNavigation(true)
-                                  setCurrentClipIndex(index)
-                                  updateVisibleClipRange(index)
-                                  setTimeout(() => setIsManualNavigation(false), 1000)
-                                }}
-                                className={`px-3 py-1 text-xs font-medium rounded-lg border transition-all duration-200 ${
-                                  index === currentClipIndex 
-                                    ? 'bg-secondary-950 text-white border-secondary-950 shadow-lg' 
-                                    : 'bg-white/10 text-white border-white/30 hover:border-secondary-950 hover:text-secondary-950 hover:bg-white/20'
-                                }`}
-                              >
-                                {index + 1}
-                              </button>
-                            )) : (
-                              <span className="text-xs text-white/70">No clips available</span>
-                            )}
-                          </div>
-                        </div>
+
                       </div>
                     </div>
 

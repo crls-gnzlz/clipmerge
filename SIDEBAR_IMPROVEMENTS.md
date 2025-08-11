@@ -90,3 +90,4 @@
 - [ ] Temas de color personalizables
 - [ ] Búsqueda global en el sidebar
 - [ ] Notificaciones en tiempo real
+

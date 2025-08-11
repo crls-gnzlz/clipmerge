@@ -116,3 +116,4 @@ const MiPagina = () => {
 - [ ] Más opciones de configuración
 - [ ] Notificaciones en tiempo real
 - [ ] Búsqueda global en el sidebar
+

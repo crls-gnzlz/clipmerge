@@ -138,3 +138,4 @@ npm run dev
 ```
 
 El proyecto compila correctamente y todas las funcionalidades están integradas.
+
