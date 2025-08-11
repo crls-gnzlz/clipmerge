@@ -302,7 +302,7 @@ const LandingPage = () => {
               <h3 className="text-lg font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
                 <li><Link to="/library" className="hover:text-white transition-colors">Library</Link></li>
-                <li><Link to="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
+                <li><Link to="/dashboard" className="hover:text-white transition-colors">Workspace</Link></li>
                 <li><Link to="/" className="hover:text-white transition-colors">Login</Link></li>
               </ul>
             </div>

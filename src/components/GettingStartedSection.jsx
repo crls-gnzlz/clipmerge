@@ -51,20 +51,18 @@ const GettingStartedSection = () => {
           <h2 className="text-xl font-bold text-gray-900 mb-4">
             Quick Access
           </h2>
-          <p className="text-sm text-gray-600 mb-6">
-            Access your dashboard or explore the community library
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl">
+            Access your workspace or explore the community library
           </p>
-          
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Link
               to="/dashboard"
-              className="flex flex-col items-center justify-center p-6 bg-secondary-950 text-white rounded-xl font-medium hover:bg-secondary-900 transition-all duration-200 hover:shadow-lg hover:scale-105"
+              className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200"
             >
-              <svg className="w-8 h-8 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              <span className="text-sm font-semibold">Dashboard</span>
+              <span className="text-sm font-semibold">Workspace</span>
             </Link>
             
             <Link

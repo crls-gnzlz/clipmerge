@@ -85,11 +85,11 @@ const RecentChainsSection = () => {
             Continue working on your latest clipchains
           </p>
         </div>
-        <Link
+        <Link 
           to="/dashboard"
-          className="text-sm text-secondary-950 hover:text-secondary-700 font-medium transition-colors duration-200 hover:underline"
+          className="text-primary-600 hover:text-primary-700 font-medium text-sm"
         >
-          View all →
+          Ver todo en Workspace →
         </Link>
       </div>
 
