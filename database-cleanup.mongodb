@@ -1,0 +1,83 @@
+// ========================================
+// 🗑️ ClipChain Database Cleanup Script
+// ========================================
+// 
+// Instructions:
+// 1. Open MongoDB Compass
+// 2. Connect to your MongoDB instance
+// 3. Switch to "clipchain" database
+// 4. Open the MongoDB Shell (mongosh) in Compass
+// 5. Copy and paste this script
+// 6. Press Enter to execute
+//
+// ⚠️ WARNING: This will DELETE ALL DATA in the clipchain database!
+//
+// ========================================
+
+// Switch to clipchain database
+db = db.getSiblingDB('clipchain');
+
+print("🗑️ Starting ClipChain database cleanup...");
+
+// ========================================
+// 1. DROP ALL COLLECTIONS
+// ========================================
+
+print("\n📝 Dropping collections...");
+
+// Drop collections (this will remove all data)
+db.users.drop();
+print("✅ Users collection dropped");
+
+db.clips.drop();
+print("✅ Clips collection dropped");
+
+db.chains.drop();
+print("✅ Chains collection dropped");
+
+// ========================================
+// 2. VERIFY CLEANUP
+// ========================================
+
+print("\n🔍 Verifying cleanup...");
+
+// List all collections to confirm they're gone
+const collections = db.getCollectionNames();
+print(`📋 Remaining collections: ${collections.length}`);
+
+if (collections.length === 0) {
+  print("✅ All collections successfully removed");
+} else {
+  print("⚠️ Some collections still exist:");
+  collections.forEach(collection => print(`   - ${collection}`));
+}
+
+// ========================================
+// 3. OPTIONAL: DROP ENTIRE DATABASE
+// ========================================
+
+print("\n❓ Do you want to drop the entire database?");
+print("   This will remove the clipchain database completely");
+print("   Uncomment the following line if you want to proceed:");
+
+// Uncomment the next line to drop the entire database:
+// db.dropDatabase();
+// print("✅ clipchain database completely removed");
+
+// ========================================
+// 4. SUMMARY
+// ========================================
+
+print("\n📊 Cleanup Summary:");
+print("   🗑️ All collections dropped");
+print("   📝 Database structure removed");
+print("   🔄 Ready for fresh setup");
+
+print("\n💡 To recreate the database:");
+print("   1. Run the database-setup.mongodb script");
+print("   2. Or use: npm run db:seed (if using Docker setup)");
+
+print("\n✅ ClipChain database cleanup completed!");
+print("🌱 Database is now clean and ready for fresh data");
+
+

@@ -1,5 +1,5 @@
 {
-  "name": "clip-merger",
+  "name": "clipchain",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,9 +7,25 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/server.js",
+    "server:dev": "nodemon server/server.js",
+    "db:init": "node server/scripts/initDatabase.js",
+    "db:seed": "node server/scripts/seedDatabase.js",
+    "db:clear": "node server/scripts/clearDatabase.js",
+    "db:clear:all": "node server/scripts/clearDatabase.js --drop-database",
+    "db:test": "node server/scripts/testConnection.js",
+    "db:reset": "npm run db:clear && npm run db:seed",
+    "db:setup": "npm run db:init && npm run db:seed"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.17.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^6.28.0"
@@ -22,6 +38,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "nodemon": "^3.1.10",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.17",
     "vite": "^7.0.4"

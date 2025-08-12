@@ -1,0 +1,37 @@
+// ========================================
+// 🧪 Test Script for MongoDB Compass
+// ========================================
+// 
+// This is a simple test script to verify that
+// MongoDB Compass can execute MongoDB shell scripts
+//
+// ========================================
+
+// Switch to test database
+db = db.getSiblingDB('test');
+
+print("🧪 Testing MongoDB Compass script execution...");
+
+// Create a test collection
+db.createCollection("test_collection");
+print("✅ Test collection created");
+
+// Insert a test document
+db.test_collection.insertOne({
+  message: "Hello from MongoDB Compass!",
+  timestamp: new Date(),
+  test: true
+});
+print("✅ Test document inserted");
+
+// Count documents
+const count = db.test_collection.countDocuments();
+print(`📊 Document count: ${count}`);
+
+// Clean up
+db.test_collection.drop();
+print("✅ Test collection cleaned up");
+
+print("\n🎉 Test completed successfully!");
+print("✅ Your MongoDB Compass is working correctly!");
+print("🚀 You can now run the main database scripts");

@@ -4,21 +4,21 @@ import LayoutWithSidebar from '../components/LayoutWithSidebar.jsx'
 import ClipchainPlayer from '../components/ClipChainPlayer.jsx'
 import GettingStartedSection from '../components/GettingStartedSection.jsx'
 import RecentChainsSection from '../components/RecentChainsSection.jsx'
-import { llmClips, notionTutorialClips, chainMetadata } from '../data/exampleClips.js'
+import { llmClips, chainMetadata } from '../data/exampleClips.js'
 
 const Home = () => {
   return (
     <LayoutWithSidebar>
       <div className="min-h-full bg-gradient-to-br from-primary-50 to-white">
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6 py-8">
           {/* Main Content - Two Columns */}
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid lg:grid-cols-2 gap-8">
             {/* Left Column - Clipchain Examples */}
             <div className="order-2 lg:order-1">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-6 hover:shadow-xl hover:border-gray-300 transition-all duration-300">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-4 hover:shadow-xl hover:border-gray-300 transition-all duration-300">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Step 1. See clipchain in action
+                  Home see clipchain in action
                 </h2>
                 <p className="text-gray-600 mb-8 text-sm">
                   Here you can see some examples of how Clipchain works. Each box below contains a curated collection of video clips that you can browse and play through.
@@ -34,26 +34,17 @@ const Home = () => {
                     createdAt={chainMetadata['llm-tutorial'].createdAt}
                     tags={chainMetadata['llm-tutorial'].tags}
                   />
-                  <ClipchainPlayer 
-                    id="notion-tutorial"
-                    title="Master Notion Basics"
-                    description="Learn how to use Notion effectively with clips from different tutorials combined in one place"
-                    clips={notionTutorialClips}
-                    author={chainMetadata['notion-tutorial'].author}
-                    createdAt={chainMetadata['notion-tutorial'].createdAt}
-                    tags={chainMetadata['notion-tutorial'].tags}
-                  />
                 </div>
                 
                 {/* Library Link */}
-                <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="mt-6 pt-4 border-t border-gray-100">
                   <Link 
                     to="/library" 
-                    className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200 hover:underline text-lg"
+                    className="inline-flex items-center text-gray-500 hover:text-primary-600 text-sm font-medium transition-all duration-200 hover:scale-105"
                   >
                     <span>Explore more clipchains in our public Library</span>
-                    <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
                 </div>

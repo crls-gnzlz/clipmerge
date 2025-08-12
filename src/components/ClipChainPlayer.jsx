@@ -1047,6 +1047,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   return (
     <>
       <div className={`bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 group ${compact ? 'compact-player' : ''}`}>
+
+
         {/* Header with Logo and Copy Link */}
         <div className={`flex items-center justify-between border-b border-gray-300 hover:border-gray-400 transition-colors duration-300 ${compact ? 'p-1.5' : 'p-2'}`}>
           {/* Left side - Logo */}

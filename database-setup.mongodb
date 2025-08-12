@@ -1,0 +1,567 @@
+// ========================================
+// 🎬 ClipChain Database Setup Script
+// ========================================
+// 
+// Instructions:
+// 1. Open MongoDB Compass
+// 2. Connect to your MongoDB instance
+// 3. Create a new database called "clipchain"
+// 4. Open the MongoDB Shell (mongosh) in Compass
+// 5. Copy and paste this entire script
+// 6. Press Enter to execute
+//
+// ========================================
+
+// Switch to clipchain database
+db = db.getSiblingDB('clipchain');
+
+print("🚀 Starting ClipChain database setup...");
+
+// ========================================
+// 1. CREATE COLLECTIONS
+// ========================================
+
+print("\n📝 Creating collections...");
+
+// Create users collection
+db.createCollection("users");
+print("✅ Users collection created");
+
+// Create clips collection
+db.createCollection("clips");
+print("✅ Clips collection created");
+
+// Create chains collection
+db.createCollection("chains");
+print("✅ Chains collection created");
+
+// ========================================
+// 2. CREATE INDEXES
+// ========================================
+
+print("\n🔍 Creating indexes...");
+
+// Users indexes
+db.users.createIndex({ "username": 1 }, { unique: true });
+db.users.createIndex({ "email": 1 }, { unique: true });
+db.users.createIndex({ "isVerified": 1 });
+db.users.createIndex({ "createdAt": -1 });
+print("✅ Users indexes created");
+
+// Clips indexes
+db.clips.createIndex({ "videoId": 1 });
+db.clips.createIndex({ "author": 1 });
+db.clips.createIndex({ "tags": 1 });
+db.clips.createIndex({ "isPublic": 1 });
+db.clips.createIndex({ "createdAt": -1 });
+print("✅ Clips indexes created");
+
+// Chains indexes
+db.chains.createIndex({ "author": 1 });
+db.chains.createIndex({ "tags": 1 });
+db.chains.createIndex({ "category": 1 });
+db.chains.createIndex({ "isPublic": 1 });
+db.chains.createIndex({ "isFeatured": 1 });
+db.chains.createIndex({ "createdAt": -1 });
+db.chains.createIndex({ "clips.clip": 1 });
+print("✅ Chains indexes created");
+
+// ========================================
+// 3. INSERT SAMPLE USERS
+// ========================================
+
+print("\n👥 Creating sample users...");
+
+const adminUser = {
+  _id: ObjectId(),
+  username: "admin",
+  email: "admin@clipchain.com",
+  password: "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8HwqK8i", // admin123
+  displayName: "Administrator",
+  bio: "System administrator with full access to all features",
+  isVerified: true,
+  isAdmin: true,
+  preferences: {
+    language: "en",
+    theme: "light",
+    notifications: {
+      email: true,
+      push: true
+    }
+  },
+  stats: {
+    totalClips: 0,
+    totalChains: 0,
+    totalViews: 0
+  },
+  social: {
+    youtube: "",
+    twitter: "",
+    instagram: "",
+    website: ""
+  },
+  lastLogin: new Date(),
+  createdAt: new Date(),
+  updatedAt: new Date()
+}
+
+const demoUser = {
+  _id: ObjectId(),
+  username: "demo_user",
+  email: "demo@clipchain.com",
+  password: "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8HwqK8i", // demo123
+  displayName: "Demo User",
+  bio: "Demo user for testing and demonstration purposes",
+  isVerified: true,
+  isAdmin: false,
+  preferences: {
+    language: "en",
+    theme: "auto",
+    notifications: {
+      email: true,
+      push: false
+    }
+  },
+  stats: {
+    totalClips: 0,
+    totalChains: 0,
+    totalViews: 0
+  },
+  social: {
+    youtube: "",
+    twitter: "",
+    instagram: "",
+    website: ""
+  },
+  lastLogin: new Date(),
+  createdAt: new Date(),
+  updatedAt: new Date()
+}
+
+const creatorUser = {
+  _id: ObjectId(),
+  username: "content_creator",
+  email: "creator@clipchain.com",
+  password: "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8HwqK8i", // creator123
+  displayName: "Content Creator",
+  bio: "Professional content creator specializing in educational videos and tutorials",
+  isVerified: true,
+  isAdmin: false,
+  preferences: {
+    language: "en",
+    theme: "dark",
+    notifications: {
+      email: true,
+      push: true
+    }
+  },
+  stats: {
+    totalClips: 0,
+    totalChains: 0,
+    totalViews: 0
+  },
+  social: {
+    youtube: "https://youtube.com/@contentcreator",
+    twitter: "https://twitter.com/contentcreator",
+    instagram: "https://instagram.com/contentcreator",
+    website: "https://contentcreator.com"
+  },
+  lastLogin: new Date(),
+  createdAt: new Date(),
+  updatedAt: new Date()
+}
+
+// Insert users
+db.users.insertMany([adminUser, demoUser, creatorUser]);
+print("✅ Sample users created");
+
+// ========================================
+// 4. INSERT SAMPLE CLIPS
+// ========================================
+
+print("\n🎬 Creating sample clips...");
+
+const sampleClips = [
+  {
+    _id: ObjectId(),
+    title: "Introduction to React Hooks",
+    videoId: "TNhaISOU2GU",
+    startTime: 120,
+    endTime: 300,
+    description: "Clear explanation of useState and useEffect in React with practical examples",
+    tags: ["programming", "react", "javascript", "hooks", "frontend", "web-development"],
+    author: demoUser._id,
+    isPublic: true,
+    duration: 180,
+    thumbnailUrl: "https://img.youtube.com/vi/TNhaISOU2GU/maxresdefault.jpg",
+    views: 45,
+    createdAt: new Date("2024-01-15T10:30:00Z"),
+    updatedAt: new Date("2024-01-15T10:30:00Z")
+  },
+  {
+    _id: ObjectId(),
+    title: "Best Goal of the Match",
+    videoId: "dQw4w9WgXcQ",
+    startTime: 45,
+    endTime: 120,
+    description: "The most spectacular goal of the match with amazing technique",
+    tags: ["football", "goal", "sports", "highlight", "soccer", "amazing"],
+    author: demoUser._id,
+    isPublic: true,
+    duration: 75,
+    thumbnailUrl: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+    views: 128,
+    createdAt: new Date("2024-01-14T15:45:00Z"),
+    updatedAt: new Date("2024-01-14T15:45:00Z")
+  },
+  {
+    _id: ObjectId(),
+    title: "Cooking Tutorial - Perfect Pasta",
+    videoId: "abc123def",
+    startTime: 60,
+    endTime: 180,
+    description: "Step-by-step guide to make perfect pasta with professional chef tips",
+    tags: ["cooking", "pasta", "tutorial", "food", "chef", "italian-cuisine"],
+    author: creatorUser._id,
+    isPublic: true,
+    duration: 120,
+    thumbnailUrl: "https://img.youtube.com/vi/abc123def/maxresdefault.jpg",
+    views: 89,
+    createdAt: new Date("2024-01-13T20:15:00Z"),
+    updatedAt: new Date("2024-01-13T20:15:00Z")
+  },
+  {
+    _id: ObjectId(),
+    title: "Guitar Lesson - Basic Chords",
+    videoId: "xyz789ghi",
+    startTime: 45,
+    endTime: 150,
+    description: "Learn the essential guitar chords for beginners with clear demonstrations",
+    tags: ["music", "guitar", "tutorial", "chords", "beginner", "learning"],
+    author: creatorUser._id,
+    isPublic: true,
+    duration: 105,
+    thumbnailUrl: "https://img.youtube.com/vi/xyz789ghi/maxresdefault.jpg",
+    views: 67,
+    createdAt: new Date("2024-01-12T14:20:00Z"),
+    updatedAt: new Date("2024-01-12T14:20:00Z")
+  },
+  {
+    _id: ObjectId(),
+    title: "Funny Moment from Late Show",
+    videoId: "jNQXAC9IVRw",
+    startTime: 30,
+    endTime: 90,
+    description: "The funniest moment from the late night show that went viral",
+    tags: ["comedy", "entertainment", "funny", "late-show", "viral", "humor"],
+    author: demoUser._id,
+    isPublic: true,
+    duration: 60,
+    thumbnailUrl: "https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg",
+    views: 234,
+    createdAt: new Date("2024-01-11T09:15:00Z"),
+    updatedAt: new Date("2024-01-11T09:15:00Z")
+  },
+  {
+    _id: ObjectId(),
+    title: "Advanced React Patterns",
+    videoId: "advanced-react-123",
+    startTime: 200,
+    endTime: 450,
+    description: "Advanced React patterns including render props, HOCs, and custom hooks",
+    tags: ["programming", "react", "advanced", "patterns", "javascript", "web-development"],
+    author: creatorUser._id,
+    isPublic: true,
+    duration: 250,
+    thumbnailUrl: "https://img.youtube.com/vi/advanced-react-123/maxresdefault.jpg",
+    views: 156,
+    createdAt: new Date("2024-01-10T16:30:00Z"),
+    updatedAt: new Date("2024-01-10T16:30:00Z")
+  },
+  {
+    _id: ObjectId(),
+    title: "Basketball Highlights - Top Plays",
+    videoId: "basketball-highlights-456",
+    startTime: 15,
+    endTime: 95,
+    description: "Top 10 basketball plays of the week with amazing dunks and shots",
+    tags: ["basketball", "sports", "highlights", "dunks", "amazing", "top-plays"],
+    author: demoUser._id,
+    isPublic: true,
+    duration: 80,
+    thumbnailUrl: "https://img.youtube.com/vi/basketball-highlights-456/maxresdefault.jpg",
+    views: 312,
+    createdAt: new Date("2024-01-09T12:00:00Z"),
+    updatedAt: new Date("2024-01-09T12:00:00Z")
+  },
+  {
+    _id: ObjectId(),
+    title: "Piano Tutorial - Moonlight Sonata",
+    videoId: "piano-moonlight-789",
+    startTime: 30,
+    endTime: 180,
+    description: "Learn to play Beethoven's Moonlight Sonata with detailed finger positioning",
+    tags: ["music", "piano", "classical", "beethoven", "tutorial", "moonlight-sonata"],
+    author: creatorUser._id,
+    isPublic: true,
+    duration: 150,
+    thumbnailUrl: "https://img.youtube.com/vi/piano-moonlight-789/maxresdefault.jpg",
+    views: 98,
+    createdAt: new Date("2024-01-08T18:45:00Z"),
+    updatedAt: new Date("2024-01-08T18:45:00Z")
+  }
+]
+
+// Insert clips
+db.clips.insertMany(sampleClips);
+print("✅ Sample clips created");
+
+// ========================================
+// 5. INSERT SAMPLE CHAINS
+// ========================================
+
+print("\n🔗 Creating sample chains...");
+
+const sampleChains = [
+  {
+    _id: ObjectId(),
+    name: "Complete React Tutorial Series",
+    description: "A comprehensive series covering React from basics to advanced patterns, perfect for beginners and intermediate developers",
+    clips: [
+      {
+        clip: sampleClips[0]._id, // React Hooks
+        order: 0,
+        transition: "fade",
+        transitionDuration: 0.5
+      },
+      {
+        clip: sampleClips[5]._id, // Advanced React Patterns
+        order: 1,
+        transition: "crossfade",
+        transitionDuration: 0.8
+      }
+    ],
+    author: demoUser._id,
+    isPublic: true,
+    tags: ["react", "javascript", "programming", "tutorial", "web-development", "series"],
+    category: "tutorial",
+    difficulty: "beginner",
+    totalDuration: 430,
+    views: 78,
+    plays: 23,
+    isFeatured: true,
+    metadata: {
+      language: "en",
+      ageRating: "G",
+      originalSource: "React Official Documentation"
+    },
+    createdAt: new Date("2024-01-15T11:00:00Z"),
+    updatedAt: new Date("2024-01-15T11:00:00Z")
+  },
+  {
+    _id: ObjectId(),
+    name: "Sports Highlights Compilation",
+    description: "Best moments from various sports including football, basketball, and other exciting plays",
+    clips: [
+      {
+        clip: sampleClips[1]._id, // Football goal
+        order: 0,
+        transition: "cut",
+        transitionDuration: 0.3
+      },
+      {
+        clip: sampleClips[6]._id, // Basketball highlights
+        order: 1,
+        transition: "slide",
+        transitionDuration: 0.6
+      }
+    ],
+    author: demoUser._id,
+    isPublic: true,
+    tags: ["sports", "highlights", "football", "basketball", "amazing", "compilation"],
+    category: "entertainment",
+    difficulty: "beginner",
+    totalDuration: 155,
+    views: 156,
+    plays: 89,
+    isFeatured: false,
+    metadata: {
+      language: "en",
+      ageRating: "G",
+      originalSource: "Sports Network"
+    },
+    createdAt: new Date("2024-01-14T16:00:00Z"),
+    updatedAt: new Date("2024-01-14T16:00:00Z")
+  },
+  {
+    _id: ObjectId(),
+    name: "Cooking & Music Masterclass",
+    description: "Learn cooking techniques and music skills from professional chefs and musicians",
+    clips: [
+      {
+        clip: sampleClips[2]._id, // Pasta tutorial
+        order: 0,
+        transition: "crossfade",
+        transitionDuration: 0.8
+      },
+      {
+        clip: sampleClips[3]._id, // Guitar lesson
+        order: 1,
+        transition: "fade",
+        transitionDuration: 0.5
+      },
+      {
+        clip: sampleClips[7]._id, // Piano tutorial
+        order: 2,
+        transition: "slide",
+        transitionDuration: 0.7
+      }
+    ],
+    author: creatorUser._id,
+    isPublic: true,
+    tags: ["cooking", "music", "tutorial", "masterclass", "professional", "skills"],
+    category: "education",
+    difficulty: "intermediate",
+    totalDuration: 375,
+    views: 234,
+    plays: 145,
+    isFeatured: true,
+    metadata: {
+      language: "en",
+      ageRating: "G",
+      originalSource: "Culinary & Music Institute"
+    },
+    createdAt: new Date("2024-01-13T21:00:00Z"),
+    updatedAt: new Date("2024-01-13T21:00:00Z")
+  },
+  {
+    _id: ObjectId(),
+    name: "Entertainment & Comedy Mix",
+    description: "A fun collection of entertaining moments and comedy clips for relaxation",
+    clips: [
+      {
+        clip: sampleClips[4]._id, // Funny moment
+        order: 0,
+        transition: "cut",
+        transitionDuration: 0.4
+      }
+    ],
+    author: demoUser._id,
+    isPublic: true,
+    tags: ["entertainment", "comedy", "funny", "relaxation", "viral", "humor"],
+    category: "entertainment",
+    difficulty: "beginner",
+    totalDuration: 60,
+    views: 445,
+    plays: 267,
+    isFeatured: false,
+    metadata: {
+      language: "en",
+      ageRating: "PG",
+      originalSource: "Late Night Shows"
+    },
+    createdAt: new Date("2024-01-11T10:00:00Z"),
+    updatedAt: new Date("2024-01-11T10:00:00Z")
+  }
+]
+
+// Insert chains
+db.chains.insertMany(sampleChains);
+print("✅ Sample chains created");
+
+// ========================================
+// 6. UPDATE USER STATISTICS
+// ========================================
+
+print("\n📊 Updating user statistics...");
+
+// Update admin user stats
+db.users.updateOne(
+  { username: "admin" },
+  { 
+    $set: { 
+      stats: {
+        totalClips: 0,
+        totalChains: 0,
+        totalViews: 0
+      }
+    }
+  }
+)
+
+// Update demo user stats
+const demoUserClips = db.clips.countDocuments({ author: demoUser._id })
+const demoUserChains = db.chains.countDocuments({ author: demoUser._id })
+const demoUserViews = db.clips.aggregate([
+  { $match: { author: demoUser._id } },
+  { $group: { _id: null, totalViews: { $sum: "$views" } } }
+]).toArray()[0]?.totalViews || 0
+
+db.users.updateOne(
+  { username: "demo_user" },
+  { 
+    $set: { 
+      stats: {
+        totalClips: demoUserClips,
+        totalChains: demoUserChains,
+        totalViews: demoUserViews
+      }
+    }
+  }
+)
+
+// Update creator user stats
+const creatorUserClips = db.clips.countDocuments({ author: creatorUser._id })
+const creatorUserChains = db.chains.countDocuments({ author: creatorUser._id })
+const creatorUserViews = db.clips.aggregate([
+  { $match: { author: creatorUser._id } },
+  { $group: { _id: null, totalViews: { $sum: "$views" } } }
+]).toArray()[0]?.totalViews || 0
+
+db.users.updateOne(
+  { username: "content_creator" },
+  { 
+    $set: { 
+      stats: {
+        totalClips: creatorUserClips,
+        totalChains: creatorUserChains,
+        totalViews: creatorUserViews
+      }
+    }
+  }
+)
+
+print("✅ User statistics updated");
+
+// ========================================
+// 7. VERIFICATION AND SUMMARY
+// ========================================
+
+print("\n🔍 Verifying database setup...");
+
+// Count documents
+const userCount = db.users.countDocuments()
+const clipCount = db.clips.countDocuments()
+const chainCount = db.chains.countDocuments()
+
+// Count indexes
+const userIndexes = db.users.getIndexes().length
+const clipIndexes = db.clips.getIndexes().length
+const chainIndexes = db.chains.getIndexes().length
+
+print("\n📊 Database Summary:");
+print(`   👥 Users: ${userCount}`);
+print(`   🎬 Clips: ${clipCount}`);
+print(`   🔗 Chains: ${chainCount}`);
+print(`   🔍 Total Indexes: ${userIndexes + clipIndexes + chainIndexes}`);
+
+print("\n🔑 Access Credentials:");
+print("   Admin: admin@clipchain.com / admin123");
+print("   Demo: demo@clipchain.com / demo123");
+print("   Creator: creator@clipchain.com / creator123");
+
+print("\n✅ ClipChain database setup completed successfully!");
+print("🌐 You can now use the application with real test data");
+print("📱 Connect your frontend to test all features");
+
+

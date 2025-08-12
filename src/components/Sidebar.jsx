@@ -247,6 +247,20 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 </svg>
                 <span className="text-xs font-medium">Library</span>
               </Link>
+
+              <Link
+                to="/database-test"
+                className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg transition-all duration-200 ${
+                  isActive('/database-test') 
+                    ? 'bg-primary-50 text-primary-700 shadow-sm' 
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-medium">DB Test</span>
+              </Link>
             </nav>
 
             {/* Subtle separator */}

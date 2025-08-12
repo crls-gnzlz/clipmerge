@@ -10,6 +10,7 @@ import CreateClip from './pages/CreateClip.jsx'
 import EmbedPage from './pages/EmbedPage.jsx'
 import EditChain from './pages/EditChain.jsx'
 import CustomPage from './pages/CustomPage.jsx'
+import DatabaseTest from './pages/DatabaseTest.jsx'
 
 function App() {
   const location = useLocation()
@@ -37,6 +38,7 @@ function App() {
             </div>
           } />
           <Route path="/create" element={<CreateClip />} />
+          <Route path="/database-test" element={<DatabaseTest />} />
         </Routes>
       </main>
     </div>

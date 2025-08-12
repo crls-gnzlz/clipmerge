@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Simple - ClipChain DB</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .loading { background: #fff3cd; border: 1px solid #ffeaa7; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .data-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .count {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba Simple de Base de Datos</h1>
+        <p>Verificando conexión entre Frontend, Backend y MongoDB</p>
+        
+        <div id="status" class="status loading">
+            <strong>Estado:</strong> Probando conexión...
+        </div>
+        
+        <button id="testBtn" onclick="testConnection()">🔄 Probar Conexión</button>
+        
+        <div class="data-section">
+            <h3>📊 Estadísticas</h3>
+            <div>Chains: <span id="chainsCount" class="count">-</span></div>
+            <div>Clips: <span id="clipsCount" class="count">-</span></div>
+        </div>
+        
+        <div id="chainsData" class="data-section" style="display: none;">
+            <h3>🔗 Chains</h3>
+            <div id="chainsList"></div>
+        </div>
+        
+        <div id="clipsData" class="data-section" style="display: none;">
+            <h3>🎬 Clips</h3>
+            <div id="clipsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9000/api';
+        
+        async function testConnection() {
+            const statusEl = document.getElementById('status');
+            const testBtn = document.getElementById('testBtn');
+            
+            // Reset UI
+            statusEl.className = 'status loading';
+            statusEl.innerHTML = '<strong>Estado:</strong> Probando conexión...';
+            testBtn.disabled = true;
+            
+            try {
+                // Test basic connection
+                const response = await fetch(API_BASE + '/chains?limit=5');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    // Success!
+                    statusEl.className = 'status success';
+                    statusEl.innerHTML = '<strong>Estado:</strong> ✅ Conexión exitosa!';
+                    
+                    // Update counts
+                    document.getElementById('chainsCount').textContent = data.data.length;
+                    
+                    // Load clips data
+                    const clipsResponse = await fetch(API_BASE + '/clips?limit=5');
+                    const clipsData = await clipsResponse.json();
+                    
+                    if (clipsData.success && clipsData.data) {
+                        document.getElementById('clipsCount').textContent = clipsData.data.length;
+                        
+                        // Show data
+                        displayChains(data.data);
+                        displayClips(clipsData.data);
+                    }
+                    
+                } else {
+                    throw new Error('Respuesta del servidor no válida');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusEl.className = 'status error';
+                statusEl.innerHTML = `<strong>Estado:</strong> ❌ Error: ${error.message}`;
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+        
+        function displayChains(chains) {
+            const container = document.getElementById('chainsList');
+            const section = document.getElementById('chainsData');
+            
+            if (chains.length === 0) {
+                container.innerHTML = '<p>No hay chains disponibles</p>';
+            } else {
+                container.innerHTML = chains.map(chain => `
+                    <div class="item">
+                        <h4>${chain.name}</h4>
+                        <p>${chain.description || 'Sin descripción'}</p>
+                        <small>Autor: ${chain.author?.username || 'Desconocido'} | Clips: ${chain.clips?.length || 0}</small>
+                    </div>
+                `).join('');
+            }
+            
+            section.style.display = 'block';
+        }
+        
+        function displayClips(clips) {
+            const container = document.getElementById('clipsList');
+            const section = document.getElementById('clipsData');
+            
+            if (clips.length === 0) {
+                container.innerHTML = '<p>No hay clips disponibles</p>';
+            } else {
+                container.innerHTML = clips.map(clip => `
+                    <div class="item">
+                        <h4>${clip.title}</h4>
+                        <p>${clip.description || 'Sin descripción'}</p>
+                        <small>Autor: ${clip.author?.username || 'Desconocido'} | Duración: ${clip.duration || 0}s</small>
+                    </div>
+                `).join('');
+            }
+            
+            section.style.display = 'block';
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html>
