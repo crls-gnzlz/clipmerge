@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 import config from '../config/config.js';
 
 // Import models
@@ -203,12 +202,10 @@ const createUsers = async () => {
     const createdUsers = [];
     
     for (const userData of sampleUsers) {
-      // Hash password before saving
-      const hashedPassword = await bcrypt.hash(userData.password, 12);
-      
+      // Don't hash password here - let the User model's pre-save hook handle it
       const user = new User({
-        ...userData,
-        password: hashedPassword
+        ...userData
+        // password will be automatically hashed by the User model
       });
       
       await user.save();

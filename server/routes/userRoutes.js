@@ -35,11 +35,11 @@ const validateLogin = [
   body('username')
     .trim()
     .notEmpty()
-    .withMessage('El nombre de usuario o email es obligatorio'),
+    .withMessage('Username or email is required'),
   
   body('password')
     .notEmpty()
-    .withMessage('La contraseña es obligatoria')
+    .withMessage('Password is required')
 ];
 
 // Middleware de validación para actualización de perfil
@@ -48,69 +48,69 @@ const validateProfileUpdate = [
     .optional()
     .trim()
     .isLength({ min: 1, max: 50 })
-    .withMessage('El nombre de visualización debe tener entre 1 y 50 caracteres'),
+    .withMessage('Display name must be between 1 and 50 characters'),
   
   body('bio')
     .optional()
     .trim()
     .isLength({ max: 500 })
-    .withMessage('La biografía no puede tener más de 500 caracteres'),
+    .withMessage('Bio cannot exceed 500 characters'),
   
   body('avatar')
     .optional()
     .isURL()
-    .withMessage('El avatar debe ser una URL válida'),
+    .withMessage('Avatar must be a valid URL'),
   
   body('social.youtube')
     .optional()
     .isURL()
-    .withMessage('El enlace de YouTube debe ser una URL válida'),
+    .withMessage('YouTube link must be a valid URL'),
   
   body('social.twitter')
     .optional()
     .isURL()
-    .withMessage('El enlace de Twitter debe ser una URL válida'),
+    .withMessage('Twitter link must be a valid URL'),
   
   body('social.instagram')
     .optional()
     .isURL()
-    .withMessage('El enlace de Instagram debe ser una URL válida'),
+    .withMessage('Instagram link must be a valid URL'),
   
   body('social.website')
     .optional()
     .isURL()
-    .withMessage('El enlace del sitio web debe ser una URL válida'),
+    .withMessage('Website link must be a valid URL'),
   
   body('preferences.language')
     .optional()
     .isIn(['es', 'en', 'fr', 'de'])
-    .withMessage('Idioma inválido'),
+    .withMessage('Invalid language'),
   
   body('preferences.theme')
     .optional()
     .isIn(['light', 'dark', 'auto'])
-    .withMessage('Tema inválido'),
+    .withMessage('Invalid theme'),
   
   body('preferences.notifications.email')
     .optional()
     .isBoolean()
-    .withMessage('La preferencia de notificaciones por email debe ser un valor booleano'),
+    .withMessage('Email notification preference must be a boolean value'),
   
   body('preferences.notifications.push')
     .optional()
     .isBoolean()
-    .withMessage('La preferencia de notificaciones push debe ser un valor booleano')
+    .withMessage('Push notification preference must be a boolean value')
 ];
 
 // Middleware de validación para cambio de contraseña
 const validatePasswordChange = [
   body('currentPassword')
     .notEmpty()
-    .withMessage('La contraseña actual es obligatoria'),
+    .withMessage('Current password is required'),
   
   body('newPassword')
     .isLength({ min: 6 })
-    .withMessage('La nueva contraseña debe tener al menos 6 caracteres')
+    .withMessage('New password must be at least 6 characters long')
 ];
 
 // Middleware de validación para búsqueda
@@ -118,24 +118,24 @@ const validateSearch = [
   query('search')
     .trim()
     .isLength({ min: 2 })
-    .withMessage('El término de búsqueda debe tener al menos 2 caracteres'),
+    .withMessage('Search term must be at least 2 characters long'),
   
   query('limit')
     .optional()
     .isInt({ min: 1, max: 50 })
-    .withMessage('El límite debe ser un número entre 1 y 50')
+    .withMessage('Limit must be a number between 1 and 50')
 ];
 
 // Middleware de validación para verificación de disponibilidad
 const validateAvailability = [
   query('field')
     .isIn(['username', 'email'])
-    .withMessage('El campo debe ser "username" o "email"'),
+    .withMessage('Field must be "username" or "email"'),
   
   query('value')
     .trim()
     .notEmpty()
-    .withMessage('El valor es obligatorio')
+    .withMessage('Value is required')
 ];
 
 // Rutas públicas
@@ -152,7 +152,7 @@ router.post('/login',
 );
 
 router.get('/profile/:username',
-  param('username').trim().notEmpty().withMessage('El nombre de usuario es obligatorio'),
+  param('username').trim().notEmpty().withMessage('Username is required'),
   userController.getPublicProfile
 );
 

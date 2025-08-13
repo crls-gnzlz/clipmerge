@@ -46,20 +46,6 @@ const ClipchainLaunchpad = () => {
   
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header with Logo and Tagline */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <div className="text-left">
-            <div className="flex justify-start mb-1">
-              <img src="/logo2.svg" alt="Clipchain" className="h-6 w-auto" />
-            </div>
-            <h1 className="text-xs font-medium text-gray-700 leading-tight">
-              Turn video moments into powerful collections
-            </h1>
-          </div>
-        </div>
-      </div>
-
       <div className="flex-1">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Clipchain Player */}

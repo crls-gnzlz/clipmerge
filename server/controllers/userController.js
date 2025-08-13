@@ -17,7 +17,7 @@ const register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'El nombre de usuario o email ya está en uso'
+        message: 'Username or email already in use'
       });
     }
     
@@ -43,7 +43,7 @@ const register = async (req, res) => {
     
     res.status(201).json({
       success: true,
-      message: 'Usuario registrado exitosamente',
+      message: 'User registered successfully',
       data: {
         user: userResponse,
         token
@@ -56,7 +56,7 @@ const register = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Datos de entrada inválidos',
+        message: 'Invalid input data',
         errors: Object.values(error.errors).map(err => ({
           field: err.path,
           message: err.message
@@ -66,7 +66,7 @@ const register = async (req, res) => {
     
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -82,7 +82,7 @@ const login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Credenciales inválidas'
+        message: 'Invalid credentials'
       });
     }
     
@@ -91,7 +91,7 @@ const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Credenciales inválidas'
+        message: 'Invalid credentials'
       });
     }
     
@@ -107,7 +107,7 @@ const login = async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Inicio de sesión exitoso',
+      message: 'Login successful',
       data: {
         user: userResponse,
         token
@@ -118,7 +118,7 @@ const login = async (req, res) => {
     console.error('Error en login:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -135,10 +135,10 @@ const getProfile = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error obteniendo perfil:', error);
+    console.error('Error getting profile:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -164,17 +164,17 @@ const updateProfile = async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Perfil actualizado exitosamente',
+      message: 'Profile updated successfully',
       data: user
     });
     
   } catch (error) {
-    console.error('Error actualizando perfil:', error);
+    console.error('Error updating profile:', error);
     
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Datos de entrada inválidos',
+        message: 'Invalid input data',
         errors: Object.values(error.errors).map(err => ({
           field: err.path,
           message: err.message
@@ -184,7 +184,7 @@ const updateProfile = async (req, res) => {
     
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -200,7 +200,7 @@ const changePassword = async (req, res) => {
     if (!isCurrentPasswordValid) {
       return res.status(400).json({
         success: false,
-        message: 'La contraseña actual es incorrecta'
+        message: 'Current password is incorrect'
       });
     }
     
@@ -210,16 +210,16 @@ const changePassword = async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Contraseña cambiada exitosamente'
+      message: 'Password changed successfully'
     });
     
   } catch (error) {
-    console.error('Error cambiando contraseña:', error);
+    console.error('Error changing password:', error);
     
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Datos de entrada inválidos',
+        message: 'Invalid input data',
         errors: Object.values(error.errors).map(err => ({
           field: err.path,
           message: err.message
@@ -229,7 +229,7 @@ const changePassword = async (req, res) => {
     
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -245,7 +245,7 @@ const getPublicProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Usuario no encontrado'
+        message: 'User not found'
       });
     }
     
@@ -255,10 +255,10 @@ const getPublicProfile = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error obteniendo perfil público:', error);
+    console.error('Error getting public profile:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -274,7 +274,7 @@ const getUserStats = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Usuario no encontrado'
+        message: 'User not found'
       });
     }
     
@@ -289,10 +289,10 @@ const getUserStats = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error obteniendo estadísticas del usuario:', error);
+    console.error('Error getting user stats:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -306,7 +306,7 @@ const searchUsers = async (req, res) => {
     if (!search || search.length < 2) {
       return res.status(400).json({
         success: false,
-        message: 'El término de búsqueda debe tener al menos 2 caracteres'
+        message: 'Search term must be at least 2 characters long'
       });
     }
     
@@ -327,10 +327,10 @@ const searchUsers = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error buscando usuarios:', error);
+    console.error('Error searching users:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -344,7 +344,7 @@ const checkAvailability = async (req, res) => {
     if (!['username', 'email'].includes(field)) {
       return res.status(400).json({
         success: false,
-        message: 'Campo inválido. Use "username" o "email"'
+        message: 'Invalid field. Use "username" or "email"'
       });
     }
     
@@ -360,10 +360,10 @@ const checkAvailability = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error verificando disponibilidad:', error);
+    console.error('Error checking availability:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -377,17 +377,17 @@ const refreshToken = async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Token renovado exitosamente',
+      message: 'Token refreshed successfully',
       data: {
         token: newToken
       }
     });
     
   } catch (error) {
-    console.error('Error renovando token:', error);
+    console.error('Error refreshing token:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }
@@ -401,14 +401,14 @@ const logout = async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Sesión cerrada exitosamente'
+      message: 'Session closed successfully'
     });
     
   } catch (error) {
-    console.error('Error cerrando sesión:', error);
+    console.error('Error closing session:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }

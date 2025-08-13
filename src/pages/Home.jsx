@@ -10,6 +10,18 @@ const Home = () => {
   return (
     <LayoutWithSidebar>
       <div className="min-h-full bg-gradient-to-br from-primary-50 to-white">
+        {/* Welcome Message */}
+        <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 pb-2">
+          <div className="flex items-center justify-center mb-1">
+            <div className="flex items-center space-x-3">
+              <img src="/logo-blue.svg" alt="Clipchain" className="h-6 w-6" />
+              <h1 className="text-xl font-semibold text-gray-800">
+                Welcome to Clipchain!
+              </h1>
+            </div>
+          </div>
+        </div>
+
         {/* Main Content */}
         <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6 py-8">
           {/* Main Content - Two Columns */}
@@ -18,7 +30,7 @@ const Home = () => {
             <div className="order-2 lg:order-1">
               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-4 hover:shadow-xl hover:border-gray-300 transition-all duration-300">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Home see clipchain in action
+                  Step 1. See Clipchain in action
                 </h2>
                 <p className="text-gray-600 mb-8 text-sm">
                   Here you can see some examples of how Clipchain works. Each box below contains a curated collection of video clips that you can browse and play through.

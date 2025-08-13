@@ -236,13 +236,31 @@ const Library = () => {
       {/* Header with Logo and Tagline */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <div className="text-left">
-            <div className="flex justify-start mb-1">
-              <img src="/logo2.svg" alt="Clipchain" className="h-6 w-auto" />
+          <div className="flex justify-between items-center">
+            <div className="text-left">
+              <div className="flex justify-start mb-1">
+                <img src="/logo2.svg" alt="clipchain" className="h-6 w-auto" />
+              </div>
+              <h1 className="text-xs font-medium text-gray-700 leading-tight">
+                Turn video moments into powerful collections
+              </h1>
             </div>
-            <h1 className="text-xs font-medium text-gray-700 leading-tight">
-              Turn video moments into powerful collections
-            </h1>
+            
+            {/* Navigation Buttons */}
+            <div className="flex items-center space-x-4">
+              <Link
+                to="/login"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="bg-secondary-950 hover:bg-secondary-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Get Started
+              </Link>
+            </div>
           </div>
         </div>
       </div>

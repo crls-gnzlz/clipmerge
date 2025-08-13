@@ -11,19 +11,26 @@ import EmbedPage from './pages/EmbedPage.jsx'
 import EditChain from './pages/EditChain.jsx'
 import CustomPage from './pages/CustomPage.jsx'
 import DatabaseTest from './pages/DatabaseTest.jsx'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
 
 function App() {
   const location = useLocation()
   const isLandingPage = location.pathname === '/landing'
   const isEmbedPage = location.pathname.startsWith('/embed/')
   const isCustomPage = location.pathname === '/custom'
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
+  const isPublicPage = isLandingPage || location.pathname.startsWith('/chain/')
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {!isLandingPage && !isEmbedPage && !isCustomPage && <Header />}
+      {/* Show Header on public pages, not on main app pages with sidebar */}
+      {isPublicPage && <Header />}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/library" element={<Library />} />
           <Route path="/chain/:chainId" element={<ClipchainLaunchpad />} />
