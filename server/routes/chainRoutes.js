@@ -197,6 +197,19 @@ router.get('/category/:category',
   chainController.getChainsByCategory
 );
 
+// Rutas de usuario (deben ir antes de /:id)
+router.get('/user',
+  authenticateToken,
+  validatePagination,
+  chainController.getUserChains
+);
+
+router.get('/user/:userId',
+  authenticateToken,
+  validatePagination,
+  chainController.getUserChains
+);
+
 router.get('/:id',
   validateObjectId,
   optionalAuth,
@@ -259,13 +272,6 @@ router.post('/:id/reaction',
 router.post('/:id/play',
   validateObjectId,
   chainController.incrementPlays
-);
-
-// Rutas de usuario
-router.get('/user/:userId',
-  authenticateToken,
-  validatePagination,
-  chainController.getUserChains
 );
 
 export default router;

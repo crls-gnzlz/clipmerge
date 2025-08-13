@@ -1,15 +1,41 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import LayoutWithSidebar from '../components/LayoutWithSidebar.jsx'
-import { mockCollections, mockClips } from '../data/mockData.js'
 import CopyNotification from '../components/CopyNotification.jsx'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import apiService from '../lib/api.js'
 
 const Dashboard = () => {
-  const chains = mockCollections
-  const clips = mockClips
+  const { user, isAuthenticated } = useAuth()
+  const [chains, setChains] = useState([])
+  const [clips, setClips] = useState([])
   const [activeTab, setActiveTab] = useState('chains') // 'chains' or 'clips'
   const [showCopyNotification, setShowCopyNotification] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
+  // Fetch user's clips and chains
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (isAuthenticated && user) {
+        try {
+          setIsLoading(true)
+          const [clipsResponse, chainsResponse] = await Promise.all([
+            apiService.getUserClips(),
+            apiService.getUserChains()
+          ])
+          
+          setClips(clipsResponse.data || [])
+          setChains(chainsResponse.data || [])
+        } catch (error) {
+          console.error('Error fetching user data:', error)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    fetchUserData()
+  }, [isAuthenticated, user])
 
 
   return (
@@ -68,7 +94,19 @@ const Dashboard = () => {
               <div className="overflow-hidden">
                 {activeTab === 'chains' ? (
                   // Chains Tab
-                  chains.length > 0 ? (
+                  isLoading ? (
+                    <div className="text-center py-12">
+                      <div className="mx-auto w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Loading chains...</h3>
+                      <p className="text-gray-500 mb-6">
+                        Please wait while we fetch your chains.
+                      </p>
+                    </div>
+                  ) : chains.length > 0 ? (
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
@@ -91,7 +129,7 @@ const Dashboard = () => {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {chains.map((chain) => (
-                          <tr key={chain.id} className="hover:bg-gray-50">
+                          <tr key={chain._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
@@ -104,7 +142,7 @@ const Dashboard = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                                {chain.clips.length} clips
+                                {chain.clips?.length || 0} clips
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -121,13 +159,13 @@ const Dashboard = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <Link 
-                                to={`/chains/${chain.id}`}
+                                to={`/chains/${chain._id}`}
                                 className="text-primary-950 hover:text-primary-700 mr-4"
                               >
                                 View
                               </Link>
                               <Link 
-                                to={`/chains/${chain.id}/edit`}
+                                to={`/chains/${chain._id}/edit`}
                                 className="text-primary-950 hover:text-primary-700"
                               >
                                 Edit
@@ -158,7 +196,19 @@ const Dashboard = () => {
                   )
                 ) : (
                   // Clips Tab
-                  clips.length > 0 ? (
+                  isLoading ? (
+                    <div className="text-center py-12">
+                      <div className="mx-auto w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Loading clips...</h3>
+                      <p className="text-gray-500 mb-6">
+                        Please wait while we fetch your clips.
+                      </p>
+                    </div>
+                  ) : clips.length > 0 ? (
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
@@ -181,7 +231,7 @@ const Dashboard = () => {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {clips.map((clip) => (
-                          <tr key={clip.id} className="hover:bg-gray-50">
+                          <tr key={clip._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
@@ -194,16 +244,16 @@ const Dashboard = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {Math.floor((clip.endTime - clip.startTime) / 60)}:{(clip.endTime - clip.startTime) % 60 < 10 ? '0' : ''}{(clip.endTime - clip.startTime) % 60}
+                                {Math.floor((clip.duration || (clip.endTime - clip.startTime)) / 60)}:{((clip.duration || (clip.endTime - clip.startTime)) % 60).toString().padStart(2, '0')}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-wrap gap-1">
-                                {clip.tags.map((tag, index) => (
+                                {clip.tags?.map((tag, index) => (
                                   <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                     {tag}
                                   </span>
-                                ))}
+                                )) || <span className="text-gray-400 text-xs">No tags</span>}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -211,13 +261,13 @@ const Dashboard = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <Link 
-                                to={`/clips/${clip.id}`}
+                                to={`/clips/${clip._id}`}
                                 className="text-primary-950 hover:text-primary-700 mr-4"
                               >
                                 View
                               </Link>
                               <Link 
-                                to={`/clips/${clip.id}/edit`}
+                                to={`/clips/${clip._id}/edit`}
                                 className="text-primary-950 hover:text-primary-700"
                               >
                                 Edit

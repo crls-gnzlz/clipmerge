@@ -4,16 +4,28 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import config from './config/config.js';
 
+// Import logging utilities
+import logger from './utils/logger.js';
+import { requestLogger, errorLogger, performanceMonitor } from './middleware/logging.js';
+
 // Importar controladores
 import * as userController from './controllers/userController.js';
 import * as clipController from './controllers/clipController.js';
 import * as chainController from './controllers/chainController.js';
+
+// Importar rutas
+import userRoutes from './routes/userRoutes.js';
+import clipRoutes from './routes/clipRoutes.js';
+import chainRoutes from './routes/chainRoutes.js';
 
 // Configurar variables de entorno
 dotenv.config();
 
 const app = express();
 const PORT = config.port;
+
+// Log server startup
+logger.serverStart(PORT, process.env.NODE_ENV || 'development');
 
 // Middleware
 app.use(cors({
@@ -23,13 +35,17 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Logging middleware
+app.use(requestLogger);
+app.use(performanceMonitor);
+
 // Conectar a MongoDB
 mongoose.connect(config.mongoUri)
 .then(() => {
-  console.log('✅ Conectado a MongoDB');
+  logger.databaseConnected(config.mongoUri);
 })
 .catch((error) => {
-  console.error('❌ Error conectando a MongoDB:', error);
+  logger.databaseError(error);
 });
 
 // Test route
@@ -37,37 +53,14 @@ app.get('/', (req, res) => {
   res.json({ message: '🎬 ClipChain API is running successfully!' });
 });
 
-// Rutas de usuarios
-app.post('/api/users/register', userController.register);
-app.post('/api/users/login', userController.login);
-app.get('/api/users/profile', userController.getProfile);
-app.put('/api/users/profile', userController.updateProfile);
-app.put('/api/users/change-password', userController.changePassword);
-app.get('/api/users/profile/:username', userController.getPublicProfile);
-app.get('/api/users/stats/:userId', userController.getUserStats);
-
-// Rutas de clips
-app.get('/api/clips', clipController.getAllClips);
-app.get('/api/clips/:id', clipController.getClipById);
-app.post('/api/clips', clipController.createClip);
-app.put('/api/clips/:id', clipController.updateClip);
-app.delete('/api/clips/:id', clipController.deleteClip);
-app.get('/api/clips/user/:userId', clipController.getUserClips);
-
-// Rutas de chains
-app.get('/api/chains', chainController.getAllChains);
-app.get('/api/chains/:id', chainController.getChainById);
-app.post('/api/chains', chainController.createChain);
-app.put('/api/chains/:id', chainController.updateChain);
-app.delete('/api/chains/:id', chainController.deleteChain);
-app.post('/api/chains/:id/clips', chainController.addClipToChain);
-app.put('/api/chains/:id/clips/reorder', chainController.reorderChainClips);
-app.post('/api/chains/:id/play', chainController.incrementPlays);
-app.get('/api/chains/user/:userId', chainController.getUserChains);
+// Usar las rutas importadas
+app.use('/api/users', userRoutes);
+app.use('/api/clips', clipRoutes);
+app.use('/api/chains', chainRoutes);
 
 // Error handling middleware
+app.use(errorLogger);
 app.use((err, req, res, next) => {
-  console.error(err.stack);
   res.status(500).json({ 
     message: 'Something went wrong!', 
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error' 
@@ -80,7 +73,7 @@ app.use('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Frontend: http://localhost:3000`);
-  console.log(`🔧 API: http://localhost:${PORT}/api`);
+  logger.serverReady(PORT, process.env.NODE_ENV || 'development');
+  logger.info(`📱 Frontend: http://localhost:3000`);
+  logger.info(`🔧 API: http://localhost:${PORT}/api`);
 });

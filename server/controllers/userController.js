@@ -1,6 +1,7 @@
 import { User } from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import config from '../config/config.js';
+import { logAuthEvent } from '../middleware/logging.js';
 
 // Generar token JWT
 const generateToken = (userId) => {
@@ -80,6 +81,9 @@ const login = async (req, res) => {
     // Buscar usuario por username o email
     const user = await User.findByUsernameOrEmail(username);
     if (!user) {
+      // Log failed login attempt
+      logAuthEvent('login_failure', null, username, { reason: 'User not found' });
+      
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -89,6 +93,9 @@ const login = async (req, res) => {
     // Verificar contraseña
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
+      // Log failed login attempt
+      logAuthEvent('login_failure', null, username, { reason: 'Invalid password' });
+      
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -100,6 +107,9 @@ const login = async (req, res) => {
     
     // Actualizar último login
     await user.updateLastLogin();
+    
+    // Log successful login
+    logAuthEvent('login_success', user._id, user.username);
     
     // Omitir contraseña en la respuesta
     const userResponse = user.toObject();

@@ -14,10 +14,10 @@ const validateClipData = [
     .isLength({ min: 1, max: 100 })
     .withMessage('El título debe tener entre 1 y 100 caracteres'),
   
-  body('videoId')
+  body('videoUrl')
     .trim()
-    .isLength({ min: 1 })
-    .withMessage('El ID del video es obligatorio'),
+    .isURL()
+    .withMessage('La URL del video debe ser válida'),
   
   body('startTime')
     .isInt({ min: 0 })
@@ -47,10 +47,10 @@ const validateClipData = [
     .isLength({ min: 1, max: 30 })
     .withMessage('Cada tag debe tener entre 1 y 30 caracteres'),
   
-  body('isPublic')
+  body('status')
     .optional()
-    .isBoolean()
-    .withMessage('isPublic debe ser un valor booleano')
+    .isIn(['public', 'private'])
+    .withMessage('El status debe ser "public" o "private"')
 ];
 
 const validateClipUpdate = [
@@ -115,12 +115,37 @@ router.get('/',
 
 router.get('/popular',
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('El límite debe ser un número entre 1 y 50'),
+  validateRequest,
   clipController.getPopularClips
+);
+
+router.get('/tags',
+  clipController.getAllTags
 );
 
 router.get('/tags/:tags',
   param('tags').isString().withMessage('Los tags deben ser una cadena de texto'),
   clipController.getClipsByTags
+);
+
+// Rutas de usuario (deben ir antes de /:id)
+router.get('/user',
+  authenticateToken,
+  validatePagination,
+  clipController.getUserClips
+);
+
+router.get('/user/:userId',
+  authenticateToken,
+  validatePagination,
+  clipController.getUserClips
+);
+
+router.post('/analyze-video',
+  optionalAuth,
+  body('videoUrl').isURL().withMessage('La URL del video debe ser válida'),
+  validateRequest,
+  clipController.analyzeVideo
 );
 
 router.get('/:id',
@@ -159,13 +184,6 @@ router.post('/:id/reaction',
   validateReaction,
   validateRequest,
   clipController.toggleReaction
-);
-
-// Rutas de usuario
-router.get('/user/:userId',
-  authenticateToken,
-  validatePagination,
-  clipController.getUserClips
 );
 
 export default router;

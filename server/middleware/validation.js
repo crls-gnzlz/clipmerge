@@ -1,4 +1,5 @@
 import { validationResult } from 'express-validator';
+import mongoose from 'mongoose';
 
 // Middleware para validar los resultados de express-validator
 const validateRequest = (req, res, next) => {
@@ -22,7 +23,7 @@ const validateRequest = (req, res, next) => {
 const validateObjectId = (req, res, next) => {
   const { id } = req.params;
   
-  if (!id || !require('mongoose').Types.ObjectId.isValid(id)) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({
       message: 'ID inválido',
       code: 'INVALID_ID'
@@ -146,7 +147,7 @@ const validateSearchFilters = (req, res, next) => {
   
   // Validar autor
   if (author && typeof author === 'string') {
-    if (require('mongoose').Types.ObjectId.isValid(author)) {
+    if (mongoose.Types.ObjectId.isValid(author)) {
       filters.author = author;
     } else {
       return res.status(400).json({

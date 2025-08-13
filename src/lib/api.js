@@ -105,6 +105,17 @@ class ApiService {
     return this.request(endpoint);
   }
 
+  async analyzeVideo(videoUrl) {
+    return this.request('/clips/analyze-video', {
+      method: 'POST',
+      body: JSON.stringify({ videoUrl }),
+    });
+  }
+
+  async getAllTags() {
+    return this.request('/clips/tags');
+  }
+
   // Métodos para Chains
   async getChains(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -173,6 +184,10 @@ class ApiService {
   async getUserChains(userId = null) {
     const endpoint = userId ? `/chains/user/${userId}` : '/chains/user';
     return this.request(endpoint);
+  }
+
+  async getRecentChains(limit = 5) {
+    return this.request(`/chains?limit=${limit}&sort=updatedAt&order=-1`);
   }
 
   // Métodos para Usuarios

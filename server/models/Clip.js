@@ -8,9 +8,9 @@ const clipSchema = new mongoose.Schema({
     maxlength: [100, 'Title cannot exceed 100 characters']
   },
   
-  videoId: {
+  videoUrl: {
     type: String,
-    required: [true, 'Video ID is required'],
+    required: [true, 'Video URL is required'],
     trim: true
   },
   
@@ -50,9 +50,17 @@ const clipSchema = new mongoose.Schema({
     required: [true, 'Author is required']
   },
   
+  status: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public'
+  },
+  
   isPublic: {
     type: Boolean,
-    default: true
+    default: function() {
+      return this.status === 'public';
+    }
   },
   
   duration: {
@@ -65,7 +73,8 @@ const clipSchema = new mongoose.Schema({
   thumbnailUrl: {
     type: String,
     default: function() {
-      return `https://img.youtube.com/vi/${this.videoId}/maxresdefault.jpg`;
+      // Generate a default thumbnail or use a placeholder
+      return `https://via.placeholder.com/320x180/cccccc/666666?text=Video+Clip`;
     }
   },
   
@@ -80,9 +89,10 @@ const clipSchema = new mongoose.Schema({
 });
 
 // Indexes to improve query performance
-clipSchema.index({ videoId: 1 });
+clipSchema.index({ videoUrl: 1 });
 clipSchema.index({ author: 1 });
 clipSchema.index({ tags: 1 });
+clipSchema.index({ status: 1 });
 clipSchema.index({ isPublic: 1 });
 clipSchema.index({ createdAt: -1 });
 

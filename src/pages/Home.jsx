@@ -14,8 +14,8 @@ const Home = () => {
         <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 pb-2">
           <div className="flex items-center justify-center mb-1">
             <div className="flex items-center space-x-3">
-              <img src="/logo-blue.svg" alt="Clipchain" className="h-6 w-6" />
-              <h1 className="text-xl font-semibold text-gray-800">
+              <img src="/logo-blue.svg" alt="Clipchain" className="h-7 w-7" />
+              <h1 className="text-2xl font-semibold text-gray-800">
                 Welcome to Clipchain!
               </h1>
             </div>
@@ -33,7 +33,7 @@ const Home = () => {
                   Step 1. See Clipchain in action
                 </h2>
                 <p className="text-gray-600 mb-8 text-sm">
-                  Here you can see some examples of how Clipchain works. Each box below contains a curated collection of video clips that you can browse and play through.
+                  Here you can see an example of how Clipchain works. Start selecting any clip to see the content.
                 </p>
                 
                 <div className="space-y-8">
@@ -46,19 +46,6 @@ const Home = () => {
                     createdAt={chainMetadata['llm-tutorial'].createdAt}
                     tags={chainMetadata['llm-tutorial'].tags}
                   />
-                </div>
-                
-                {/* Library Link */}
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <Link 
-                    to="/library" 
-                    className="inline-flex items-center text-gray-500 hover:text-primary-600 text-sm font-medium transition-all duration-200 hover:scale-105"
-                  >
-                    <span>Explore more clipchains in our public Library</span>
-                    <svg className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
                 </div>
               </div>
             </div>

@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import CopyNotification from './CopyNotification.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import apiService from '../lib/api.js'
 
 const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const location = useLocation()
@@ -14,9 +15,36 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const [emails, setEmails] = useState([''])
   const [showCopyNotification, setShowCopyNotification] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [userClips, setUserClips] = useState([])
+  const [userChains, setUserChains] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const sidebarRef = useRef(null)
   const resizeHandleRef = useRef(null)
   const profileMenuRef = useRef(null)
+
+  // Fetch user's clips and chains
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (isAuthenticated && user) {
+        try {
+          setIsLoading(true)
+          const [clipsResponse, chainsResponse] = await Promise.all([
+            apiService.getUserClips(),
+            apiService.getUserChains()
+          ])
+          
+          setUserClips(clipsResponse.data || [])
+          setUserChains(chainsResponse.data || [])
+        } catch (error) {
+          console.error('Error fetching user data:', error)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    fetchUserData()
+  }, [isAuthenticated, user])
 
   // Close profile menu when clicking outside
   useEffect(() => {
@@ -30,37 +58,86 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Mock data for recent clips and chains
-  const recentClips = [
-    { id: 1, title: 'Introduction to React', duration: '2:30', createdAt: '2024-01-15' },
-    { id: 2, title: 'State Management', duration: '4:15', createdAt: '2024-01-14' },
-    { id: 3, title: 'Hooks Tutorial', duration: '3:45', createdAt: '2024-01-13' },
-    { id: 4, title: 'Component Lifecycle', duration: '5:20', createdAt: '2024-01-12' },
-    { id: 5, title: 'Props vs State', duration: '2:55', createdAt: '2024-01-11' },
-    { id: 6, title: 'Context API', duration: '3:10', createdAt: '2024-01-10' },
-    { id: 7, title: 'Custom Hooks', duration: '4:05', createdAt: '2024-01-09' },
-    { id: 8, title: 'Performance Optimization', duration: '6:15', createdAt: '2024-01-08' },
-    { id: 9, title: 'Testing Components', duration: '4:30', createdAt: '2024-01-07' },
-    { id: 10, title: 'Error Boundaries', duration: '3:20', createdAt: '2024-01-06' }
-  ]
+  // Loading state for clips and chains
+  const renderClipsList = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+    
+    if (userClips.length === 0) {
+      return (
+        <div className="text-center py-0.5">
+          <p className="text-xs text-gray-400">No clips yet</p>
+        </div>
+      )
+    }
+    
+    return userClips.slice(0, 5).map((clip) => (
+      <div key={clip._id} className="group relative flex items-center p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-gray-900 truncate">{clip.title}</p>
+        </div>
+        {/* Hover menu with dots */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="relative">
+            <button className="text-gray-400 hover:text-gray-600 p-0.5">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    ))
+  }
 
-  const userChains = [
-    { id: 1, name: 'React Fundamentals', clipsCount: 8, isPublic: true },
-    { id: 2, name: 'Advanced JavaScript', clipsCount: 12, isPublic: false },
-    { id: 3, name: 'CSS Grid Layout', clipsCount: 6, isPublic: true },
-    { id: 4, name: 'TypeScript Basics', clipsCount: 10, isPublic: false },
-    { id: 5, name: 'Node.js Backend', clipsCount: 15, isPublic: true },
-    { id: 6, name: 'Database Design', clipsCount: 7, isPublic: false },
-    { id: 7, name: 'API Development', clipsCount: 9, isPublic: true },
-    { id: 8, name: 'Testing Strategies', clipsCount: 11, isPublic: false },
-    { id: 9, name: 'Deployment Guide', clipsCount: 5, isPublic: true },
-    { id: 10, name: 'Performance Tips', clipsCount: 13, isPublic: false },
-    { id: 11, name: 'Security Best Practices', clipsCount: 8, isPublic: true },
-    { id: 12, name: 'Mobile Development', clipsCount: 6, isPublic: false },
-    { id: 13, name: 'Cloud Architecture', clipsCount: 9, isPublic: true },
-    { id: 14, name: 'DevOps Practices', clipsCount: 7, isPublic: false },
-    { id: 15, name: 'Microservices', clipsCount: 11, isPublic: true }
-  ]
+  const renderChainsList = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+    
+    if (userChains.length === 0) {
+      return (
+        <div className="text-center py-0.5">
+          <p className="text-xs text-gray-400">No chains yet</p>
+        </div>
+      )
+    }
+    
+    return userChains.slice(0, 5).map((chain) => (
+      <div key={chain._id} className="group relative flex items-center p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-gray-900 truncate">{chain.name}</p>
+        </div>
+        {/* Hover menu with dots */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="relative">
+            <button className="text-gray-400 hover:text-gray-600 p-0.5">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    ))
+  }
 
   const handleMouseDown = useCallback((e) => {
     console.log('Mouse down on resize handle')
@@ -204,24 +281,12 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         }`}
         style={{ width: `${width}px` }}
       >
-        {/* Header with Profile - Reduced 20% and updated */}
-        <div className="p-3 border-b border-gray-200 bg-white">
-          <Link to="/profile" className="flex items-center space-x-2 hover:bg-gray-50 p-1.5 rounded-lg transition-colors cursor-pointer">
-            <div className="w-6 h-6 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-xs">C</span>
-            </div>
-            <div>
-              <p className="text-xs text-gray-600">carlos@clipchain.com</p>
-            </div>
-          </Link>
-        </div>
-
         {/* Content Area - Scrollable content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-3">
             {/* User Profile Section - Only show when authenticated */}
             {isAuthenticated && (
-              <div className="mb-4 p-2 bg-gray-50 rounded-lg">
+              <div className="mb-4">
                 <div className="relative" ref={profileMenuRef}>
                   {/* Clickable Profile Header */}
                   <button
@@ -345,20 +410,6 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 </svg>
                 <span className="text-xs font-medium">Library</span>
               </Link>
-
-              <Link
-                to="/database-test"
-                className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg transition-all duration-200 ${
-                  isActive('/database-test') 
-                    ? 'bg-primary-50 text-primary-700 shadow-sm' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-xs font-medium">DB Test</span>
-              </Link>
             </nav>
 
             {/* Subtle separator */}
@@ -376,24 +427,8 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 </Link>
               </div>
               
-              <div className="h-28 overflow-y-auto space-y-0.5 pr-1">
-                {recentClips.map((clip) => (
-                  <div key={clip.id} className="group relative flex items-center p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-900 truncate">{clip.title}</p>
-                    </div>
-                    {/* Hover menu with dots */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="relative">
-                        <button className="text-gray-400 hover:text-gray-600 p-0.5">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className={`overflow-y-auto space-y-0.5 pr-1 ${userClips.length === 0 ? 'h-8' : 'h-28'}`}>
+                {renderClipsList()}
               </div>
             </div>
 
@@ -412,24 +447,8 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 </Link>
               </div>
               
-              <div className="h-28 overflow-y-auto space-y-0.5 pr-1">
-                {userChains.map((chain) => (
-                  <div key={chain.id} className="group relative flex items-center p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-900 truncate">{chain.name}</p>
-                    </div>
-                    {/* Hover menu with dots */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="relative">
-                        <button className="text-gray-400 hover:text-gray-600 p-0.5">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className={`overflow-y-auto space-y-0.5 pr-1 ${userChains.length === 0 ? 'h-8' : 'h-28'}`}>
+                {renderChainsList()}
               </div>
             </div>
 

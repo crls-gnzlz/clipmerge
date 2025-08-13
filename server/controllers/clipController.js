@@ -1,5 +1,22 @@
 import { Clip } from '../models/Clip.js';
 import { User } from '../models/User.js';
+import { google } from 'googleapis';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Ensure environment variables are loaded
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
+
+// Initialize YouTube API
+const youtube = google.youtube('v3');
+const API_KEY = process.env.YOUTUBE_API_KEY;
+
+// Test logging - this should show up in the logs
+console.log('🔑 YouTube API Key Status:', API_KEY ? 'LOADED' : 'NOT LOADED');
+console.log('🔑 API Key Value:', API_KEY ? `${API_KEY.substring(0, 10)}...` : 'undefined');
 
 // Obtener todos los clips con paginación y filtros
 const getAllClips = async (req, res) => {
@@ -390,6 +407,166 @@ const getClipsByTags = async (req, res) => {
   }
 };
 
+// Obtener todos los tags únicos
+const getAllTags = async (req, res) => {
+  try {
+    const tags = await Clip.distinct('tags', { isPublic: true });
+    
+    res.json({
+      success: true,
+      data: tags.sort()
+    });
+    
+  } catch (error) {
+    console.error('Error obteniendo tags:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
+
+// Analizar video para obtener duración
+const analyzeVideo = async (req, res) => {
+  try {
+    const { videoUrl } = req.body;
+    
+    // Extract YouTube video ID
+    const extractYouTubeId = (url) => {
+      if (!url) return null;
+      
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+        /youtube\.com\/v\/([^&\n?#]+)/,
+        /youtube\.com\/watch\?.*&v=([^&\n?#]+)/
+      ];
+      
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+      }
+      
+      return null;
+    };
+    
+    const youtubeId = extractYouTubeId(videoUrl);
+    
+    if (!youtubeId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid YouTube URL provided'
+      });
+    }
+    
+    let videoMetadata;
+    
+    // Try to use real YouTube API if key is available
+    if (API_KEY) {
+      try {
+        console.log(`🎥 Fetching real data for video: ${youtubeId}`);
+        console.log(`🔑 Using API key: ${API_KEY.substring(0, 10)}...`);
+        
+        const response = await youtube.videos.list({
+          key: API_KEY,
+          part: 'snippet,contentDetails,statistics',
+          id: youtubeId
+        });
+        
+        console.log(`📡 YouTube API response status: ${response.status}`);
+        console.log(`📡 YouTube API response items: ${response.data.items ? response.data.items.length : 0}`);
+        
+        if (response.data.items && response.data.items.length > 0) {
+          const video = response.data.items[0];
+          const snippet = video.snippet;
+          const contentDetails = video.contentDetails;
+          const statistics = video.statistics;
+          
+          // Parse duration (ISO 8601 format: PT4M13S)
+          const duration = parseDuration(contentDetails.duration);
+          
+          videoMetadata = {
+            id: youtubeId,
+            title: snippet.title,
+            thumbnail: snippet.thumbnails?.medium?.url || `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`,
+            duration,
+            channel: snippet.channelTitle,
+            viewCount: parseInt(statistics.viewCount) || 0,
+            description: snippet.description,
+            publishedAt: snippet.publishedAt,
+            category: snippet.categoryId,
+            tags: snippet.tags || []
+          };
+          
+          console.log(`✅ Real YouTube data fetched: ${snippet.title}`);
+          console.log(`✅ Channel: ${snippet.channelTitle}`);
+          console.log(`✅ Duration: ${duration}s`);
+        } else {
+          throw new Error('Video not found');
+        }
+      } catch (apiError) {
+        console.warn(`⚠️ YouTube API failed, falling back to mock data:`, apiError.message);
+        console.warn(`⚠️ API Error details:`, apiError);
+        // Fall back to mock data if API fails
+        videoMetadata = generateMockMetadata(youtubeId);
+      }
+    } else {
+      // No API key, use mock data
+      console.log(`📝 No YouTube API key, using mock data for: ${youtubeId}`);
+      console.log(`📝 API_KEY value:`, API_KEY);
+      videoMetadata = generateMockMetadata(youtubeId);
+    }
+    
+    res.json({
+      success: true,
+      data: videoMetadata
+    });
+    
+  } catch (error) {
+    console.error('Error analizando video:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error analizando el video',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to parse YouTube duration (ISO 8601)
+const parseDuration = (duration) => {
+  const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+  let hours = 0, minutes = 0, seconds = 0;
+  
+  if (match[1]) hours = parseInt(match[1]);
+  if (match[2]) minutes = parseInt(match[2]);
+  if (match[3]) seconds = parseInt(match[3]);
+  
+  return hours * 3600 + minutes * 60 + seconds;
+};
+
+// Helper function to generate mock metadata
+const generateMockMetadata = (youtubeId) => {
+  const hash = youtubeId.split('').reduce((a, b) => {
+    a = ((a << 5) - a + b.charCodeAt(0)) & 0xffffffff;
+    return a;
+  }, 0);
+  
+  const duration = Math.abs(hash % 2520) + 180; // 3-45 minutes in seconds
+  
+  return {
+    id: youtubeId,
+    title: `Sample Video ${youtubeId.substring(0, 6)} - A comprehensive tutorial on modern web development techniques`,
+    thumbnail: `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`,
+    duration,
+    channel: `Channel ${youtubeId.substring(0, 4)}`,
+    viewCount: Math.floor(Math.random() * 1000000) + 1000,
+    description: `This is a sample video with ID ${youtubeId}. In production, this would contain the actual video description from YouTube.`,
+    publishedAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+    category: 'Education',
+    tags: ['Tutorial', 'Web Development', 'JavaScript']
+  };
+};
+
 export {
   getAllClips,
   getClipById,
@@ -399,5 +576,7 @@ export {
   toggleReaction,
   getUserClips,
   getPopularClips,
-  getClipsByTags
+  getClipsByTags,
+  getAllTags,
+  analyzeVideo
 };

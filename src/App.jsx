@@ -7,6 +7,7 @@ import Library from './pages/Library.jsx'
 import ClipchainLaunchpad from './pages/ClipchainLaunchpad.jsx'
 import LandingPage from './pages/LandingPage.jsx'
 import CreateClip from './pages/CreateClip.jsx'
+import CreateChain from './pages/CreateChain.jsx'
 import EmbedPage from './pages/EmbedPage.jsx'
 import EditChain from './pages/EditChain.jsx'
 import CustomPage from './pages/CustomPage.jsx'
@@ -45,6 +46,7 @@ function App() {
             </div>
           } />
           <Route path="/create" element={<CreateClip />} />
+          <Route path="/create-chain" element={<CreateChain />} />
           <Route path="/database-test" element={<DatabaseTest />} />
         </Routes>
       </main>
