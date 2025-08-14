@@ -52,7 +52,7 @@ const register = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error registrando usuario:', error);
+    console.error('Error registering user:', error);
     
     if (error.name === 'ValidationError') {
       return res.status(400).json({
@@ -76,10 +76,18 @@ const register = async (req, res) => {
 // Iniciar sesión
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
     
     // Buscar usuario por username o email
-    const user = await User.findByUsernameOrEmail(username);
+    const identifier = username || email;
+    if (!identifier) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username or email is required'
+      });
+    }
+    
+    const user = await User.findByUsernameOrEmail(identifier);
     if (!user) {
       // Log failed login attempt
       logAuthEvent('login_failure', null, username, { reason: 'User not found' });
@@ -125,7 +133,7 @@ const login = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error en login:', error);
+    console.error('Error during login:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -137,11 +145,26 @@ const login = async (req, res) => {
 // Obtener perfil del usuario autenticado
 const getProfile = async (req, res) => {
   try {
-    // Por ahora, devolver un mensaje de que se requiere autenticación
-    res.status(401).json({
-      success: false,
-      message: 'Autenticación requerida',
-      code: 'AUTH_REQUIRED'
+    // El usuario ya está autenticado por el middleware authenticateToken
+    // req.user contiene la información del usuario autenticado
+    const user = req.user;
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+    
+    // Omitir campos sensibles
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    
+    res.json({
+      success: true,
+      message: 'Profile retrieved successfully',
+      data: userResponse
     });
     
   } catch (error) {

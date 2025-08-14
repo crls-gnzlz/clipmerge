@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import LayoutWithSidebar from '../components/LayoutWithSidebar.jsx';
 import SelectField from '../components/SelectField.jsx';
 import apiService from '../lib/api.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const CreateClip = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -18,10 +20,17 @@ const CreateClip = () => {
   const [videoMetadata, setVideoMetadata] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
 
   const [videoId, setVideoId] = useState(null);
   const [youtubePlayer, setYoutubePlayer] = useState(null);
   const [createAnother, setCreateAnother] = useState(false);
+  
+  // New state for chain selection
+  const [showChainSelector, setShowChainSelector] = useState(false);
+  const [userChains, setUserChains] = useState([]);
+  const [selectedChainId, setSelectedChainId] = useState('');
+  const [isLoadingChains, setIsLoadingChains] = useState(false);
 
   // Refs
   const iframeRef = useRef(null);
@@ -33,13 +42,57 @@ const CreateClip = () => {
 
   // Load YouTube IFrame API
   useEffect(() => {
+    console.log('🔍 CreateClip: Loading YouTube IFrame API...');
+    
     if (!window.YT) {
+      console.log('🔍 CreateClip: YouTube API not found, loading script...');
+      
+      // Create global callback for YouTube API
+      window.onYouTubeIframeAPIReady = () => {
+        console.log('✅ CreateClip: YouTube IFrame API ready!');
+        console.log('🔍 CreateClip: YT object available:', window.YT);
+        console.log('🔍 CreateClip: YT.Player available:', window.YT.Player);
+      };
+      
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      
+      console.log('🔍 CreateClip: YouTube script tag added to DOM');
+    } else {
+      console.log('✅ CreateClip: YouTube API already available');
+      console.log('🔍 CreateClip: YT object:', window.YT);
+      console.log('🔍 CreateClip: YT.Player available:', window.YT.Player);
     }
   }, []);
+
+  // Load user chains when component mounts
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadUserChains();
+    }
+  }, [isAuthenticated, user]);
+
+  // Load user chains
+  const loadUserChains = async () => {
+    try {
+      setIsLoadingChains(true);
+      const response = await apiService.getUserChains();
+      if (response.success) {
+        setUserChains(response.data || []);
+        console.log('✅ CreateClip: User chains loaded:', response.data?.length || 0);
+      } else {
+        console.warn('⚠️ CreateClip: Failed to load user chains:', response.message);
+        setUserChains([]);
+      }
+    } catch (error) {
+      console.error('❌ CreateClip: Error loading user chains:', error);
+      setUserChains([]);
+    } finally {
+      setIsLoadingChains(false);
+    }
+  };
 
 
 
@@ -92,9 +145,16 @@ const CreateClip = () => {
     
     try {
       setIsLoading(true);
+      console.log('🔍 CreateClip: Starting video duration detection for URL:', url);
+      
       const extractedId = extractVideoId(url);
+      console.log('🔍 CreateClip: Extracted video ID:', extractedId);
+      
       if (extractedId) {
         setVideoId(extractedId);
+        console.log('✅ CreateClip: videoId state updated to:', extractedId);
+      } else {
+        console.warn('⚠️ CreateClip: Could not extract video ID from URL');
       }
       
       const response = await apiService.analyzeVideo(url);
@@ -107,15 +167,19 @@ const CreateClip = () => {
           videoUrl: url
         }));
         
-        console.log('Video metadata received:', metadata);
+        console.log('✅ CreateClip: Video metadata received:', metadata);
+        console.log('✅ CreateClip: Video duration set to:', metadata.duration);
+      } else {
+        console.warn('⚠️ CreateClip: Video analysis failed:', response.message);
       }
     } catch (error) {
-      console.error('Error detecting video duration:', error);
+      console.error('❌ CreateClip: Error detecting video duration:', error);
       setVideoDuration(300);
       setFormData(prev => ({ ...prev, videoUrl: url }));
       setVideoMetadata(null);
     } finally {
       setIsLoading(false);
+      console.log('🔍 CreateClip: Video duration detection completed');
     }
   };
 
@@ -226,38 +290,36 @@ const CreateClip = () => {
     
     try {
       setIsLoading(true);
+      setErrors({});
       
       const clipData = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        videoUrl: formData.videoUrl,
         startTime: timeToSeconds(formData.startTime),
-        endTime: timeToSeconds(formData.endTime),
-        duration: timeToSeconds(formData.endTime) - timeToSeconds(formData.startTime)
+        endTime: timeToSeconds(formData.endTime)
       };
+      
+      console.log('🚀 CreateClip: Creating clip with data:', clipData);
       
       const response = await apiService.createClip(clipData);
       
       if (response.success) {
+        console.log('✅ CreateClip: Clip created successfully');
+        
         if (createAnother) {
-          // Reset form but keep video information
+          // Reset form but keep video
           setFormData(prev => ({
             ...prev,
-            startTime: '',
-            endTime: '',
             title: '',
-            description: ''
+            description: '',
+            startTime: '',
+            endTime: ''
           }));
-          // Keep videoId, videoDuration, videoMetadata, and youtubePlayer
           setErrors({});
-          // Show success message
-          setErrors({ submit: 'Clip created successfully! Form reset for creating another clip from the same video.' });
-          // Clear success message after 3 seconds
-          setTimeout(() => {
-            setErrors(prev => {
-              const { submit, ...rest } = prev;
-              return rest;
-            });
-          }, 3000);
+          setErrors({ submit: 'Clip created successfully! Form reset for another clip.' });
         } else {
+          // Navigate to dashboard
           navigate('/dashboard');
         }
       } else {
@@ -265,7 +327,104 @@ const CreateClip = () => {
       }
     } catch (error) {
       console.error('Error creating clip:', error);
-      setErrors({ submit: 'An error occurred while creating the clip' });
+      setErrors({ submit: error.message || 'An error occurred while creating the clip' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Create clip and associate with chain
+  const handleCreateAndChain = async () => {
+    if (!validateForm()) return;
+    
+    try {
+      setIsLoading(true);
+      setErrors({});
+      
+      const clipData = {
+        title: formData.title,
+        description: formData.description,
+        videoUrl: formData.videoUrl,
+        startTime: timeToSeconds(formData.startTime),
+        endTime: timeToSeconds(formData.endTime)
+      };
+      
+      console.log('🚀 CreateClip: Creating clip and associating with chain:', clipData);
+      console.log('🔍 CreateClip: Selected chain ID:', selectedChainId);
+      
+      // First create the clip
+      const clipResponse = await apiService.createClip(clipData);
+      
+      if (clipResponse.success) {
+        console.log('✅ CreateClip: Clip created successfully, associating with chain');
+        console.log('🔍 CreateClip: Created clip data:', clipResponse.data);
+        
+        // Then associate with selected chain
+        if (selectedChainId) {
+          try {
+            console.log('🔍 CreateClip: Adding clip to chain...');
+            
+            // Use addClipToChain which handles the association internally
+            const chainResponse = await apiService.addClipToChain(selectedChainId, clipResponse.data._id);
+            
+            if (chainResponse.success) {
+              console.log('✅ CreateClip: Clip associated with chain successfully');
+              console.log('🔍 CreateClip: Chain response:', chainResponse);
+              setSuccessMessage('Clip created and associated with chain successfully!');
+              setErrors({});
+              
+              // Reset form but stay on the same page
+              // Only clear form data if "same video" is not checked
+              if (!createAnother) {
+                setFormData({
+                  title: '',
+                  description: '',
+                  videoUrl: '',
+                  startTime: '',
+                  endTime: '',
+                  tags: []
+                });
+                setVideoId('');
+                setVideoDuration(0);
+                setVideoMetadata(null);
+                setYoutubePlayer(null);
+              } else {
+                // Keep video data but clear clip-specific fields
+                setFormData(prev => ({
+                  ...prev,
+                  title: '',
+                  description: '',
+                  startTime: '',
+                  endTime: '',
+                  tags: []
+                }));
+              }
+              
+              // Close the chain selector modal
+              setShowChainSelector(false);
+              setSelectedChainId('');
+              
+              // Show success message
+              setTimeout(() => {
+                setSuccessMessage('');
+              }, 3000);
+            } else {
+              console.warn('⚠️ CreateClip: Clip created but failed to associate with chain:', chainResponse.message);
+              setErrors({ submit: 'Clip created but failed to associate with chain. You can add it manually later.' });
+            }
+          } catch (error) {
+            console.error('❌ CreateClip: Error associating clip with chain:', error);
+            setErrors({ submit: 'Clip created but failed to associate with chain. You can add it manually later.' });
+          }
+        } else {
+          setErrors({ submit: 'Clip created successfully! Please select a chain to associate it with.' });
+        }
+      } else {
+        setErrors({ submit: clipResponse.message || 'Failed to create clip' });
+      }
+    } catch (error) {
+      console.error('❌ CreateClip: Error creating clip and associating with chain:', error);
+      setErrors({ submit: error.message || 'An error occurred while creating the clip' });
     } finally {
       setIsLoading(false);
     }
@@ -273,16 +432,33 @@ const CreateClip = () => {
 
   // Copy current video time to specified field
   const copyCurrentTime = (field) => {
+    console.log('🔍 CreateClip: copyCurrentTime called for field:', field);
+    console.log('🔍 CreateClip: youtubePlayer state:', youtubePlayer ? 'Ready' : 'Not ready');
+    console.log('🔍 CreateClip: videoId state:', videoId);
+    
     if (!youtubePlayer) {
-      console.warn('YouTube player not ready yet');
+      console.warn('❌ CreateClip: YouTube player not ready yet');
+      setErrors(prev => ({ ...prev, [field]: 'YouTube player not ready. Please wait for the video to load.' }));
+      return;
+    }
+    
+    if (!videoId) {
+      console.warn('❌ CreateClip: No video ID available');
+      setErrors(prev => ({ ...prev, [field]: 'No video loaded. Please enter a video URL first.' }));
       return;
     }
     
     try {
+      console.log('🔍 CreateClip: Attempting to get current time from YouTube player...');
+      
       // Get current time from YouTube player
       const currentTime = youtubePlayer.getCurrentTime();
+      console.log('🔍 CreateClip: Current time from player:', currentTime);
+      
       if (currentTime !== undefined && currentTime >= 0) {
         const timeString = secondsToTime(Math.floor(currentTime));
+        console.log('🔍 CreateClip: Converted time string:', timeString);
+        
         handleInputChange(field, timeString);
         
         // Visual feedback - briefly change button text
@@ -298,6 +474,8 @@ const CreateClip = () => {
           }, 1000);
         }
         
+        console.log('✅ CreateClip: Time copied successfully to', field, ':', timeString);
+        
         // Auto-validate the copied time
         setTimeout(() => {
           const timeValidation = validateTimeFormat(timeString);
@@ -305,15 +483,34 @@ const CreateClip = () => {
             setErrors(prev => ({ ...prev, [field]: timeValidation.message }));
           }
         }, 100);
+      } else {
+        console.warn('⚠️ CreateClip: Invalid current time from player:', currentTime);
+        setErrors(prev => ({ ...prev, [field]: 'Could not get current time from video player.' }));
       }
     } catch (error) {
-      console.error('Error getting current time:', error);
+      console.error('❌ CreateClip: Error getting current time:', error);
+      setErrors(prev => ({ ...prev, [field]: 'Error getting current time from video player.' }));
     }
   };
 
   // Handle YouTube player ready
   const onPlayerReady = (event) => {
-    setYoutubePlayer(event.target);
+    console.log('✅ CreateClip: YouTube player ready event triggered');
+    console.log('�� CreateClip: Player event:', event);
+    
+    // The event.target is the player instance
+    const player = event.target;
+    console.log('🔍 CreateClip: Player instance:', player);
+    
+    setYoutubePlayer(player);
+    console.log('✅ CreateClip: youtubePlayer state updated');
+    
+    // Test if player methods are available
+    if (player && typeof player.getCurrentTime === 'function') {
+      console.log('✅ CreateClip: Player methods are available');
+    } else {
+      console.warn('⚠️ CreateClip: Player methods not available');
+    }
   };
 
   // Handle input changes
@@ -522,11 +719,28 @@ const CreateClip = () => {
                     <iframe
                       ref={iframeRef}
                       className="absolute top-0 left-0 w-full h-full rounded-lg"
-                      src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`}
+                      src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}&events=onReady,onStateChange`}
                       title="YouTube video player"
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
+                      onLoad={() => {
+                        console.log('🔍 CreateClip: YouTube iframe loaded');
+                        // Initialize YouTube player API
+                        if (window.YT && window.YT.Player) {
+                          console.log('🔍 CreateClip: YouTube API available, creating player instance');
+                          const player = new window.YT.Player(iframeRef.current, {
+                            events: {
+                              onReady: onPlayerReady,
+                              onStateChange: (event) => {
+                                console.log('🔍 CreateClip: Player state changed:', event.data);
+                              }
+                            }
+                          });
+                        } else {
+                          console.warn('⚠️ CreateClip: YouTube API not available yet');
+                        }
+                      }}
                     />
                   </div>
                 </div>
@@ -562,11 +776,15 @@ const CreateClip = () => {
                       type="button"
                       onClick={() => copyCurrentTime('startTime')}
                       data-copy-time="startTime"
-                      disabled={!videoId}
-                      className="px-3 py-2.5 bg-secondary-600 text-white text-xs rounded-lg hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 font-medium whitespace-nowrap"
-                      title="Copy current video time"
+                      disabled={!videoId || !youtubePlayer}
+                      className={`px-3 py-2.5 text-white text-xs rounded-lg transition-all duration-200 font-medium whitespace-nowrap ${
+                        !videoId || !youtubePlayer
+                          ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                          : 'bg-secondary-600 hover:bg-blue-500'
+                      }`}
+                      title={!videoId ? 'Enter a video URL first' : !youtubePlayer ? 'Video player not ready yet' : 'Copy current video time'}
                     >
-                      Copy Time
+                      {!videoId ? 'No Video' : !youtubePlayer ? 'Loading...' : 'Copy Time'}
                     </button>
                   </div>
                   {errors.startTime && (
@@ -611,11 +829,15 @@ const CreateClip = () => {
                       type="button"
                       onClick={() => copyCurrentTime('endTime')}
                       data-copy-time="endTime"
-                      disabled={!videoId}
-                      className="px-3 py-2.5 bg-secondary-600 text-white text-xs rounded-lg hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 font-medium whitespace-nowrap"
-                      title="Copy current video time"
+                      disabled={!videoId || !youtubePlayer}
+                      className={`px-3 py-2.5 text-white text-xs rounded-lg transition-all duration-200 font-medium whitespace-nowrap ${
+                        !videoId || !youtubePlayer
+                          ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                          : 'bg-secondary-600 hover:bg-blue-500'
+                      }`}
+                      title={!videoId ? 'Enter a video URL first' : !youtubePlayer ? 'Video player not ready yet' : 'Copy current video time'}
                     >
-                      Copy Time
+                      {!videoId ? 'No Video' : !youtubePlayer ? 'Loading...' : 'Copy Time'}
                     </button>
                   </div>
                   {errors.endTime && (
@@ -694,6 +916,20 @@ const CreateClip = () => {
                 </div>
               )}
 
+              {/* Success Message */}
+              {successMessage && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-2">
+                    <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <p className="text-sm text-green-600 font-medium">
+                      {successMessage}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Create Another Checkbox */}
               <div className={`flex items-start space-x-3 pt-4 p-3 rounded-lg border transition-all duration-200 ${
                 createAnother 
@@ -743,11 +979,113 @@ const CreateClip = () => {
                 >
                   {isLoading ? 'Creating...' : 'Create Clip'}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowChainSelector(true)}
+                  disabled={isLoading || userChains.length === 0}
+                  className="px-6 py-2.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                >
+                  {isLoading ? 'Creating...' : 'Create and Chain'}
+                </button>
               </div>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Chain Selector Modal */}
+      {showChainSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Select Chain</h3>
+                <button 
+                  onClick={() => setShowChainSelector(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 rounded p-1"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                Choose a chain to associate with your new clip
+              </p>
+            </div>
+            
+            <div className="px-6 py-4">
+              {isLoadingChains ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                  <p className="text-sm text-gray-500 mt-2">Loading chains...</p>
+                </div>
+              ) : userChains.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No chains available</h3>
+                  <p className="text-gray-500 mb-4">Create a chain first to associate clips with it</p>
+                  <button
+                    onClick={() => {
+                      setShowChainSelector(false);
+                      navigate('/create-chain');
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-all duration-200"
+                  >
+                    Create Chain
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-700 mb-3">
+                    Select a chain to associate your clip with:
+                  </div>
+                  {userChains.map((chain) => (
+                    <label key={chain._id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="selectedChain"
+                        value={chain._id}
+                        checked={selectedChainId === chain._id}
+                        onChange={(e) => setSelectedChainId(e.target.value)}
+                        className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">{chain.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {chain.clips && chain.clips.length > 0 ? `${chain.clips.length} clips` : 'No clips yet'}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {userChains.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowChainSelector(false)}
+                  className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateAndChain}
+                  disabled={!selectedChainId || isLoading}
+                  className="px-6 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  {isLoading ? 'Creating...' : 'Create and Associate'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </LayoutWithSidebar>
   );
 };

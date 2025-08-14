@@ -12,34 +12,50 @@ const validateRegistration = [
     .trim()
     .isLength({ min: 3, max: 30 })
     .matches(/^[a-zA-Z0-9_]+$/)
-    .withMessage('El nombre de usuario debe tener entre 3 y 30 caracteres y solo puede contener letras, números y guiones bajos'),
+    .withMessage('Username must be between 3 and 30 characters and can only contain letters, numbers and underscores'),
   
   body('email')
     .isEmail()
     .normalizeEmail()
-    .withMessage('Por favor introduce un email válido'),
+    .withMessage('Please enter a valid email'),
   
   body('password')
     .isLength({ min: 6 })
-    .withMessage('La contraseña debe tener al menos 6 caracteres'),
+    .withMessage('Password must be at least 6 characters long'),
   
   body('displayName')
     .optional()
     .trim()
     .isLength({ min: 1, max: 50 })
-    .withMessage('El nombre de visualización debe tener entre 1 y 50 caracteres')
+    .withMessage('Display name must be between 1 and 50 characters')
 ];
 
 // Middleware de validación para login
 const validateLogin = [
   body('username')
+    .optional()
     .trim()
     .notEmpty()
-    .withMessage('Username or email is required'),
+    .withMessage('Username is required if provided'),
+  
+  body('email')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required if provided'),
   
   body('password')
     .notEmpty()
-    .withMessage('Password is required')
+    .withMessage('Password is required'),
+  
+  // Custom validation to ensure either username or email is provided
+  body()
+    .custom((value, { req }) => {
+      if (!req.body.username && !req.body.email) {
+        throw new Error('Either username or email is required');
+      }
+      return true;
+    })
 ];
 
 // Middleware de validación para actualización de perfil

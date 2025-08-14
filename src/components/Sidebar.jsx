@@ -7,7 +7,21 @@ import apiService from '../lib/api.js'
 const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth()
+  
+  // Debug logs for authentication state
+  useEffect(() => {
+    console.log('🔍 Sidebar Debug - Auth State:', {
+      isAuthenticated,
+      authLoading,
+      user: user ? {
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName
+      } : null
+    });
+  }, [isAuthenticated, authLoading, user]);
+  
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [startWidth, setStartWidth] = useState(0)
@@ -17,14 +31,28 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [userClips, setUserClips] = useState([])
   const [userChains, setUserChains] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const sidebarRef = useRef(null)
   const resizeHandleRef = useRef(null)
   const profileMenuRef = useRef(null)
 
+  // Handle loading state changes
+  useEffect(() => {
+    if (authLoading) {
+      setIsLoading(true)
+    } else if (!isAuthenticated) {
+      setIsLoading(false)
+    }
+  }, [authLoading, isAuthenticated])
+
   // Fetch user's clips and chains
   useEffect(() => {
     const fetchUserData = async () => {
+      // Don't fetch data while auth is still loading
+      if (authLoading) {
+        return
+      }
+      
       if (isAuthenticated && user) {
         try {
           setIsLoading(true)
@@ -40,11 +68,16 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         } finally {
           setIsLoading(false)
         }
+      } else if (!isAuthenticated) {
+        // Reset state when user is not authenticated
+        setUserClips([])
+        setUserChains([])
+        setIsLoading(false)
       }
     }
 
     fetchUserData()
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user, authLoading])
 
   // Close profile menu when clicking outside
   useEffect(() => {
@@ -60,7 +93,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
 
   // Loading state for clips and chains
   const renderClipsList = () => {
-    if (isLoading) {
+    if (authLoading || isLoading) {
       return (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
@@ -68,6 +101,14 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
             </div>
           ))}
+        </div>
+      )
+    }
+    
+    if (!isAuthenticated) {
+      return (
+        <div className="text-center py-2">
+          <p className="text-xs text-gray-400 font-light">Please log in to view your clips</p>
         </div>
       )
     }
@@ -81,7 +122,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
     }
     
     return userClips.slice(0, 5).map((clip) => (
-      <div key={clip._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer duration-200">
+      <div key={clip._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
         <div className="flex-1 min-w-0">
           <p className="text-xs text-gray-900 truncate font-medium">{clip.title}</p>
         </div>
@@ -103,7 +144,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   }
 
   const renderChainsList = () => {
-    if (isLoading) {
+    if (authLoading || isLoading) {
       return (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
@@ -111,6 +152,14 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
             </div>
           ))}
+        </div>
+      )
+    }
+    
+    if (!isAuthenticated) {
+      return (
+        <div className="text-center py-2">
+          <p className="text-xs text-gray-400 font-light">Please log in to view your chains</p>
         </div>
       )
     }
@@ -124,7 +173,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
     }
     
     return userChains.slice(0, 5).map((chain) => (
-      <div key={chain._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200">
+      <div key={chain._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
         <div className="flex-1 min-w-0">
           <p className="text-xs text-gray-900 truncate font-medium">{chain.name}</p>
         </div>
@@ -282,9 +331,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-40 transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : (isDesktop ? 'translate-x-0' : '-translate-x-full')
-        }`}
+        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-40`}
         style={{ width: `${width}px` }}
       >
         {/* Content Area - Scrollable content */}
@@ -379,7 +426,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             <nav className="space-y-2 mb-6">
               <Link
                 to="/"
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
                   isActive('/') 
                     ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -394,7 +441,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
               
               <Link
                 to="/dashboard"
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
                   isActive('/dashboard') 
                     ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -408,7 +455,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
 
               <Link
                 to="/library"
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
                   isActive('/library') 
                     ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -420,6 +467,44 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 <span className="text-sm font-medium">Library</span>
               </Link>
             </nav>
+
+            {/* Subtle separator */}
+            <div className="border-t border-gray-100 mb-6"></div>
+
+            {/* Testing & Development Section - Hidden for now */}
+            {/* 
+            <div className="mb-6">
+              <h4 className="text-xs font-medium text-gray-700 mb-3">Testing & Development</h4>
+              <div className="space-y-1">
+                <Link
+                  to="/database-test"
+                  className={`flex items-center space-x-2 px-2 py-1.5 rounded text-xs transition-colors ${
+                    isActive('/database-test')
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Database Test</span>
+                </Link>
+                <Link
+                  to="/api-test"
+                  className={`flex items-center space-x-2 px-2 py-1.5 rounded text-xs transition-colors ${
+                    isActive('/api-test')
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>API Test</span>
+                </Link>
+              </div>
+            </div>
+            */}
 
             {/* Subtle separator */}
             <div className="border-t border-gray-100 mb-6"></div>

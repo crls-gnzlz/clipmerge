@@ -7,7 +7,8 @@ const Register = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    displayName: '' // Added displayName field
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -21,16 +22,34 @@ const Register = () => {
     
     try {
       setIsLoading(true);
-      const success = await register(formData.username, formData.email, formData.password);
+      setErrors({});
       
-      if (success) {
-        navigate('/dashboard');
+      console.log('📝 Register: Attempting registration with:', { 
+        username: formData.username, 
+        email: formData.email 
+      });
+      
+      // Prepare user data in the format expected by the backend
+      const userData = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        displayName: formData.displayName || formData.username // Use displayName if provided, otherwise username
+      };
+      
+      const result = await register(userData);
+      console.log('📝 Register: Result received:', result);
+      
+      if (result.success) {
+        console.log('✅ Register: Successful, redirecting to home');
+        navigate('/');
       } else {
-        setErrors({ submit: 'Registration failed. Please try again.' });
+        console.log('❌ Register: Failed with error:', result.error);
+        setErrors({ submit: result.error || 'Registration failed. Please try again.' });
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({ submit: 'An error occurred during registration' });
+      console.error('❌ Register: Error occurred:', error);
+      setErrors({ submit: error.message || 'An error occurred during registration' });
     } finally {
       setIsLoading(false);
     }
@@ -120,6 +139,23 @@ const Register = () => {
                   {errors.username}
                 </p>
               )}
+            </div>
+
+            {/* Display Name Field */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Display Name <span className="text-gray-400">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                value={formData.displayName || ''}
+                onChange={(e) => handleInputChange('displayName', e.target.value)}
+                placeholder="How you want to be displayed (defaults to username)"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This is how your name will appear to other users
+              </p>
             </div>
 
             {/* Email Field */}

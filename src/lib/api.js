@@ -5,7 +5,21 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000/api'
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
-    this.token = localStorage.getItem('authToken');
+    this.token = null;
+    // Initialize token from localStorage if available
+    this.initializeToken();
+  }
+
+  // Initialize token from localStorage
+  initializeToken() {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        this.token = localStorage.getItem('authToken');
+      }
+    } catch (error) {
+      console.warn('Could not access localStorage:', error);
+      this.token = null;
+    }
   }
 
   // Configurar headers comunes
@@ -16,19 +30,47 @@ class ApiService {
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
+      console.log('🔑 API Headers: Token incluido en Authorization header');
+    } else {
+      console.log('⚠️ API Headers: No hay token disponible');
     }
 
     return headers;
   }
 
+  // Método para verificar el estado del token
+  getTokenStatus() {
+    return {
+      hasToken: !!this.token,
+      tokenValue: this.token,
+      localStorageToken: typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+    };
+  }
+
   // Establecer token de autenticación
   setToken(token) {
+    console.log('🔑 apiService.setToken called with:', token ? 'Token presente' : 'Token ausente');
     this.token = token;
-    if (token) {
-      localStorage.setItem('authToken', token);
-    } else {
-      localStorage.removeItem('authToken');
+    try {
+      if (token) {
+        localStorage.setItem('authToken', token);
+        console.log('🔑 apiService: Token guardado en localStorage');
+        
+        // Verify it was actually stored
+        const storedToken = localStorage.getItem('authToken');
+        console.log('🔑 apiService: Verificación - token en localStorage:', storedToken ? 'Presente' : 'Ausente');
+      } else {
+        localStorage.removeItem('authToken');
+        console.log('🔑 apiService: Token removido de localStorage');
+      }
+    } catch (error) {
+      console.warn('Could not access localStorage:', error);
     }
+  }
+
+  // Refrescar token desde localStorage
+  refreshToken() {
+    this.initializeToken();
   }
 
   // Método genérico para hacer requests
@@ -239,10 +281,8 @@ class ApiService {
     return this.request(`/users/check-availability?field=${field}&value=${value}`);
   }
 
-  async refreshToken() {
-    return this.request('/users/refresh-token', {
-      method: 'POST',
-    });
+  refreshToken() {
+    this.initializeToken();
   }
 
   async logout() {
@@ -259,7 +299,11 @@ class ApiService {
   // Método para limpiar datos de autenticación
   clearAuth() {
     this.token = null;
-    localStorage.removeItem('authToken');
+    try {
+      localStorage.removeItem('authToken');
+    } catch (error) {
+      console.warn('Could not access localStorage:', error);
+    }
   }
 }
 

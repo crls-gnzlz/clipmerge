@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LayoutWithSidebar from '../components/LayoutWithSidebar.jsx';
 import SelectField from '../components/SelectField.jsx';
-import ClipSelector from '../components/ClipSelector.jsx';
+import EnhancedClipSelector from '../components/ClipSelector.jsx';
 import DragDropClips from '../components/DragDropClips.jsx';
 import apiService from '../lib/api.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const CreateChain = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -22,7 +24,18 @@ const CreateChain = () => {
   const [tagInput, setTagInput] = useState('');
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [showClipSelector, setShowClipSelector] = useState(false);
-  const [useMockData, setUseMockData] = useState(true); // Enable mock data by default for testing
+  const [useMockData, setUseMockData] = useState(false); // Use real data by default when authenticated
+
+  // Set mock data mode based on authentication status
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      setUseMockData(true);
+      console.log('🎭 CreateChain: User not authenticated, using mock data');
+    } else {
+      setUseMockData(false);
+      console.log('📡 CreateChain: User authenticated, using real data');
+    }
+  }, [isAuthenticated, user]);
 
   // Fetch existing tags for suggestions
   useEffect(() => {
@@ -39,7 +52,27 @@ const CreateChain = () => {
     fetchTags();
   }, []);
 
-  // Handle tag input
+  // Add tag
+  const addTag = (tag) => {
+    if (formData.tags.length >= 5) return;
+    
+    // Clean the tag (remove extra spaces, convert to lowercase)
+    const cleanTag = tag.trim().toLowerCase();
+    
+    if (!formData.tags.includes(cleanTag)) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, cleanTag]
+      }));
+      console.log('🏷️ CreateChain: Tag added:', cleanTag);
+    } else {
+      console.log('ℹ️ CreateChain: Tag already exists:', cleanTag);
+    }
+    setTagInput('');
+    setShowTagSuggestions(false);
+  };
+
+  // Handle tag input with suggestions
   const handleTagInput = (value) => {
     setTagInput(value);
     if (value.length > 0) {
@@ -49,18 +82,33 @@ const CreateChain = () => {
     }
   };
 
-  // Add tag
-  const addTag = (tag) => {
-    if (formData.tags.length >= 5) return;
-    if (!formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag]
-      }));
+  // Handle tag input submission (Enter key or Add button)
+  const handleTagSubmit = () => {
+    if (tagInput.trim()) {
+      addTag(tagInput);
     }
-    setTagInput('');
-    setShowTagSuggestions(false);
   };
+
+  // Handle Enter key in tag input
+  const handleTagKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTagSubmit();
+    }
+  };
+
+  // Filter existing tags for suggestions
+  const getTagSuggestions = () => {
+    if (!tagInput.trim()) return [];
+    
+    const input = tagInput.toLowerCase();
+    return existingTags.filter(tag => 
+      tag.toLowerCase().includes(input) && 
+      !formData.tags.includes(tag.toLowerCase())
+    );
+  };
+
+  const tagSuggestions = getTagSuggestions();
 
   // Remove tag
   const removeTag = (tagToRemove) => {
@@ -94,9 +142,10 @@ const CreateChain = () => {
       newErrors.name = 'Chain name is required';
     }
     
-    if (selectedClips.length === 0) {
-      newErrors.clips = 'At least one clip is required';
-    }
+    // Remove the requirement for clips - allow empty chains
+    // if (selectedClips.length === 0) {
+    //   newErrors.clips = 'At least one clip is required';
+    // }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -110,41 +159,62 @@ const CreateChain = () => {
     
     try {
       setIsLoading(true);
+      setErrors({});
+      
+      console.log('🚀 CreateChain: Starting chain creation...');
+      console.log('📝 CreateChain: Form data:', formData);
+      console.log('🎬 CreateChain: Selected clips:', selectedClips.length);
       
       if (useMockData) {
         // Simulate API call with mock data
+        console.log('🎭 CreateChain: Using mock data mode');
         await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('Creating chain with mock data:', {
-          ...formData,
-          clips: selectedClips.map((clip, index) => ({
-            clipId: clip._id,
-            order: index
-          }))
-        });
+        console.log('✅ CreateChain: Mock chain created successfully');
         
         // Navigate to dashboard after successful creation
         navigate('/dashboard');
       } else {
         // Real API call
+        console.log('📡 CreateChain: Using real API mode');
+        
         const chainData = {
-          ...formData,
-          clips: selectedClips.map((clip, index) => ({
-            clipId: clip._id,
+          name: formData.name, // Backend expects 'name' not 'title'
+          description: formData.description,
+          tags: formData.tags,
+          isPublic: formData.status === 'public', // Convert status to boolean
+          clips: selectedClips.length > 0 ? selectedClips.map((clip, index) => ({
+            clip: clip._id, // Backend expects 'clip' not 'clipId'
             order: index
-          }))
+          })) : [] // Empty array for chains without clips
         };
         
+        console.log('📤 CreateChain: Sending chain data to API:', chainData);
+        console.log('🏷️ CreateChain: Tags being sent:', formData.tags);
+        console.log('🎬 CreateChain: Clips count:', selectedClips.length);
+        console.log('🔒 CreateChain: Public status:', chainData.isPublic);
+        console.log('📋 CreateChain: Full form data:', formData);
+        console.log('🎬 CreateChain: Selected clips details:', selectedClips);
+        
         const response = await apiService.createChain(chainData);
+        console.log('📥 CreateChain: API response received:', response);
         
         if (response.success) {
+          console.log('✅ CreateChain: Chain created successfully, redirecting to dashboard');
+          
+          // Show success message before redirecting
+          if (formData.tags.some(tag => !existingTags.includes(tag))) {
+            console.log('🏷️ CreateChain: New tags were created during chain creation');
+          }
+          
           navigate('/dashboard');
         } else {
+          console.log('❌ CreateChain: Failed to create chain:', response.message);
           setErrors({ submit: response.message || 'Failed to create chain' });
         }
       }
     } catch (error) {
-      console.error('Error creating chain:', error);
-      setErrors({ submit: 'An error occurred while creating the chain' });
+      console.error('❌ CreateChain: Error occurred:', error);
+      setErrors({ submit: error.message || 'An error occurred while creating the chain' });
     } finally {
       setIsLoading(false);
     }
@@ -188,11 +258,29 @@ const CreateChain = () => {
                 />
                 <span className="text-xs text-gray-600">Use mock data for testing</span>
               </label>
-              {useMockData && (
-                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                  Mock Mode Active
-                </span>
-              )}
+              
+              {/* Data Mode Indicator */}
+              <div className="flex items-center space-x-2">
+                {useMockData ? (
+                  <span className="text-xs text-orange-600 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-200">
+                    🎭 Mock Mode
+                  </span>
+                ) : (
+                  <span className="text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
+                    📡 Real Data
+                  </span>
+                )}
+                
+                {isAuthenticated && user ? (
+                  <span className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200">
+                    👤 {user.username}
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-600 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200">
+                    🔒 Not Authenticated
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -242,30 +330,50 @@ const CreateChain = () => {
                 <label className="block text-xs font-medium text-gray-700 mb-2">
                   Tags
                 </label>
+                {/* Tag Input */}
                 <div className="relative">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => handleTagInput(e.target.value)}
-                    placeholder="Type to search existing tags or add new ones"
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
-                  />
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => handleTagInput(e.target.value)}
+                      onKeyPress={handleTagKeyPress}
+                      placeholder="Type to search existing tags or add new ones"
+                      className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTagSubmit}
+                      disabled={!tagInput.trim()}
+                      className="px-4 py-2.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+                    >
+                      Add
+                    </button>
+                  </div>
                   
                   {/* Tag Suggestions */}
-                  {showTagSuggestions && existingTags.length > 0 && (
+                  {showTagSuggestions && tagSuggestions.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {existingTags
-                        .filter(tag => tag.toLowerCase().includes(tagInput.toLowerCase()))
-                        .map(tag => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => addTag(tag)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 transition-colors duration-200"
-                          >
-                            {tag}
-                          </button>
-                        ))}
+                      <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
+                        Existing tags:
+                      </div>
+                      {tagSuggestions.map(tag => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => addTag(tag)}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 transition-colors duration-200"
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* New Tag Indicator */}
+                  {tagInput.trim() && !tagSuggestions.some(tag => tag.toLowerCase() === tagInput.toLowerCase()) && (
+                    <div className="mt-2 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+                      💡 Press "Add" or Enter to create new tag: <strong>"{tagInput}"</strong>
                     </div>
                   )}
                 </div>
@@ -310,7 +418,12 @@ const CreateChain = () => {
               {/* Clips Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-medium text-gray-700">Clips</h3>
+                  <div>
+                    <h3 className="text-xs font-medium text-gray-700">Clips</h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Add clips to your chain or create an empty chain as a folder
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setShowClipSelector(true)}
@@ -339,7 +452,7 @@ const CreateChain = () => {
                       </div>
                       
                       <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-120px)]">
-                        <ClipSelector 
+                        <EnhancedClipSelector 
                           onAddClips={handleAddClips}
                           existingClipIds={selectedClips.map(clip => clip._id)}
                           useMockData={useMockData}
@@ -349,22 +462,41 @@ const CreateChain = () => {
                   </div>
                 )}
 
-                {/* Selected Clips */}
-                <DragDropClips
-                  clips={selectedClips}
-                  onOrderChange={handleReorderClips}
-                  onRemoveClip={handleRemoveClip}
-                />
+                {/* Selected Clips or Empty State */}
+                {selectedClips.length > 0 ? (
+                  <DragDropClips
+                    clips={selectedClips}
+                    onOrderChange={handleReorderClips}
+                    onRemoveClip={handleRemoveClip}
+                  />
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2" />
+                    </svg>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No clips selected</h3>
+                    <p className="mt-1 text-xs text-gray-500">
+                      This will create an empty chain that you can use as a folder to organize content later
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowClipSelector(true)}
+                      className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    >
+                      + Add Clips
+                    </button>
+                  </div>
+                )}
 
-                {/* Clips Error */}
-                {errors.clips && (
+                {/* Clips Error - No longer needed since clips are optional */}
+                {/* {errors.clips && (
                   <p className="text-red-500 text-xs flex items-center">
                     <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     {errors.clips}
                   </p>
-                )}
+                )} */}
               </div>
 
               {/* Submit Error */}

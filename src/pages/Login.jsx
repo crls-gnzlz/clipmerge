@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -19,16 +19,23 @@ const Login = () => {
     
     try {
       setIsLoading(true);
-      const success = await login(formData.email, formData.password);
+      setErrors({});
       
-      if (success) {
-        navigate('/dashboard');
+      console.log('🔐 Login: Attempting login with:', { username: formData.username });
+      
+      const result = await login({ username: formData.username, password: formData.password });
+      console.log('🔐 Login: Result received:', result);
+      
+      if (result.success) {
+        console.log('✅ Login: Successful, redirecting to home');
+        navigate('/');
       } else {
-        setErrors({ submit: 'Invalid email or password' });
+        console.log('❌ Login: Failed with error:', result.error);
+        setErrors({ submit: result.error || 'Invalid username or password' });
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setErrors({ submit: 'An error occurred during login' });
+      console.error('❌ Login: Error occurred:', error);
+      setErrors({ submit: error.message || 'An error occurred during login' });
     } finally {
       setIsLoading(false);
     }
@@ -37,10 +44,8 @@ const Login = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
     }
     
     if (!formData.password) {
@@ -85,23 +90,23 @@ const Login = () => {
             {/* Email Field */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">
-                Email
+                Username
               </label>
               <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="Enter your email address"
+                type="text"
+                value={formData.username}
+                onChange={(e) => handleInputChange('username', e.target.value)}
+                placeholder="Enter your username"
                 className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 ${
-                  errors.email ? 'border-red-300' : 'border-gray-200'
+                  errors.username ? 'border-red-300' : 'border-gray-200'
                 }`}
               />
-              {errors.email && (
+              {errors.username && (
                 <p className="text-red-500 text-xs mt-2 flex items-center">
                   <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  {errors.email}
+                  {errors.username}
                 </p>
               )}
             </div>

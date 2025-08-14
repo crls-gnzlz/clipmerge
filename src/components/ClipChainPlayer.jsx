@@ -160,7 +160,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         const { offsetWidth, offsetHeight } = playerContainerRef.current
         
         // Enviar comando de resize a YouTube
-        if (playerRef.current.iframe && playerRef.current.iframe.contentWindow) {
+        if (playerRef.current?.iframe?.contentWindow?.postMessage && typeof playerRef.current.iframe.contentWindow.postMessage === 'function') {
           try {
             // Comando 1: setSize para forzar el redimensionamiento
             playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
@@ -172,22 +172,34 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
             
             // Comando 2: setPlaybackQuality para forzar alta calidad
             setTimeout(() => {
-              playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
-                event: 'command',
-                func: 'setPlaybackQuality',
-                args: ['hd1080']
-              }), '*')
-              console.log('✅ YouTube setPlaybackQuality command sent: hd1080')
+              if (playerRef.current?.iframe?.contentWindow?.postMessage && typeof playerRef.current.iframe.contentWindow.postMessage === 'function') {
+                try {
+                  playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
+                    event: 'command',
+                    func: 'setPlaybackQuality',
+                    args: ['hd1080']
+                  }), '*')
+                  console.log('✅ YouTube setPlaybackQuality command sent: hd1080')
+                } catch (error) {
+                  console.warn('Failed to send setPlaybackQuality command:', error)
+                }
+              }
             }, 100)
             
             // Comando 3: Resize adicional para asegurar
             setTimeout(() => {
-              playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
-                event: 'command',
-                func: 'setSize',
-                args: [offsetWidth, offsetHeight]
-              }), '*')
-              console.log('✅ YouTube setSize command sent again for quality assurance')
+              if (playerRef.current?.iframe?.contentWindow?.postMessage && typeof playerRef.current.iframe.contentWindow.postMessage === 'function') {
+                try {
+                  playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
+                    event: 'command',
+                    func: 'setSize',
+                    args: [offsetWidth, offsetHeight]
+                  }), '*')
+                  console.log('✅ YouTube setSize command sent again for quality assurance')
+                } catch (error) {
+                  console.warn('Failed to send setSize command:', error)
+                }
+              }
             }, 300)
             
           } catch (e) {
@@ -218,7 +230,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           console.log('✅ Iframe CSS restored to normal size')
           
           // Enviar comando de resize a YouTube para el tamaño normal
-          if (playerRef.current.iframe && playerRef.current.iframe.contentWindow) {
+          if (playerRef.current?.iframe?.contentWindow?.postMessage && typeof playerRef.current.iframe.contentWindow.postMessage === 'function') {
             try {
               const { offsetWidth, offsetHeight } = playerContainerRef.current
               playerRef.current.iframe.contentWindow.postMessage(JSON.stringify({
@@ -305,7 +317,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
     // Look for iframe in the player container
     const iframe = iframeRef.current && iframeRef.current.querySelector('iframe')
     
-    if (iframe && iframe.contentWindow) {
+    // Enhanced safety checks
+    if (iframe && iframe.contentWindow && iframe.contentWindow.postMessage && typeof iframe.contentWindow.postMessage === 'function') {
       try {
         const message = {
           event: 'command',
@@ -338,9 +351,12 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         console.error('❌ Error sending postMessage:', error)
       }
     } else {
-      console.error('❌ No iframe available for command:', command, {
+      console.warn('❌ No iframe available for command:', command, {
         iframeRef: !!iframeRef.current,
-        normalIframe: !!(iframeRef.current && iframeRef.current.querySelector('iframe'))
+        normalIframe: !!(iframeRef.current && iframeRef.current.querySelector('iframe')),
+        hasContentWindow: !!(iframe && iframe.contentWindow),
+        hasPostMessage: !!(iframe && iframe.contentWindow && iframe.contentWindow.postMessage),
+        postMessageType: iframe?.contentWindow?.postMessage ? typeof iframe.contentWindow.postMessage : 'undefined'
       })
     }
   }
@@ -521,32 +537,39 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         try {
           const iframe = playerRef.current.iframe
           
-          // Command 1: Ensure annotations are hidden
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'setOption',
-            args: ['annotations', 'show', false]
-          }), '*')
-          
-          // Command 2: Set player size to maintain clean appearance
-          const { offsetWidth, offsetHeight } = playerContainerRef.current
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'setSize',
-            args: [offsetWidth, offsetHeight]
-          }), '*')
-          
-          // Command 3: Additional cleanup for related content
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'setOption',
-            args: ['captions', 'track', null]
-          }), '*')
-          
-          // NEW: Inject CSS to hide YouTube elements directly
-          injectYouTubeCleanupCSS(iframe)
-          
-          console.log('🔧 Periodic cleanup completed')
+          // Check if iframe is valid before sending messages
+          if (iframe && iframe.contentWindow && iframe.contentWindow.postMessage && typeof iframe.contentWindow.postMessage === 'function') {
+            // Command 1: Ensure annotations are hidden
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setOption',
+              args: ['annotations', 'show', false]
+            }), '*')
+            
+            // Command 2: Set player size to maintain clean appearance
+            if (playerContainerRef.current) {
+              const { offsetWidth, offsetHeight } = playerContainerRef.current
+              iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setSize',
+                args: [offsetWidth, offsetHeight]
+              }), '*')
+            }
+            
+            // Command 3: Additional cleanup for related content
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setOption',
+              args: ['captions', 'track', null]
+            }), '*')
+            
+            // NEW: Inject CSS to hide YouTube elements directly
+            injectYouTubeCleanupCSS(iframe)
+            
+            console.log('🔧 Periodic cleanup completed')
+          } else {
+            console.warn('🔧 Iframe not available for periodic cleanup')
+          }
         } catch (error) {
           console.log('🔧 Periodic cleanup error:', error)
         }
@@ -601,29 +624,36 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                   try {
                     const iframe = playerRef.current.iframe
                     
-                    // Command 1: Hide annotations
-                    iframe.contentWindow.postMessage(JSON.stringify({
-                      event: 'command',
-                      func: 'setOption',
-                      args: ['annotations', 'show', false]
-                    }), '*')
-                    
-                    // Command 2: Set player size
-                    const { offsetWidth, offsetHeight } = playerContainerRef.current
-                    iframe.contentWindow.postMessage(JSON.stringify({
-                      event: 'command',
-                      func: 'setSize',
-                      args: [offsetWidth, offsetHeight]
-                    }), '*')
-                    
-                    // Command 3: Additional cleanup
-                    iframe.contentWindow.postMessage(JSON.stringify({
-                      event: 'command',
-                      func: 'setOption',
-                      args: ['captions', 'track', null]
-                    }), '*')
-                    
-                    console.log('🔧 YouTube state change cleanup completed')
+                    // Check if iframe is valid before sending messages
+                    if (iframe && iframe.contentWindow && iframe.contentWindow.postMessage && typeof iframe.contentWindow.postMessage === 'function') {
+                      // Command 1: Hide annotations
+                      iframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'command',
+                        func: 'setOption',
+                        args: ['annotations', 'show', false]
+                      }), '*')
+                      
+                      // Command 2: Set player size
+                      if (playerContainerRef.current) {
+                        const { offsetWidth, offsetHeight } = playerContainerRef.current
+                        iframe.contentWindow.postMessage(JSON.stringify({
+                          event: 'command',
+                          func: 'setSize',
+                          args: [offsetWidth, offsetHeight]
+                        }), '*')
+                      }
+                      
+                      // Command 3: Additional cleanup
+                      iframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'command',
+                        func: 'setOption',
+                        args: ['captions', 'track', null]
+                      }), '*')
+                      
+                      console.log('🔧 YouTube state change cleanup completed')
+                    } else {
+                      console.warn('🔧 Iframe not available for state change cleanup')
+                    }
                   } catch (error) {
                     console.log('🔧 YouTube state change cleanup error:', error)
                   }
@@ -715,37 +745,57 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           args: ['onStateChange']
         }
         setTimeout(() => {
-          iframe.contentWindow.postMessage(JSON.stringify(message), '*')
-          console.log('🔤 Added onStateChange listener to iframe')
+          // Check if iframe is still valid before sending message
+          if (iframe && iframe.contentWindow && iframe.contentWindow.postMessage && typeof iframe.contentWindow.postMessage === 'function') {
+            try {
+              iframe.contentWindow.postMessage(JSON.stringify(message), '*')
+              console.log('🔤 Added onStateChange listener to iframe')
+            } catch (error) {
+              console.warn('Failed to send message to iframe:', error)
+            }
+          } else {
+            console.warn('Iframe not available for postMessage')
+          }
         }, 1000)
         
         // Additional commands to remove unwanted YouTube elements
         setTimeout(() => {
           console.log('🔧 Applying additional YouTube cleanup commands...')
           
-          // Command 1: Set player options to minimize UI elements
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'setOption',
-            args: ['captions', 'track', null]
-          }), '*')
-          
-          // Command 2: Set additional options to hide elements
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'setOption',
-            args: ['annotations', 'show', false]
-          }), '*')
-          
-          // Command 3: Set player size to ensure proper rendering
-          const { offsetWidth, offsetHeight } = playerContainerRef.current
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'setSize',
-            args: [offsetWidth, offsetHeight]
-          }), '*')
-          
-          console.log('🔧 YouTube cleanup commands applied')
+          // Check if iframe is still valid before sending messages
+          if (iframe && iframe.contentWindow && iframe.contentWindow.postMessage && typeof iframe.contentWindow.postMessage === 'function') {
+            try {
+              // Command 1: Set player options to minimize UI elements
+              iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setOption',
+                args: ['captions', 'track', null]
+              }), '*')
+              
+              // Command 2: Set additional options to hide elements
+              iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setOption',
+                args: ['annotations', 'show', false]
+              }), '*')
+              
+              // Command 3: Set player size to ensure proper rendering
+              if (playerContainerRef.current) {
+                const { offsetWidth, offsetHeight } = playerContainerRef.current
+                iframe.contentWindow.postMessage(JSON.stringify({
+                  event: 'command',
+                  func: 'setSize',
+                  args: [offsetWidth, offsetHeight]
+                }), '*')
+              }
+              
+              console.log('🔧 YouTube cleanup commands applied')
+            } catch (error) {
+              console.warn('Failed to apply YouTube cleanup commands:', error)
+            }
+          } else {
+            console.warn('Iframe not available for cleanup commands')
+          }
         }, 1500)
       }
 
@@ -784,29 +834,36 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           try {
             const iframe = playerRef.current.iframe
             
-            // Command 1: Hide annotations immediately
-            iframe.contentWindow.postMessage(JSON.stringify({
-              event: 'command',
-              func: 'setOption',
-              args: ['annotations', 'show', false]
-            }), '*')
-            
-            // Command 2: Set player size to maintain clean appearance
-            const { offsetWidth, offsetHeight } = playerContainerRef.current
-            iframe.contentWindow.postMessage(JSON.stringify({
-              event: 'command',
-              func: 'setSize',
-              args: [offsetWidth, offsetHeight]
-            }), '*')
-            
-            // Command 3: Additional cleanup for related content
-            iframe.contentWindow.postMessage(JSON.stringify({
-              event: 'command',
-              func: 'setOption',
-              args: ['captions', 'track', null]
-            }), '*')
-            
-            console.log('🔧 Immediate cleanup completed after pause')
+            // Check if iframe is valid before sending messages
+            if (iframe && iframe.contentWindow && iframe.contentWindow.postMessage && typeof iframe.contentWindow.postMessage === 'function') {
+              // Command 1: Hide annotations immediately
+              iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setOption',
+                args: ['annotations', 'show', false]
+              }), '*')
+              
+              // Command 2: Set player size to maintain clean appearance
+              if (playerContainerRef.current) {
+                const { offsetWidth, offsetHeight } = playerContainerRef.current
+                iframe.contentWindow.postMessage(JSON.stringify({
+                  event: 'command',
+                  func: 'setSize',
+                  args: [offsetWidth, offsetHeight]
+                }), '*')
+              }
+              
+              // Command 3: Additional cleanup for related content
+              iframe.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'setOption',
+                args: ['captions', 'track', null]
+              }), '*')
+              
+              console.log('🔧 Immediate cleanup completed after pause')
+            } else {
+              console.warn('🔧 Iframe not available for immediate cleanup')
+            }
           } catch (error) {
             console.log('🔧 Immediate cleanup error:', error)
           }
@@ -1214,29 +1271,36 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                           try {
                             const iframe = playerRef.current.iframe
                             
-                            // Command 1: Hide annotations immediately
-                            iframe.contentWindow.postMessage(JSON.stringify({
-                              event: 'command',
-                              func: 'setOption',
-                              args: ['annotations', 'show', false]
-                            }), '*')
-                            
-                            // Command 2: Set player size to maintain clean appearance
-                            const { offsetWidth, offsetHeight } = playerContainerRef.current
-                            iframe.contentWindow.postMessage(JSON.stringify({
-                              event: 'command',
-                              func: 'setSize',
-                              args: [offsetWidth, offsetHeight]
-                            }), '*')
-                            
-                            // Command 3: Additional cleanup for related content
-                            iframe.contentWindow.postMessage(JSON.stringify({
-                              event: 'command',
-                              func: 'setOption',
-                              args: ['captions', 'track', null]
-                            }), '*')
-                            
-                            console.log('🔧 Overlay pause cleanup completed')
+                            // Check if iframe is valid before sending messages
+                            if (iframe && iframe.contentWindow && iframe.contentWindow.postMessage && typeof iframe.contentWindow.postMessage === 'function') {
+                              // Command 1: Hide annotations immediately
+                              iframe.contentWindow.postMessage(JSON.stringify({
+                                event: 'command',
+                                func: 'setOption',
+                                args: ['annotations', 'show', false]
+                              }), '*')
+                              
+                              // Command 2: Set player size to maintain clean appearance
+                              if (playerContainerRef.current) {
+                                const { offsetWidth, offsetHeight } = playerContainerRef.current
+                                iframe.contentWindow.postMessage(JSON.stringify({
+                                  event: 'command',
+                                  func: 'setSize',
+                                  args: [offsetWidth, offsetHeight]
+                                }), '*')
+                              }
+                              
+                              // Command 3: Additional cleanup for related content
+                              iframe.contentWindow.postMessage(JSON.stringify({
+                                event: 'command',
+                                func: 'setOption',
+                                args: ['captions', 'track', null]
+                              }), '*')
+                              
+                              console.log('🔧 Overlay pause cleanup completed')
+                            } else {
+                              console.warn('🔧 Iframe not available for overlay pause cleanup')
+                            }
                           } catch (error) {
                             console.log('🔧 Overlay pause cleanup error:', error)
                           }
@@ -1284,29 +1348,36 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                               try {
                                 const iframe = playerRef.current.iframe
                                 
-                                // Command 1: Hide annotations immediately
-                                iframe.contentWindow.postMessage(JSON.stringify({
-                                  event: 'command',
-                                  func: 'setOption',
-                                  args: ['annotations', 'show', false]
-                                }), '*')
-                                
-                                // Command 2: Set player size to maintain clean appearance
-                                const { offsetWidth, offsetHeight } = playerContainerRef.current
-                                iframe.contentWindow.postMessage(JSON.stringify({
-                                  event: 'command',
-                                  func: 'setSize',
-                                  args: [offsetWidth, offsetHeight]
-                                }), '*')
-                                
-                                // Command 3: Additional cleanup for related content
-                                iframe.contentWindow.postMessage(JSON.stringify({
-                                  event: 'command',
-                                  func: 'setOption',
-                                  args: ['captions', 'track', null]
-                                }), '*')
-                                
-                                console.log('🔧 Fullscreen overlay pause cleanup completed')
+                                // Check if iframe is valid before sending messages
+                                if (iframe && iframe.contentWindow && iframe.contentWindow.postMessage && typeof iframe.contentWindow.postMessage === 'function') {
+                                  // Command 1: Hide annotations immediately
+                                  iframe.contentWindow.postMessage(JSON.stringify({
+                                    event: 'command',
+                                    func: 'setOption',
+                                    args: ['annotations', 'show', false]
+                                  }), '*')
+                                  
+                                  // Command 2: Set player size to maintain clean appearance
+                                  if (playerContainerRef.current) {
+                                    const { offsetWidth, offsetHeight } = playerContainerRef.current
+                                    iframe.contentWindow.postMessage(JSON.stringify({
+                                      event: 'command',
+                                      func: 'setSize',
+                                      args: [offsetWidth, offsetHeight]
+                                    }), '*')
+                                  }
+                                  
+                                  // Command 3: Additional cleanup for related content
+                                  iframe.contentWindow.postMessage(JSON.stringify({
+                                    event: 'command',
+                                    func: 'setOption',
+                                    args: ['captions', 'track', null]
+                                  }), '*')
+                                  
+                                  console.log('🔧 Fullscreen overlay pause cleanup completed')
+                                } else {
+                                  console.warn('🔧 Iframe not available for fullscreen overlay cleanup')
+                                }
                               } catch (error) {
                                 console.log('🔧 Fullscreen overlay pause cleanup error:', error)
                               }

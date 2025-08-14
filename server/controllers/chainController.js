@@ -127,13 +127,19 @@ const getChainById = async (req, res) => {
 // Crear una nueva chain
 const createChain = async (req, res) => {
   try {
+    console.log('🔍 ChainController: createChain called with body:', req.body);
+    console.log('🔍 ChainController: User ID:', req.user._id);
+    
     const chainData = {
       ...req.body,
       author: req.user._id
     };
     
+    console.log('🔍 ChainController: Processed chain data:', chainData);
+    
     // Validar que los clips existan y pertenezcan al usuario
     if (chainData.clips && chainData.clips.length > 0) {
+      console.log('🔍 ChainController: Validating clips:', chainData.clips);
       for (let clipItem of chainData.clips) {
         const clip = await Clip.findById(clipItem.clip);
         if (!clip) {
@@ -151,10 +157,15 @@ const createChain = async (req, res) => {
           });
         }
       }
+    } else {
+      console.log('🔍 ChainController: No clips to validate, creating empty chain');
     }
     
+    console.log('🔍 ChainController: Creating chain with data:', chainData);
     const chain = new Chain(chainData);
+    console.log('🔍 ChainController: Chain instance created, saving...');
     await chain.save();
+    console.log('✅ ChainController: Chain saved successfully');
     
     // Calcular duración total
     await chain.calculateTotalDuration();

@@ -1,0 +1,51 @@
+// ========================================
+// 🔍 Quick Database Check - clipchain
+// ========================================
+// 
+// Instructions:
+// 1. Open MongoDB Compass
+// 2. Connect to your MongoDB instance
+// 3. Open the MongoDB Shell (mongosh) in Compass
+// 4. Copy and paste this script
+// 5. Press Enter to execute
+//
+// ========================================
+
+// Switch to clipchain database
+db = db.getSiblingDB('clipchain');
+
+print("🔍 Quick check of clipchain database...");
+
+// Check collections
+const collections = db.getCollectionNames();
+print("Collections found:", collections);
+
+// Quick counts
+const userCount = db.users.countDocuments({});
+const clipCount = db.clips.countDocuments({});
+const chainCount = db.chains.countDocuments({});
+
+print(`\n📊 Quick Counts:`);
+print(`Users: ${userCount}`);
+print(`Clips: ${clipCount}`);
+print(`Chains: ${chainCount}`);
+
+// Check if demo_user exists
+if (userCount > 0) {
+  const demoUser = db.users.findOne({ username: "demo_user" });
+  if (demoUser) {
+    print(`\n✅ demo_user found: ${demoUser._id}`);
+    
+    // Check user's chains
+    const userChains = db.chains.find({ author: demoUser._id }).toArray();
+    print(`Chains by demo_user: ${userChains.length}`);
+    
+    if (userChains.length > 0) {
+      print("Sample chain:", userChains[0].name);
+    }
+  } else {
+    print("\n❌ demo_user not found");
+  }
+}
+
+print("\n✅ Quick check complete!");

@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import apiService from '../lib/api.js';
 
 const DatabaseTest = () => {
+  const { user, isAuthenticated } = useAuth();
   const [chains, setChains] = useState([]);
   const [clips, setClips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('chains');
+  const [showUserChainsOnly, setShowUserChainsOnly] = useState(true);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [showUserChainsOnly, user]);
 
   const loadData = async () => {
     try {
@@ -18,10 +21,17 @@ const DatabaseTest = () => {
       setError(null);
 
       // Cargar chains y clips en paralelo
-      const [chainsResponse, clipsResponse] = await Promise.all([
-        apiService.getChains({ limit: 20 }),
-        apiService.getClips({ limit: 20 })
-      ]);
+      let chainsResponse;
+      
+      if (showUserChainsOnly && isAuthenticated && user) {
+        // Cargar chains del usuario logueado
+        chainsResponse = await apiService.getUserChains();
+      } else {
+        // Cargar chains generales
+        chainsResponse = await apiService.getChains({ limit: 20 });
+      }
+
+      const clipsResponse = await apiService.getClips({ limit: 20 });
 
       setChains(chainsResponse.data || []);
       setClips(clipsResponse.data || []);
@@ -35,6 +45,10 @@ const DatabaseTest = () => {
 
   const refreshData = () => {
     loadData();
+  };
+
+  const toggleUserChains = () => {
+    setShowUserChainsOnly(!showUserChainsOnly);
   };
 
   if (loading) {
@@ -77,6 +91,30 @@ const DatabaseTest = () => {
           <p className="text-xl text-gray-600 mb-6">
             Verificando la conexión entre Frontend, Backend y MongoDB
           </p>
+
+          {/* User Info */}
+          {isAuthenticated && user && (
+            <div className="bg-white rounded-lg shadow p-6 mb-6 max-w-md mx-auto">
+              <div className="flex items-center justify-center space-x-3 mb-3">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-xl font-bold text-blue-600">
+                    {user.username?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900">
+                    {user.displayName || user.username}
+                  </h3>
+                  <p className="text-sm text-gray-600">@{user.username}</p>
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  {showUserChainsOnly ? 'Mostrando solo tus chains' : 'Mostrando chains generales'}
+                </p>
+              </div>
+            </div>
+          )}
           
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -84,7 +122,9 @@ const DatabaseTest = () => {
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {chains.length}
               </div>
-              <div className="text-gray-600">Chains Encontradas</div>
+              <div className="text-gray-600">
+                {showUserChainsOnly && isAuthenticated ? 'Tus Chains' : 'Chains Encontradas'}
+              </div>
             </div>
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-3xl font-bold text-green-600 mb-2">
@@ -100,13 +140,28 @@ const DatabaseTest = () => {
             </div>
           </div>
 
-          {/* Refresh Button */}
-          <button
-            onClick={refreshData}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors mb-8"
-          >
-            🔄 Actualizar Datos
-          </button>
+          {/* Control Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            {isAuthenticated && user && (
+              <button
+                onClick={toggleUserChains}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  showUserChainsOnly
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+              >
+                {showUserChainsOnly ? '🔍 Ver Chains Generales' : '👤 Ver Mis Chains'}
+              </button>
+            )}
+            
+            <button
+              onClick={refreshData}
+              className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+            >
+              🔄 Actualizar Datos
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -122,6 +177,11 @@ const DatabaseTest = () => {
                 }`}
               >
                 Chains ({chains.length})
+                {showUserChainsOnly && isAuthenticated && (
+                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    Mis Chains
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('clips')}
@@ -139,7 +199,11 @@ const DatabaseTest = () => {
           {/* Tab Content */}
           <div className="p-6">
             {activeTab === 'chains' ? (
-              <ChainsTab chains={chains} />
+              <ChainsTab 
+                chains={chains} 
+                showUserChainsOnly={showUserChainsOnly}
+                currentUser={user}
+              />
             ) : (
               <ClipsTab clips={clips} />
             )}
@@ -162,7 +226,10 @@ const DatabaseTest = () => {
               </h3>
               <p className="text-green-700">
                 El frontend se está comunicando correctamente con el backend y MongoDB.
-                Se han cargado {chains.length} chains y {clips.length} clips.
+                {showUserChainsOnly && isAuthenticated 
+                  ? ` Se han cargado ${chains.length} de tus chains y ${clips.length} clips.`
+                  : ` Se han cargado ${chains.length} chains y ${clips.length} clips.`
+                }
               </p>
             </div>
           </div>
@@ -173,13 +240,20 @@ const DatabaseTest = () => {
 };
 
 // Componente para mostrar las Chains
-const ChainsTab = ({ chains }) => {
+const ChainsTab = ({ chains, showUserChainsOnly, currentUser }) => {
   if (chains.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-400 text-6xl mb-4">📋</div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No hay Chains</h3>
-        <p className="text-gray-500">No se encontraron chains en la base de datos.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          {showUserChainsOnly ? 'No tienes Chains' : 'No hay Chains'}
+        </h3>
+        <p className="text-gray-500">
+          {showUserChainsOnly 
+            ? 'Aún no has creado ninguna chain. ¡Comienza creando tu primera chain!'
+            : 'No se encontraron chains en la base de datos.'
+          }
+        </p>
       </div>
     );
   }
@@ -190,9 +264,17 @@ const ChainsTab = ({ chains }) => {
         <div key={chain._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {chain.name}
-              </h3>
+              <div className="flex items-center space-x-2 mb-2">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {chain.name}
+                </h3>
+                {showUserChainsOnly && currentUser && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    Mi Chain
+                  </span>
+                )}
+              </div>
+              
               <p className="text-gray-600 mb-3">{chain.description}</p>
               
               <div className="flex flex-wrap gap-2 mb-3">
@@ -208,8 +290,8 @@ const ChainsTab = ({ chains }) => {
 
               <div className="flex items-center space-x-6 text-sm text-gray-500">
                 <span>📊 {chain.clips?.length || 0} clips</span>
+                <span>⏱️ {chain.totalDuration || 0}s</span>
                 <span>👁️ {chain.views || 0} vistas</span>
-                <span>❤️ {chain.likes || 0} likes</span>
                 <span>📅 {new Date(chain.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
@@ -225,6 +307,13 @@ const ChainsTab = ({ chains }) => {
               }`}>
                 {chain.isPublic ? 'Público' : 'Privado'}
               </div>
+              {chain.category && (
+                <div className="mt-2">
+                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                    {chain.category}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

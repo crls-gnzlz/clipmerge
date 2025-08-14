@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test User Chains API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test User Chains API</h1>
+    
+    <div class="container">
+        <h2>1. Login de Usuario</h2>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" value="demo_user" placeholder="demo_user">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="demo123" placeholder="demo123">
+        </div>
+        <button onclick="login()">🔐 Login</button>
+        <button onclick="logout()">🚪 Logout</button>
+        <div id="loginResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>2. Obtener Chains del Usuario</h2>
+        <button onclick="getUserChains()">👤 Obtener Mis Chains</button>
+        <button onclick="getAllChains()">🌐 Obtener Todas las Chains</button>
+        <div id="chainsResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>3. Información del Usuario</h2>
+        <button onclick="getUserProfile()">👤 Obtener Perfil</button>
+        <div id="profileResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:9000/api';
+        let authToken = null;
+        let currentUser = null;
+
+        // Función para mostrar resultados
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isError ? 'error' : 'success'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Función para hacer requests a la API
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                },
+                ...options
+            };
+
+            try {
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                }
+                
+                return data;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Login
+        async function login() {
+            try {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                const response = await apiRequest('/users/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.success) {
+                    authToken = response.data.token;
+                    currentUser = response.data.user;
+                    showResult('loginResult', {
+                        success: true,
+                        message: 'Login exitoso',
+                        user: currentUser
+                    });
+                } else {
+                    showResult('loginResult', {
+                        success: false,
+                        message: response.message
+                    }, true);
+                }
+            } catch (error) {
+                showResult('loginResult', {
+                    success: false,
+                    message: error.message
+                }, true);
+            }
+        }
+
+        // Logout
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            showResult('loginResult', {
+                success: true,
+                message: 'Logout exitoso'
+            });
+        }
+
+        // Obtener chains del usuario
+        async function getUserChains() {
+            try {
+                if (!authToken) {
+                    showResult('chainsResult', {
+                        success: false,
+                        message: 'Debes hacer login primero'
+                    }, true);
+                    return;
+                }
+
+                const response = await apiRequest('/chains/user');
+                showResult('chainsResult', {
+                    success: true,
+                    message: 'Chains del usuario obtenidas',
+                    data: response
+                });
+            } catch (error) {
+                showResult('chainsResult', {
+                    success: false,
+                    message: error.message
+                }, true);
+            }
+        }
+
+        // Obtener todas las chains
+        async function getAllChains() {
+            try {
+                const response = await apiRequest('/chains?limit=5');
+                showResult('chainsResult', {
+                    success: true,
+                    message: 'Todas las chains obtenidas',
+                    data: response
+                });
+            } catch (error) {
+                showResult('chainsResult', {
+                    success: false,
+                    message: error.message
+                }, true);
+            }
+        }
+
+        // Obtener perfil del usuario
+        async function getUserProfile() {
+            try {
+                if (!authToken) {
+                    showResult('profileResult', {
+                        success: false,
+                        message: 'Debes hacer login primero'
+                    }, true);
+                    return;
+                }
+
+                const response = await apiRequest('/users/profile');
+                showResult('profileResult', {
+                    success: true,
+                    message: 'Perfil del usuario obtenido',
+                    data: response
+                });
+            } catch (error) {
+                showResult('profileResult', {
+                    success: false,
+                    message: error.message
+                }, true);
+            }
+        }
+
+        // Verificar estado de autenticación al cargar la página
+        window.addEventListener('load', () => {
+            console.log('🔍 Test User Chains API cargado');
+            console.log('📡 API Base URL:', API_BASE_URL);
+        });
+    </script>
+</body>
+</html>

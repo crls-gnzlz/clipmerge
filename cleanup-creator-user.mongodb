@@ -1,0 +1,70 @@
+// ========================================
+// 🧹 Cleanup Corrupted creator_user
+// ========================================
+// 
+// Instructions:
+// 1. Open MongoDB Compass
+// 2. Connect to your MongoDB instance
+// 3. Open the MongoDB Shell (mongosh) in Compass
+// 4. Copy and paste this script
+// 5. Press Enter to execute
+//
+// ========================================
+
+// Switch to clipchain database
+db = db.getSiblingDB('clipchain');
+
+print("🧹 Starting cleanup of corrupted creator_user...");
+
+// Check current state
+print("\n🔍 Current database state:");
+print("Collections:", db.getCollectionNames());
+
+const userCount = db.users.countDocuments({});
+print("Total users:", userCount);
+
+if (userCount > 0) {
+  print("\n👥 Current users:");
+  const users = db.users.find({}).toArray();
+  users.forEach(user => {
+    print(`- ${user.username} (${user.email}) - Created: ${user.createdAt}`);
+  });
+}
+
+// Find and remove corrupted creator_user
+const deleteResult = db.users.deleteOne({ username: "creator_user" });
+if (deleteResult.deletedCount > 0) {
+  print("\n🗑️ Corrupted creator_user removed successfully");
+} else {
+  print("\nℹ️ No creator_user found to remove");
+}
+
+// Check if test_user exists and is working
+const testUser = db.users.findOne({ username: "test_user" });
+if (testUser) {
+  print("\n✅ test_user found and should be working:");
+  print(`   Username: ${testUser.username}`);
+  print(`   Email: ${testUser.email}`);
+  print(`   Is Verified: ${testUser.isVerified}`);
+  print(`   Created: ${testUser.createdAt}`);
+} else {
+  print("\n⚠️ test_user not found - this is unexpected!");
+}
+
+// Final state
+print("\n🔍 Final database state:");
+const finalUserCount = db.users.countDocuments({});
+print("Total users after cleanup:", finalUserCount);
+
+if (finalUserCount > 0) {
+  print("Remaining users:");
+  const remainingUsers = db.users.find({}).toArray();
+  remainingUsers.forEach(user => {
+    print(`- ${user.username} (${user.email})`);
+  });
+}
+
+print("\n🎯 Next steps:");
+print("1. Use the API to create a new creator_user");
+print("2. This will ensure correct password hashing");
+print("3. Test login with the new credentials");

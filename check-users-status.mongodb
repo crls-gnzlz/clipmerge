@@ -1,0 +1,104 @@
+// ========================================
+// 🔍 Check Users Status in Database
+// ========================================
+// 
+// Instructions:
+// 1. Open MongoDB Compass
+// 2. Connect to your MongoDB instance
+// 3. Open the MongoDB Shell (mongosh) in Compass
+// 4. Copy and paste this script
+// 5. Press Enter to execute
+//
+// ========================================
+
+// Switch to clipchain database
+db = db.getSiblingDB('clipchain');
+
+print("🔍 Checking users status in database...");
+
+// Check all users
+const users = db.users.find({}).toArray();
+const userCount = users.length;
+
+print(`\n📊 Total users found: ${userCount}`);
+
+if (userCount === 0) {
+  print("❌ No users found in database!");
+  print("💡 Tip: Create users using the API registration");
+  quit();
+}
+
+print("\n👥 Users details:");
+users.forEach((user, index) => {
+  print(`\n${index + 1}. User: ${user.username}`);
+  print(`   Email: ${user.email}`);
+  print(`   Display Name: ${user.displayName || 'Not set'}`);
+  print(`   Is Verified: ${user.isVerified || false}`);
+  print(`   Created: ${user.createdAt}`);
+  print(`   Password Hash: ${user.password ? 'Presente' : 'Ausente'}`);
+  
+  if (user.password) {
+    print(`   Hash Length: ${user.password.length} characters`);
+    print(`   Hash Starts With: ${user.password.substring(0, 10)}...`);
+  }
+});
+
+// Check if test_user exists and has correct data
+const testUser = db.users.findOne({ username: "test_user" });
+if (testUser) {
+  print("\n✅ test_user found:");
+  print(`   Username: ${testUser.username}`);
+  print(`   Email: ${testUser.email}`);
+  print(`   Password Hash: ${testUser.password ? 'Presente' : 'Ausente'}`);
+  print(`   Is Verified: ${testUser.isVerified || false}`);
+} else {
+  print("\n❌ test_user NOT found!");
+  print("💡 Tip: Create test_user using the API registration");
+}
+
+// Check if creator_user exists
+const creatorUser = db.users.findOne({ username: "creator_user" });
+if (creatorUser) {
+  print("\n✅ creator_user found:");
+  print(`   Username: ${creatorUser.username}`);
+  print(`   Email: ${creatorUser.email}`);
+  print(`   Password Hash: ${creatorUser.password ? 'Presente' : 'Ausente'}`);
+  print(`   Is Verified: ${creatorUser.isVerified || false}`);
+} else {
+  print("\n❌ creator_user NOT found!");
+  print("💡 Tip: Create creator_user using the API registration");
+}
+
+// Check if demo_user exists
+const demoUser = db.users.findOne({ username: "demo_user" });
+if (demoUser) {
+  print("\n⚠️ demo_user found (this might be causing conflicts):");
+  print(`   Username: ${demoUser.username}`);
+  print(`   Email: ${demoUser.email}`);
+  print(`   Password Hash: ${demoUser.password ? 'Presente' : 'Ausente'}`);
+  print(`   Is Verified: ${demoUser.isVerified || false}`);
+} else {
+  print("\nℹ️ demo_user NOT found");
+}
+
+print("\n🎯 Recommendations:");
+if (testUser && testUser.password) {
+  print("✅ test_user exists and has password - should work for login");
+} else {
+  print("❌ test_user missing or has no password - recreate using API");
+}
+
+if (creatorUser && creatorUser.password) {
+  print("✅ creator_user exists and has password - should work for login");
+} else {
+  print("❌ creator_user missing or has no password - recreate using API");
+}
+
+if (demoUser) {
+  print("⚠️ demo_user exists - consider removing to avoid conflicts");
+}
+
+print("\n💡 Next steps:");
+print("1. Use test_user / test123 for login");
+print("2. If it fails, recreate users using the API");
+print("3. Check that password hashing is working correctly");

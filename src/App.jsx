@@ -12,8 +12,10 @@ import EmbedPage from './pages/EmbedPage.jsx'
 import EditChain from './pages/EditChain.jsx'
 import CustomPage from './pages/CustomPage.jsx'
 import DatabaseTest from './pages/DatabaseTest.jsx'
+import ApiTest from './pages/ApiTest.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
+import ChainPreview from './pages/ChainPreview.jsx';
 
 function App() {
   const location = useLocation()
@@ -48,6 +50,8 @@ function App() {
           <Route path="/create" element={<CreateClip />} />
           <Route path="/create-chain" element={<CreateChain />} />
           <Route path="/database-test" element={<DatabaseTest />} />
+          <Route path="/api-test" element={<ApiTest />} />
+          <Route path="/chain-preview/:chainId" element={<ChainPreview />} />
         </Routes>
       </main>
     </div>
