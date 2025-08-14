@@ -26,7 +26,7 @@ const CopyNotification = ({ isVisible, onClose }) => {
       <div className="bg-secondary-50 border border-secondary-200 rounded-lg shadow-lg p-4 max-w-sm">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
-            <svg className="w-5 h-5 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -34,7 +34,7 @@ const CopyNotification = ({ isVisible, onClose }) => {
             <p className="text-sm font-medium text-secondary-800">
               Link copied to clipboard!
             </p>
-            <p className="text-xs text-secondary-600 mt-1">
+            <p className="text-xs text-secondary-600 mt-1 font-light">
               You can now share this clipchain with others
             </p>
           </div>
@@ -45,7 +45,8 @@ const CopyNotification = ({ isVisible, onClose }) => {
                 onClose()
               }, 300)
             }}
-            className="flex-shrink-0 text-secondary-400 hover:text-secondary-600 transition-colors"
+            className="flex-shrink-0 text-secondary-400 hover:text-secondary-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50 rounded p-1"
+            aria-label="Close notification"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

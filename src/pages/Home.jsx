@@ -9,32 +9,37 @@ import { llmClips, chainMetadata } from '../data/exampleClips.js'
 const Home = () => {
   return (
     <LayoutWithSidebar>
-      <div className="min-h-full bg-gradient-to-br from-primary-50 to-white">
+      <div className="min-h-full bg-gradient-to-br from-primary-50 via-white to-secondary-50">
         {/* Welcome Message */}
-        <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6 pt-4 pb-2">
-          <div className="flex items-center justify-center mb-1">
-            <div className="flex items-center space-x-3">
-              <img src="/logo-blue.svg" alt="Clipchain" className="h-7 w-7" />
-              <h1 className="text-2xl font-semibold text-gray-800">
-                Welcome to Clipchain!
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center mb-4">
+              <img src="/logo-blue.svg" alt="Clipchain" className="h-8 w-8 mr-3" />
+              <h1 className="text-3xl font-light text-gray-900">
+                Welcome to Clipchain
               </h1>
             </div>
+            <p className="text-lg text-gray-600 font-light max-w-2xl mx-auto">
+              Organize, curate, and share your favorite video moments with intelligent clip chains
+            </p>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6 py-8">
+        <div className="max-w-7xl mx-auto px-6 pb-16">
           {/* Main Content - Two Columns */}
-          <div className="grid lg:grid-cols-2 gap-8">
+          <div className="grid lg:grid-cols-2 gap-12">
             {/* Left Column - Clipchain Examples */}
             <div className="order-2 lg:order-1">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 mb-4 hover:shadow-xl hover:border-gray-300 transition-all duration-300">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Step 1. See Clipchain in action
-                </h2>
-                <p className="text-gray-600 mb-8 text-sm">
-                  Here you can see an example of how Clipchain works. Start selecting any clip to see the content.
-                </p>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md hover:border-gray-200 transition-all duration-300">
+                <div className="mb-8">
+                  <h2 className="text-xl font-medium text-gray-900 mb-3">
+                    See Clipchain in action
+                  </h2>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Experience how Clipchain works with this interactive example. Select any clip to see the content and navigate through the chain.
+                  </p>
+                </div>
                 
                 <div className="space-y-8">
                   <ClipchainPlayer 

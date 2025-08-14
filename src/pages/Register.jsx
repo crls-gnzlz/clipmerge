@@ -7,290 +7,224 @@ const Register = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    displayName: ''
+    confirmPassword: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [validationErrors, setValidationErrors] = useState({});
-  const navigate = useNavigate();
+  const [errors, setErrors] = useState({});
   const { register } = useAuth();
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear specific validation error when user starts typing
-    if (validationErrors[name]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-    
-    // Clear general error
-    if (error) setError('');
-  };
-
-  const validateForm = () => {
-    const errors = {};
-
-    // Username validation
-    if (formData.username.length < 3) {
-      errors.username = 'Username must be at least 3 characters long';
-    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      errors.username = 'Username can only contain letters, numbers and underscores';
-    }
-
-    // Email validation
-    if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    // Password validation
-    if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters long';
-    }
-
-    // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
-
-    // Display name validation
-    if (formData.displayName && formData.displayName.length > 50) {
-      errors.displayName = 'Display name cannot exceed 50 characters';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
+    if (!validateForm()) return;
+    
     try {
-      const userData = {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        displayName: formData.displayName || formData.username
-      };
-
-      const result = await register(userData);
+      setIsLoading(true);
+      const success = await register(formData.username, formData.email, formData.password);
       
-      if (result.success) {
-        // Redirect to home page
-        navigate('/');
+      if (success) {
+        navigate('/dashboard');
       } else {
-        setError(result.error || 'Registration failed. Please try again.');
+        setErrors({ submit: 'Registration failed. Please try again.' });
       }
     } catch (error) {
-      setError('An unexpected error occurred. Please try again.');
+      console.error('Registration error:', error);
+      setErrors({ submit: 'An error occurred during registration' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getFieldError = (fieldName) => {
-    return validationErrors[fieldName] || '';
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters long';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long';
+    }
+    
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
-      <div className="max-w-md mx-auto px-4 py-16">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Logo */}
+        <div className="flex justify-center">
+          <Link to="/" className="flex flex-col items-center">
+            <img src="/logo2.svg" alt="clipchain" className="h-12 w-auto" />
+          </Link>
+        </div>
+        
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <img src="/logo-blue.svg" alt="Clipchain" className="h-12 w-12" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="mt-8 text-center">
+          <h2 className="text-2xl font-light text-gray-900 mb-2">
             Create your account
-          </h1>
-          <p className="text-gray-600">
-            Join Clipchain and start creating amazing content
+          </h2>
+          <p className="text-sm text-gray-600">
+            Join us to start organizing your video content
           </p>
         </div>
+      </div>
 
-        {/* Register Form */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-8 px-6 sm:px-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username *
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Username
               </label>
               <input
                 type="text"
-                id="username"
-                name="username"
                 value={formData.username}
-                onChange={handleChange}
-                required
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                  getFieldError('username') ? 'border-red-300' : 'border-gray-300'
-                }`}
+                onChange={(e) => handleInputChange('username', e.target.value)}
                 placeholder="Choose a unique username"
-                disabled={isLoading}
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 ${
+                  errors.username ? 'border-red-300' : 'border-gray-200'
+                }`}
               />
-              {getFieldError('username') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('username')}</p>
+              {errors.username && (
+                <p className="text-red-500 text-xs mt-2 flex items-center">
+                  <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.username}
+                </p>
               )}
             </div>
 
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email *
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Email
               </label>
               <input
                 type="email"
-                id="email"
-                name="email"
                 value={formData.email}
-                onChange={handleChange}
-                required
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                  getFieldError('email') ? 'border-red-300' : 'border-gray-300'
-                }`}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Enter your email address"
-                disabled={isLoading}
-              />
-              {getFieldError('email') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('email')}</p>
-              )}
-            </div>
-
-            {/* Display Name Field */}
-            <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
-                Display Name
-              </label>
-              <input
-                type="text"
-                id="displayName"
-                name="displayName"
-                value={formData.displayName}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                  getFieldError('displayName') ? 'border-red-300' : 'border-gray-300'
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 ${
+                  errors.email ? 'border-red-300' : 'border-gray-200'
                 }`}
-                placeholder="How should we call you? (optional)"
-                disabled={isLoading}
               />
-              {getFieldError('displayName') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('displayName')}</p>
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-2 flex items-center">
+                  <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.email}
+                </p>
               )}
             </div>
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password *
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Password
               </label>
               <input
                 type="password"
-                id="password"
-                name="password"
                 value={formData.password}
-                onChange={handleChange}
-                required
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                  getFieldError('password') ? 'border-red-300' : 'border-gray-300'
-                }`}
+                onChange={(e) => handleInputChange('password', e.target.value)}
                 placeholder="Create a strong password"
-                disabled={isLoading}
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 ${
+                  errors.password ? 'border-red-300' : 'border-gray-200'
+                }`}
               />
-              {getFieldError('password') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('password')}</p>
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-2 flex items-center">
+                  <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.password}
+                </p>
               )}
             </div>
 
             {/* Confirm Password Field */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password *
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Confirm Password
               </label>
               <input
                 type="password"
-                id="confirmPassword"
-                name="confirmPassword"
                 value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                  getFieldError('confirmPassword') ? 'border-red-300' : 'border-gray-300'
-                }`}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                 placeholder="Confirm your password"
-                disabled={isLoading}
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 ${
+                  errors.confirmPassword ? 'border-red-300' : 'border-gray-200'
+                }`}
               />
-              {getFieldError('confirmPassword') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('confirmPassword')}</p>
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-xs mt-2 flex items-center">
+                  <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
+            {/* Submit Error */}
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-600 text-sm">{errors.submit}</p>
               </div>
             )}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              {isLoading ? 'Creating account...' : 'Create Account'}
-            </button>
-          </form>
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium py-2.5 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+              >
+                {isLoading ? 'Creating account...' : 'Create account'}
+              </button>
+            </div>
 
-          {/* Divider */}
-          <div className="my-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Already have an account?</span>
+            {/* Links */}
+            <div className="text-center">
+              <div className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <Link 
+                  to="/login" 
+                  className="text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200"
+                >
+                  Sign in
+                </Link>
               </div>
             </div>
-          </div>
-
-          {/* Login Link */}
-          <div className="text-center">
-            <Link
-              to="/login"
-              className="text-primary-600 hover:text-primary-700 font-medium text-sm transition-colors"
-            >
-              Sign in to your account
-            </Link>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-gray-500 text-sm">
-            By creating an account, you agree to our{' '}
-            <Link to="/terms" className="text-primary-600 hover:text-primary-700">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link to="/privacy" className="text-primary-600 hover:text-primary-700">
-              Privacy Policy
-            </Link>
-          </p>
+          </form>
         </div>
       </div>
     </div>

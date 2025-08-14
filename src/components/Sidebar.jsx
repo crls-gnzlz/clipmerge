@@ -74,21 +74,24 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
     
     if (userClips.length === 0) {
       return (
-        <div className="text-center py-0.5">
-          <p className="text-xs text-gray-400">No clips yet</p>
+        <div className="text-center py-2">
+          <p className="text-xs text-gray-400 font-light">No clips yet</p>
         </div>
       )
     }
     
     return userClips.slice(0, 5).map((clip) => (
-      <div key={clip._id} className="group relative flex items-center p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
+      <div key={clip._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer duration-200">
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-gray-900 truncate">{clip.title}</p>
+          <p className="text-xs text-gray-900 truncate font-medium">{clip.title}</p>
         </div>
         {/* Hover menu with dots */}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <div className="relative">
-            <button className="text-gray-400 hover:text-gray-600 p-0.5">
+            <button 
+              className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+              aria-label="Clip options"
+            >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
@@ -114,21 +117,24 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
     
     if (userChains.length === 0) {
       return (
-        <div className="text-center py-0.5">
-          <p className="text-xs text-gray-400">No chains yet</p>
+        <div className="text-center py-2">
+          <p className="text-xs text-gray-400 font-light">No chains yet</p>
         </div>
       )
     }
     
     return userChains.slice(0, 5).map((chain) => (
-      <div key={chain._id} className="group relative flex items-center p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
+      <div key={chain._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200">
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-gray-900 truncate">{chain.name}</p>
+          <p className="text-xs text-gray-900 truncate font-medium">{chain.name}</p>
         </div>
         {/* Hover menu with dots */}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <div className="relative">
-            <button className="text-gray-400 hover:text-gray-600 p-0.5">
+            <button 
+              className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+              aria-label="Chain options"
+            >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
@@ -283,32 +289,35 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       >
         {/* Content Area - Scrollable content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-3">
+          <div className="p-4">
             {/* User Profile Section - Only show when authenticated */}
             {isAuthenticated && (
-              <div className="mb-4">
+              <div className="mb-6">
                 <div className="relative" ref={profileMenuRef}>
                   {/* Clickable Profile Header */}
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="w-full flex items-center space-x-2 p-1 rounded-md hover:bg-gray-100 transition-colors"
+                    className="w-full flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+                    aria-label="User profile menu"
+                    aria-expanded={showProfileMenu}
+                    aria-haspopup="true"
                   >
-                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                      <span className="text-primary-700 text-sm font-medium">
+                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center border-2 border-primary-200">
+                      <span className="text-primary-700 text-sm font-semibold">
                         {user?.displayName?.charAt(0) || user?.username?.charAt(0) || 'U'}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-xs font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-gray-900 truncate">
                         {user?.displayName || user?.username}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-xs text-gray-500 truncate font-light">
                         {user?.email}
                       </p>
                     </div>
                     {/* Dropdown Arrow */}
                     <svg 
-                      className={`w-3 h-3 text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} 
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -319,14 +328,14 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
 
                   {/* Profile Dropdown Menu */}
                   {showProfileMenu && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                       <div className="py-1">
                         <Link
                           to="/profile"
                           onClick={() => setShowProfileMenu(false)}
-                          className="flex items-center space-x-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50"
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
                           <span>My Profile</span>
@@ -335,9 +344,9 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                         <Link
                           to="/settings"
                           onClick={() => setShowProfileMenu(false)}
-                          className="flex items-center space-x-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50"
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
@@ -352,9 +361,9 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                             setShowProfileMenu(false);
                             navigate('/login');
                           }}
-                          className="w-full flex items-center space-x-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 focus:outline-none focus:bg-red-50"
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                           </svg>
                           <span>Logout</span>
@@ -366,103 +375,103 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
               </div>
             )}
 
-            {/* Navigation - Reduced size */}
-            <nav className="space-y-1 mb-4">
+            {/* Navigation - Following Design System spacing */}
+            <nav className="space-y-2 mb-6">
               <Link
                 to="/"
-                className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg transition-all duration-200 ${
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
                   isActive('/') 
-                    ? 'bg-primary-50 text-primary-700 shadow-sm' 
+                    ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
                 </svg>
-                <span className="text-xs font-medium">Home</span>
+                <span className="text-sm font-medium">Home</span>
               </Link>
               
               <Link
                 to="/dashboard"
-                className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg transition-all duration-200 ${
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
                   isActive('/dashboard') 
-                    ? 'bg-primary-50 text-primary-700 shadow-sm' 
+                    ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <span className="text-xs font-medium">Workspace</span>
+                <span className="text-sm font-medium">Workspace</span>
               </Link>
 
               <Link
                 to="/library"
-                className={`flex items-center space-x-2 px-2 py-1.5 rounded-lg transition-all duration-200 ${
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
                   isActive('/library') 
-                    ? 'bg-primary-50 text-primary-700 shadow-sm' 
+                    ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                <span className="text-xs font-medium">Library</span>
+                <span className="text-sm font-medium">Library</span>
               </Link>
             </nav>
 
             {/* Subtle separator */}
-            <div className="border-t border-gray-100 mb-4"></div>
+            <div className="border-t border-gray-100 mb-6"></div>
 
-            {/* Clips Section - Allow 5 clips visible */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-semibold text-gray-900">Clips</h4>
+            {/* Clips Section - Following Design System */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-medium text-gray-700">Clips</h4>
                 <Link 
                   to="/create" 
-                  className="text-primary-600 hover:text-primary-700 text-xs font-medium"
+                  className="text-primary-600 hover:text-primary-700 text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 rounded px-1 py-0.5"
                 >
                   + New
                 </Link>
               </div>
               
-              <div className={`overflow-y-auto space-y-0.5 pr-1 ${userClips.length === 0 ? 'h-8' : 'h-28'}`}>
+              <div className={`overflow-y-auto space-y-1 pr-1 ${userClips.length === 0 ? 'h-8' : 'h-28'}`}>
                 {renderClipsList()}
               </div>
             </div>
 
             {/* Subtle separator */}
-            <div className="border-t border-gray-100 mb-4"></div>
+            <div className="border-t border-gray-100 mb-6"></div>
 
-            {/* Chains Section - Allow 5 chains visible */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-semibold text-gray-900">Chains</h4>
+            {/* Chains Section - Following Design System */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-medium text-gray-700">Chains</h4>
                 <Link 
                   to="/create-chain" 
-                  className="text-primary-600 hover:text-primary-700 text-xs font-medium"
+                  className="text-primary-600 hover:text-primary-700 text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 rounded px-1 py-0.5"
                 >
                   + New
                 </Link>
               </div>
               
-              <div className={`overflow-y-auto space-y-0.5 pr-1 ${userChains.length === 0 ? 'h-8' : 'h-28'}`}>
+              <div className={`overflow-y-auto space-y-1 pr-1 ${userChains.length === 0 ? 'h-8' : 'h-28'}`}>
                 {renderChainsList()}
               </div>
             </div>
 
             {/* Subtle separator */}
-            <div className="border-t border-gray-100 mb-4"></div>
+            <div className="border-t border-gray-100 mb-6"></div>
 
-            {/* Invite Friends Section - Two separate buttons with blue accent */}
-            <div className="mb-4">
-              <h4 className="text-xs font-semibold text-gray-900 mb-2">Invite Friends</h4>
+            {/* Invite Friends Section - Following Design System */}
+            <div className="mb-6">
+              <h4 className="text-xs font-medium text-gray-700 mb-3">Invite Friends</h4>
               <div className="space-y-2">
                 {/* Email Invite Button */}
                 <button 
                   onClick={() => setShowEmailModal(true)}
-                  className="w-full bg-secondary-50 hover:bg-secondary-100 text-black hover:text-gray-900 text-xs font-medium py-1.5 px-2 rounded-md border border-secondary-200 hover:border-secondary-300 transition-all duration-200 flex items-center justify-center space-x-1"
+                  className="w-full bg-secondary-50 hover:bg-secondary-100 text-secondary-900 hover:text-secondary-700 text-xs font-medium py-2 px-3 rounded-lg border border-secondary-200 hover:border-secondary-300 transition-all duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -471,17 +480,17 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 </button>
                 
                 {/* Copy Link Button with actual link display - Single line */}
-                <div className="py-1.5 px-2 bg-secondary-50 rounded-md border border-secondary-200">
+                <div className="py-2 px-3 bg-secondary-50 rounded-lg border border-secondary-200">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1 text-secondary-950 hover:text-secondary-700 cursor-pointer overflow-hidden text-xs" onClick={copyReferralLink}>
-                      <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center space-x-2 text-secondary-900 hover:text-secondary-700 cursor-pointer overflow-hidden text-xs" onClick={copyReferralLink}>
+                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
                       <span className="underline truncate">clipchain.com/ref/carlos</span>
                     </div>
                     <button 
                       onClick={copyReferralLink}
-                      className="ml-2 flex-shrink-0 text-secondary-950 hover:text-secondary-700 text-xs font-medium px-1.5 py-0.5 bg-white border border-secondary-300 rounded hover:bg-secondary-50 transition-colors"
+                      className="ml-2 flex-shrink-0 text-secondary-900 hover:text-secondary-700 text-xs font-medium px-2 py-1 bg-white border border-secondary-300 rounded-md hover:bg-secondary-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50"
                     >
                       Copy
                     </button>
@@ -493,19 +502,19 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         </div>
 
         {/* Footer with Logo - Fixed at bottom */}
-        <div className="border-t border-gray-200 bg-white p-2 absolute bottom-0 left-0 right-0">
+        <div className="border-t border-gray-200 bg-white p-3 absolute bottom-0 left-0 right-0">
           <div className="flex items-center justify-between px-3">
             {/* Logo */}
             <img 
               src="/logo2.svg" 
               alt="Clipchain" 
-              className="h-4 w-auto cursor-pointer hover:opacity-80 transition-opacity" 
+              className="h-4 w-auto cursor-pointer hover:opacity-80 transition-opacity duration-200" 
               onClick={handleLogoClick}
             />
             
             {/* Help Icon */}
             <div className="relative group">
-              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
+              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
                 <span className="text-gray-600 text-xs font-medium" style={{ fontSize: '12px' }}>?</span>
               </div>
               
@@ -533,14 +542,14 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         <div
           ref={resizeHandleRef}
           data-resize-handle
-          className="absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-primary-200 transition-colors group"
+          className="absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-primary-200 transition-colors duration-200 group"
           onMouseDown={handleMouseDown}
         >
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0.5 h-6 bg-gray-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0.5 h-6 bg-gray-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
         </div>
       </div>
 
-      {/* Email Invitation Modal - Same as Workspace */}
+      {/* Email Invitation Modal - Following Design System */}
       {showEmailModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4">
@@ -549,7 +558,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 <h3 className="text-lg font-semibold text-gray-900">Invite Friends</h3>
                 <button 
                   onClick={() => setShowEmailModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 rounded p-1"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -571,12 +580,12 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                       value={email}
                       onChange={(e) => updateEmail(index, e.target.value)}
                       placeholder="Enter email address"
-                      className="flex-1 text-sm border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-secondary-950 focus:border-transparent"
+                      className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-secondary-500 focus:border-secondary-500 transition-all duration-200"
                     />
                     {emails.length > 1 && (
                       <button
                         onClick={() => removeEmail(index)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 rounded p-1"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -588,7 +597,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 
                 <button
                   onClick={addEmail}
-                  className="flex items-center space-x-2 text-secondary-950 hover:text-secondary-700 text-sm font-medium"
+                  className="flex items-center space-x-2 text-secondary-900 hover:text-secondary-700 text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50 rounded px-1 py-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -601,13 +610,13 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
               <button
                 onClick={() => setShowEmailModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSendInvites}
-                className="bg-secondary-950 hover:bg-secondary-900 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+                className="bg-secondary-900 hover:bg-secondary-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50"
               >
                 Send Invites
               </button>

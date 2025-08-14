@@ -4,156 +4,172 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [errors, setErrors] = useState({});
   const { login } = useAuth();
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (error) setError('');
-  };
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
+    
+    if (!validateForm()) return;
+    
     try {
-      console.log('🔐 Attempting login with:', { username: formData.username, password: formData.password });
+      setIsLoading(true);
+      const success = await login(formData.email, formData.password);
       
-      const result = await login(formData);
-      console.log('🔐 Login result:', result);
-      
-      if (result.success) {
-        // Redirect to home page
-        navigate('/');
+      if (success) {
+        navigate('/dashboard');
       } else {
-        setError(result.error || 'Login failed. Please try again.');
+        setErrors({ submit: 'Invalid email or password' });
       }
     } catch (error) {
-      console.error('🔐 Login error:', error);
-      setError('An unexpected error occurred. Please try again.');
+      console.error('Login error:', error);
+      setErrors({ submit: 'An error occurred during login' });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
-      <div className="max-w-md mx-auto px-4 py-16">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Logo */}
+        <div className="flex justify-center">
+          <Link to="/" className="flex flex-col items-center">
+            <img src="/logo2.svg" alt="clipchain" className="h-12 w-auto" />
+          </Link>
+        </div>
+        
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <img src="/logo-blue.svg" alt="Clipchain" className="h-12 w-12" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="mt-8 text-center">
+          <h2 className="text-2xl font-light text-gray-900 mb-2">
             Welcome back
-          </h1>
-          <p className="text-gray-600">
-            Sign in to your Clipchain account
+          </h2>
+          <p className="text-sm text-gray-600">
+            Sign in to your account to continue
           </p>
         </div>
+      </div>
 
-        {/* Login Form */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-8 px-6 sm:px-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username/Email Field */}
+            {/* Email Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username or Email
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Email
               </label>
               <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                placeholder="Enter your username or email"
-                disabled={isLoading}
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="Enter your email address"
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 ${
+                  errors.email ? 'border-red-300' : 'border-gray-200'
+                }`}
               />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-2 flex items-center">
+                  <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.email}
+                </p>
+              )}
             </div>
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-2">
                 Password
               </label>
               <input
                 type="password"
-                id="password"
-                name="password"
                 value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                onChange={(e) => handleInputChange('password', e.target.value)}
                 placeholder="Enter your password"
-                disabled={isLoading}
+                className={`w-full px-4 py-2.5 text-sm border rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 ${
+                  errors.password ? 'border-red-300' : 'border-gray-200'
+                }`}
               />
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-2 flex items-center">
+                  <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.password}
+                </p>
+              )}
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
+            {/* Submit Error */}
+            {errors.submit && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-600 text-sm">{errors.submit}</p>
               </div>
             )}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium py-2.5 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+              >
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </div>
 
-          {/* Divider */}
-          <div className="my-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+            {/* Links */}
+            <div className="text-center space-y-3">
+              <div>
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-primary-600 hover:text-primary-700 transition-colors duration-200"
+                >
+                  Forgot your password?
+                </Link>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Don't have an account?</span>
+              
+              <div className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link 
+                  to="/register" 
+                  className="text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200"
+                >
+                  Sign up
+                </Link>
               </div>
             </div>
-          </div>
-
-          {/* Register Link */}
-          <div className="text-center">
-            <Link
-              to="/register"
-              className="text-primary-600 hover:text-primary-700 font-medium text-sm transition-colors"
-            >
-              Create a new account
-            </Link>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-gray-500 text-sm">
-            By signing in, you agree to our{' '}
-            <Link to="/terms" className="text-primary-600 hover:text-primary-700">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link to="/privacy" className="text-primary-600 hover:text-primary-700">
-              Privacy Policy
-            </Link>
-          </p>
+          </form>
         </div>
       </div>
     </div>

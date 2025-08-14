@@ -52,14 +52,15 @@ const LayoutWithSidebar = ({ children }) => {
           marginLeft: sidebarOpen && isDesktop ? `${sidebarWidth}px` : '0px' 
         }}
       >
-        {/* Mobile menu button - Only show on mobile when sidebar is closed */}
+        {/* Mobile menu button - Following Design System */}
         {!isDesktop && !sidebarOpen && (
           <div className="lg:hidden p-4">
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+              className="p-2.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 border border-gray-200 hover:border-gray-300"
+              aria-label="Open navigation menu"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>

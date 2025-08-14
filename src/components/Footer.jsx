@@ -4,23 +4,23 @@ import { Link } from 'react-router-dom'
 const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center mb-4">
               <img src="/logo.svg" alt="clipchain" className="h-8 brightness-0 invert" />
             </div>
-            <p className="text-gray-300 mb-6 max-w-md leading-relaxed">
+            <p className="text-gray-300 mb-6 max-w-md leading-relaxed text-sm">
               Turn video moments into powerful collections. Create, curate, and share meaningful video content with clipchain.
             </p>
-            <div className="flex space-x-4">
+            <div className="flex space-x-3">
               {/* LinkedIn */}
               <a 
                 href="https://linkedin.com/company/clipchain" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors duration-200 p-2 rounded-lg hover:bg-gray-800"
+                className="text-gray-400 hover:text-white transition-all duration-200 p-2.5 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                 title="Follow us on LinkedIn"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@ const Footer = () => {
                 href="https://instagram.com/clipchain" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors duration-200 p-2 rounded-lg hover:bg-gray-800"
+                className="text-gray-400 hover:text-white transition-all duration-200 p-2.5 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                 title="Follow us on Instagram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -46,7 +46,7 @@ const Footer = () => {
                 href="https://youtube.com/@clipchain" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors duration-200 p-2 rounded-lg hover:bg-gray-800"
+                className="text-gray-400 hover:text-white transition-all duration-200 p-2.5 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                 title="Subscribe to our YouTube channel"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -58,25 +58,25 @@ const Footer = () => {
           
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Quick Links</h3>
-            <ul className="space-y-3">
+            <h3 className="text-base font-medium mb-4 text-white">Quick Links</h3>
+            <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                <Link to="/" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">
                   Home
                 </Link>
               </li>
               <li>
-                <Link to="/library" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                <Link to="/library" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">
                   Library
                 </Link>
               </li>
               <li>
-                <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">
                   Workspace
                 </Link>
               </li>
               <li>
-                <Link to="/landing" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                <Link to="/landing" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">
                   Visit our website
                 </Link>
               </li>
@@ -85,25 +85,25 @@ const Footer = () => {
           
           {/* Company */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Company</h3>
-            <ul className="space-y-3">
+            <h3 className="text-base font-medium mb-4 text-white">Company</h3>
+            <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">
                   About Us
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">
                   Terms of Service
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline">
+                <a href="#" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">
                   Contact
                 </a>
               </li>
@@ -114,17 +114,17 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-sm font-light">
               © 2024 clipchain. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors duration-200 hover:underline">
+              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors duration-200 hover:underline font-light">
                 Privacy Policy
               </a>
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors duration-200 hover:underline">
+              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors duration-200 hover:underline font-light">
                 Terms of Service
               </a>
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors duration-200 hover:underline">
+              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors duration-200 hover:underline font-light">
                 Cookie Policy
               </a>
             </div>
