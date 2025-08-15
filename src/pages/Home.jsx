@@ -33,7 +33,7 @@ const Home = () => {
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Left Column - Clipchain Examples */}
             <div className="order-2 lg:order-1">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md hover:border-gray-200 transition-all duration-300">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 transition-all duration-300">
                 <div className="mb-8">
                   <h2 className="text-xl font-medium text-gray-900 mb-3">
                     See Clipchain in action

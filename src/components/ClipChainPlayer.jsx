@@ -634,7 +634,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                         args: ['annotations', 'show', false]
                       }), '*')
                       
-                      // Command 2: Set player size
+                      // Command 2: Set player size to maintain clean appearance
                       if (playerContainerRef.current) {
                         const { offsetWidth, offsetHeight } = playerContainerRef.current
                         iframe.contentWindow.postMessage(JSON.stringify({
@@ -644,7 +644,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                         }), '*')
                       }
                       
-                      // Command 3: Additional cleanup
+                      // Command 3: Additional cleanup for related content
                       iframe.contentWindow.postMessage(JSON.stringify({
                         event: 'command',
                         func: 'setOption',
@@ -1104,91 +1104,58 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
   return (
     <>
-      <div className={`bg-gray-50 rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 group ${compact ? 'compact-player' : ''}`}>
+      <div className={`bg-white border border-gray-100 hover:bg-blue-100/30 rounded-xl shadow-md transition-all duration-300 group ${compact ? 'compact-player' : ''}`}>
 
 
         {/* Header with Logo and Copy Link */}
-        <div className={`flex items-center justify-between border-b border-gray-300 hover:border-gray-400 transition-colors duration-300 ${compact ? 'p-1.5' : 'p-2'}`}>
+        <div className="flex items-center justify-between px-0 pt-4 pb-4 border-gray-100" style={{paddingLeft: '1.5rem', paddingRight: '1.5rem'}}>
           {/* Left side - Logo */}
-          <div className="flex items-center">
-            <img src="/logo-blue.svg" alt="clipchain" className={`brightness-110 filter group-hover:brightness-110 transition-all duration-300 ${compact ? 'h-3' : 'h-4'}`} />
+          <div className="flex items-center min-w-0">
+            <img src="/logo-blue.svg" alt="clipchain" className="h-5 w-auto mr-2" />
           </div>
           
           {/* Right side - Copy Link */}
           <button
             onClick={copyLink}
-            className={`flex items-center space-x-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-secondary-950 hover:text-white transition-all duration-200 hover:shadow-md ${compact ? 'px-1.5 py-0.5' : 'px-2.5 py-1'}`}
+            className="flex items-center px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-50 ml-auto"
+            aria-label="Copy share link"
           >
-            <svg className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
             </svg>
-            {!compact && <span className="text-xs font-semibold">Copy link</span>}
+            <span>Copy link</span>
           </button>
         </div>
 
         {/* Title and Description */}
-        <div className={`${compact ? 'px-2 pt-2 pb-1' : 'px-3 pt-3 pb-2'}`}>
-          <h2 
-            className={`font-bold text-gray-900 mb-1 cursor-help ${compact ? 'text-base' : 'text-xl'}`}
-            title={tags && tags.length > 0 ? tags.join(', ') : ''}
-          >
-            {title}
-          </h2>
-          <div className={`flex flex-col justify-center ${compact ? 'min-h-[2rem]' : 'min-h-[3rem]'}`}>
-            <p className={`text-gray-600 mb-2 ${compact ? 'text-xs' : 'text-sm'}`}>
-              {description}
-            </p>
-            {(author || createdAt) && (
-              <div className="flex items-center space-x-4 text-xs text-gray-500">
-                {author && (
-                  <span className="hover:text-secondary-950 transition-colors">
-                    By {author}
-                  </span>
-                )}
-                {author && createdAt && <span>•</span>}
-                {createdAt && <span>{new Date(createdAt).toLocaleDateString()}</span>}
-              </div>
-            )}
-          </div>
+        <div className="px-6 pb-2 text-xs text-gray-400 font-light mt-2">
+          {author && <Link to={`/user/${author}`} className="text-primary-600 hover:underline" title={`View ${author}'s profile`}>By {author}</Link>}
+          {author && createdAt && <> • </>}
+          {createdAt && <>{new Date(createdAt).toLocaleDateString()}</>}
         </div>
+        <div className="px-6 pb-2 text-sm text-gray-600 font-light">{description}</div>
 
         {/* Chapter Indicators - Moved to area above video player (pink rectangle area) */}
-        <div className={`${compact ? 'px-2' : 'px-3'}`}>
-          <div className="flex flex-col space-y-1">
-            {/* Clip indicators */}
-            <div className="flex space-x-2 flex-wrap">
-              {clips && clips.length > 0 ? clips.slice(visibleClipRange.start, visibleClipRange.end).map((_, index) => {
-                const actualIndex = visibleClipRange.start + index
-                return (
-                  <button
-                    key={actualIndex}
-                    onClick={() => {
-                      console.log('Clicked clip:', actualIndex, 'player ready:', playerReady)
-                      setIsManualNavigation(true)
-                      setCurrentClipIndex(actualIndex)
-                      updateVisibleClipRange(actualIndex)
-                      setTimeout(() => setIsManualNavigation(false), 1000)
-                    }}
-                    className={`px-2 py-1 text-xs font-medium rounded border transition-colors ${
-                      actualIndex === currentClipIndex 
-                        ? 'bg-secondary-950 text-white border-secondary-950' 
-                        : 'bg-white text-gray-600 border-gray-300 hover:border-secondary-950 hover:text-secondary-950'
-                    } ${compact ? 'text-xs px-1.5 py-0.5' : ''}`}
-                  >
-                    {actualIndex + 1}
-                  </button>
-                )
-              }) : (
-                <span className="text-xs text-gray-500">No clips available</span>
-              )}
-            </div>
-            
-
-          </div>
+        <div className="flex space-x-2 px-6 pb-2">
+          {clips.map((clip, idx) => (
+            <button
+              key={clip.id || idx}
+              className={`flex items-center justify-center rounded-full text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 ${compact ? 'w-5 h-5' : 'w-7 h-7'} ${idx === currentClipIndex ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-primary-50'}`}
+              aria-label={`Go to clip ${idx + 1}`}
+              onClick={() => {
+                setIsManualNavigation(true)
+                setCurrentClipIndex(idx)
+                updateVisibleClipRange(idx)
+                setTimeout(() => setIsManualNavigation(false), 1000)
+              }}
+            >
+              {idx + 1}
+            </button>
+          ))}
         </div>
 
         {/* Video Player */}
-        <div className={`${compact ? 'px-2 pt-2 pb-2' : 'px-3 pt-3 pb-3'}`}>
+        <div className="px-6 pb-2">
 
             <div className="mb-2 mt-2">
               {currentClip ? (
@@ -1564,7 +1531,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                             </div>
                             
                             {/* Clip Navigation Pills */}
-                            <div className="flex space-x-1 flex-wrap justify-center">
+                            <div className="flex space-x-2 flex-wrap justify-center">
                               {clips && clips.length > 0 ? clips.map((_, index) => (
                                 <button
                                   key={index}
@@ -1574,11 +1541,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                                     updateVisibleClipRange(index)
                                     setTimeout(() => setIsManualNavigation(false), 1000)
                                   }}
-                                  className={`px-2 py-1 text-xs font-medium rounded-lg border transition-all duration-200 ${
-                                    index === currentClipIndex 
-                                      ? 'bg-secondary-950 text-white border-secondary-950 shadow-lg' 
-                                      : 'bg-white/10 text-white border-white/30 hover:border-secondary-950 hover:text-secondary-950 hover:bg-white/20'
-                                  }`}
+                                  className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 ${index === currentClipIndex ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-primary-50'}`}
+                                  aria-label={`Go to clip ${index + 1}`}
                                 >
                                   {index + 1}
                                 </button>
@@ -1807,6 +1771,45 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           message={notification.message}
         />
       </div>
+      {isFullscreen && (
+        <div
+          className="absolute inset-0 z-30 pointer-events-auto"
+          onMouseMove={() => {
+            setShowFullscreenControls(true)
+            if (controlsTimeout) clearTimeout(controlsTimeout)
+            if (isPlaying) {
+              const newTimeout = setTimeout(() => setShowFullscreenControls(false), 2000)
+              setControlsTimeout(newTimeout)
+            }
+          }}
+          onClick={() => {
+            if (isPlaying) {
+              setIsPlaying(false)
+              sendPostMessage('pauseVideo')
+            } else if (currentClip) {
+              setIsPlaying(true)
+              sendPostMessage('playVideo')
+            }
+          }}
+          style={{ background: 'transparent' }}
+        />
+      )}
+      {isFullscreen && (
+        <div className={`absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm pointer-events-auto z-50 transition-all duration-300 ease-in-out ${showFullscreenControls || !isPlaying ? 'translate-y-0' : 'translate-y-full'}`}
+          onMouseEnter={() => {
+            if (controlsTimeout) clearTimeout(controlsTimeout)
+            setShowFullscreenControls(true)
+          }}
+          onMouseLeave={() => {
+            if (showFullscreenControls && isPlaying) {
+              const newTimeout = setTimeout(() => setShowFullscreenControls(false), 1000)
+              setControlsTimeout(newTimeout)
+            }
+          }}
+        >
+          {/* ...dock controls... */}
+        </div>
+      )}
     </>
   )
 }
