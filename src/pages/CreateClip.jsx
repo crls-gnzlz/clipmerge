@@ -319,8 +319,8 @@ const CreateClip = () => {
           setErrors({});
           setErrors({ submit: 'Clip created successfully! Form reset for another clip.' });
         } else {
-          // Navigate to dashboard
-          navigate('/dashboard');
+          // Navigate to workspace
+          navigate('/workspace');
         }
       } else {
         setErrors({ submit: response.message || 'Failed to create clip' });
@@ -967,7 +967,7 @@ const CreateClip = () => {
               <div className="flex justify-end space-x-3 pt-6">
                 <button
                   type="button"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/workspace')}
                   className="px-6 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium"
                 >
                   Cancel

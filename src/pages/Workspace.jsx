@@ -4,16 +4,37 @@ import LayoutWithSidebar from '../components/LayoutWithSidebar.jsx';
 import { getChainsWithClips, getUnassignedClips } from '../data/mockWorkspace.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import apiService from '../lib/api.js';
+import AppNotification from '../components/AppNotification.jsx';
 
 const Workspace = () => {
   const { user, isAuthenticated } = useAuth();
   const [chains, setChains] = useState([]);
   const [clips, setClips] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('chains'); // 'chains' or 'clips'
+  // Cambia el estado inicial de activeTab para leer de localStorage
+  const getInitialTab = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('workspaceActiveTab') || 'chains';
+    }
+    return 'chains';
+  };
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   const [sortField, setSortField] = useState('createdAt');
   const [sortDirection, setSortDirection] = useState('desc');
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'chain'|'clip', id, name }
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState('');
+  const [notification, setNotification] = useState({ isVisible: false, type: 'info', title: '', message: '' });
+
+  // Guarda la tab activa en localStorage al cambiar
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('workspaceActiveTab', tab);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -88,7 +109,28 @@ const Workspace = () => {
     return [...data].sort((a, b) => {
       let aValue, bValue;
       
-      if (sortField === 'createdAt') {
+      if (sortField === 'inChain') {
+        // Clips asignados a una chain primero, luego por nombre de chain
+        const getChainName = (clip) => {
+          const parentChain = chains.find(chain => {
+            if (!chain.clips || !Array.isArray(chain.clips)) return false;
+            return chain.clips.some(clipItem => {
+              let chainClipId = clipItem;
+              if (typeof clipItem === 'object' && clipItem.clip) chainClipId = clipItem.clip;
+              if (typeof chainClipId === 'object' && chainClipId._id) chainClipId = chainClipId._id;
+              return chainClipId && chainClipId.toString() === clip._id.toString();
+            });
+          });
+          return parentChain ? parentChain.name.toLowerCase() : '';
+        };
+        const aHasChain = !!getChainName(a);
+        const bHasChain = !!getChainName(b);
+        if (aHasChain && !bHasChain) return sortDirection === 'asc' ? -1 : 1;
+        if (!aHasChain && bHasChain) return sortDirection === 'asc' ? 1 : -1;
+        // Ambos tienen o no tienen chain, ordenar por nombre de chain
+        aValue = getChainName(a);
+        bValue = getChainName(b);
+      } else if (sortField === 'createdAt') {
         aValue = new Date(a.createdAt);
         bValue = new Date(b.createdAt);
       } else if (sortField === 'name') {
@@ -142,6 +184,38 @@ const Workspace = () => {
     );
   };
 
+  // Delete handler
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      if (deleteTarget.type === 'chain') {
+        await apiService.deleteChain(deleteTarget.id);
+        setChains(prev => prev.filter(c => c._id !== deleteTarget.id));
+      } else if (deleteTarget.type === 'clip') {
+        await apiService.deleteClip(deleteTarget.id);
+        setClips(prev => prev.filter(c => c._id !== deleteTarget.id));
+      }
+      setNotification({
+        isVisible: true,
+        type: 'success',
+        title: 'Deleted',
+        message: `${deleteTarget.type === 'chain' ? 'Chain' : 'Clip'} deleted successfully.`
+      });
+      setShowDeleteModal(false);
+    } catch (err) {
+      setNotification({
+        isVisible: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Error deleting. Please try again.'
+      });
+    } finally {
+      setDeleteLoading(false);
+      setDeleteTarget(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <LayoutWithSidebar>
@@ -188,6 +262,43 @@ const Workspace = () => {
             </div>
           )}
 
+          <AppNotification
+            isVisible={notification.isVisible}
+            onClose={() => setNotification(n => ({ ...n, isVisible: false }))}
+            type={notification.type}
+            title={notification.title}
+            message={notification.message}
+          />
+          {showDeleteModal && deleteTarget && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Confirm Deletion</h2>
+                <p className="text-gray-700 mb-4">
+                  Are you sure you want to delete this {deleteTarget.type}? <br/>
+                  <span className="font-medium">{deleteTarget.name}</span>
+                  <br/>
+                  <span className="text-red-600 font-medium">This action cannot be undone.</span>
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50"
+                    onClick={() => setShowDeleteModal(false)}
+                    disabled={deleteLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    onClick={handleDelete}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Main Content with Tabs */}
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Tab Selector */}
@@ -195,7 +306,7 @@ const Workspace = () => {
               <div className="flex items-center justify-between">
                 <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
                   <button
-                    onClick={() => setActiveTab('chains')}
+                    onClick={() => handleTabChange('chains')}
                     className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                       activeTab === 'chains'
                         ? 'bg-white text-gray-900 shadow-sm'
@@ -205,7 +316,7 @@ const Workspace = () => {
                     Chains ({chains.length})
                   </button>
                   <button
-                    onClick={() => setActiveTab('clips')}
+                    onClick={() => handleTabChange('clips')}
                     className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                       activeTab === 'clips'
                         ? 'bg-white text-gray-900 shadow-sm'
@@ -390,6 +501,10 @@ const Workspace = () => {
                                 <button 
                                   className="text-gray-400 hover:text-red-600 transition-colors duration-200 p-1 rounded"
                                   title="Delete chain"
+                                  onClick={() => {
+                                    setDeleteTarget({ type: 'chain', id: chain._id, name: chain.name });
+                                    setShowDeleteModal(true);
+                                  }}
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -438,8 +553,12 @@ const Workspace = () => {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
                             Duration
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
-                            Chain Status
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                              onClick={() => handleSort('inChain')}>
+                            <div className="flex items-center space-x-1">
+                              <span>In Chain</span>
+                              <SortIcon field="inChain" />
+                            </div>
                           </th>
                           <th 
                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors duration-200"
@@ -485,9 +604,6 @@ const Workspace = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex items-center justify-end space-x-2">
-                                {/* Preview Button - Show clip or go to chain if associated */}
-                                <ChainPreviewButton clip={clip} chains={chains} />
-                                
                                 {/* Edit Button */}
                                 <Link
                                   to={`/edit-clip/${clip._id}`}
@@ -498,14 +614,17 @@ const Workspace = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.586a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
                                 </Link>
-                                
                                 {/* Delete Button */}
                                 <button 
                                   className="text-gray-400 hover:text-red-600 transition-colors duration-200 p-1 rounded"
                                   title="Delete clip"
+                                  onClick={() => {
+                                    setDeleteTarget({ type: 'clip', id: clip._id, name: clip.title });
+                                    setShowDeleteModal(true);
+                                  }}
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
                                 </button>
                               </div>
@@ -527,41 +646,30 @@ const Workspace = () => {
 
 // Component to display chain status for a clip
 const ChainStatusCell = ({ clip, chains }) => {
-  // Debug logs to understand data structure
-  console.log('🔍 ChainStatusCell: Clip:', clip);
-  console.log('🔍 ChainStatusCell: Available chains:', chains);
-  
   // Find which chain this clip belongs to
   const parentChain = chains.find(chain => {
     if (!chain.clips || !Array.isArray(chain.clips)) {
-      console.log('🔍 ChainStatusCell: Chain has no clips array:', chain);
       return false;
     }
-    
-    const found = chain.clips.some(clipItem => {
-      // Handle both direct clip ID and nested clip object
-      const clipId = typeof clipItem === 'string' ? clipItem : clipItem.clip;
-      const isMatch = clipId === clip._id;
-      
-      if (isMatch) {
-        console.log('🔍 ChainStatusCell: Found clip in chain:', chain.name, 'clipItem:', clipItem);
+    return chain.clips.some(clipItem => {
+      let chainClipId = clipItem;
+      if (typeof clipItem === 'object' && clipItem.clip) {
+        chainClipId = clipItem.clip;
       }
-      
-      return isMatch;
+      if (typeof chainClipId === 'object' && chainClipId._id) {
+        chainClipId = chainClipId._id;
+      }
+      return chainClipId && chainClipId.toString() === clip._id.toString();
     });
-    
-    return found;
   });
-
-  console.log('🔍 ChainStatusCell: Parent chain found:', parentChain);
 
   if (!parentChain) {
     return (
       <div className="flex items-center space-x-2">
-        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+        <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 truncate" title="Unassigned">
           Unassigned
         </span>
       </div>
@@ -569,24 +677,16 @@ const ChainStatusCell = ({ clip, chains }) => {
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-        In Chain
-      </span>
-      <Link
-        to={`/edit-chain/${parentChain._id}`}
-        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors duration-200"
-        title={`Go to chain: ${parentChain.name}`}
-      >
-        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        {parentChain.name}
-      </Link>
-    </div>
+    <Link
+      to={`/edit-chain/${parentChain._id}`}
+      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors duration-200 max-w-[180px] truncate"
+      title={parentChain.name}
+    >
+      <svg className="w-3 h-3 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+      <span className="truncate">{parentChain.name}</span>
+    </Link>
   );
 };
 
@@ -614,7 +714,8 @@ const ChainPreviewButton = ({ clip, chains }) => {
         title="Preview clip"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 6v12a3 3 0 103-3H6a3 3 0 103 3V6a3 3 0 10-3 3h18a3 3 0 10-3-3" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>
       </Link>
     );
@@ -627,7 +728,8 @@ const ChainPreviewButton = ({ clip, chains }) => {
       title={`Go to chain: ${parentChain.name}`}
     >
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
       </svg>
     </Link>
   );

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailwind CSS Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-blue-600 mb-6">Tailwind CSS Test</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Test Card 1 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-3">Primary Colors</h2>
+                <div class="space-y-2">
+                    <div class="bg-primary-50 text-primary-900 p-2 rounded">Primary 50</div>
+                    <div class="bg-primary-100 text-primary-900 p-2 rounded">Primary 100</div>
+                    <div class="bg-primary-500 text-white p-2 rounded">Primary 500</div>
+                    <div class="bg-primary-900 text-white p-2 rounded">Primary 900</div>
+                </div>
+            </div>
+            
+            <!-- Test Card 2 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-3">Secondary Colors</h2>
+                <div class="space-y-2">
+                    <div class="bg-secondary-50 text-secondary-900 p-2 rounded">Secondary 50</div>
+                    <div class="bg-secondary-100 text-secondary-900 p-2 rounded">Secondary 100</div>
+                    <div class="bg-secondary-500 text-white p-2 rounded">Secondary 500</div>
+                    <div class="bg-secondary-900 text-white p-2 rounded">Secondary 900</div>
+                </div>
+            </div>
+            
+            <!-- Test Card 3 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-3">Utility Classes</h2>
+                <div class="space-y-2">
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors">
+                        Hover Button
+                    </button>
+                    <div class="text-sm text-gray-600">Small text</div>
+                    <div class="font-bold text-lg">Bold large text</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 text-center">
+            <p class="text-gray-600">If you can see this styled content, Tailwind CSS is working!</p>
+        </div>
+    </div>
+</body>
+</html>
+

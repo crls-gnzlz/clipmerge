@@ -82,68 +82,63 @@ const DragDropClips = ({ clips, onOrderChange, onRemoveClip }) => {
       
       <div className="space-y-2">
         {clips.map((clip, index) => (
-          <div
-            key={clip._id}
-            ref={index === draggedItem ? dragItemRef : null}
-            draggable
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, index)}
-            onDragEnd={handleDragEnd}
-            className={`
-              relative group cursor-move bg-white border border-gray-200 rounded-lg p-3 
-              hover:border-gray-300 hover:shadow-sm transition-all duration-200
-              ${draggedOverIndex === index ? 'border-primary-300 bg-primary-50' : ''}
-              ${draggedItem === index ? 'opacity-50' : ''}
-            `}
-          >
-            {/* Drag Handle */}
-            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <div className="flex flex-col space-y-0.5">
-                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+          <React.Fragment key={clip._id}>
+            {draggedOverIndex === index && draggedItem !== null && draggedItem !== index && (
+              <div className="h-2 -my-2 flex items-center">
+                <div className="w-full h-2 bg-blue-100 border-b-2 border-blue-400 rounded-full shadow-md animate-pulse"></div>
               </div>
-            </div>
-
-            {/* Clip Content */}
-            <div className="pl-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
+            )}
+            <div
+              ref={index === draggedItem ? dragItemRef : null}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`
+                relative group cursor-move bg-white border border-gray-200 rounded-lg px-3 py-2
+                hover:border-gray-300 hover:shadow-sm transition-all duration-200
+                ${draggedOverIndex === index ? 'border-blue-400 bg-blue-50' : ''}
+                ${draggedItem === index ? 'opacity-50' : ''}
+              `}
+            >
+              {/* Drag Handle */}
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="flex flex-col space-y-0.5">
+                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                </div>
+              </div>
+              {/* Clip Content */}
+              <div className="pl-6 flex items-center justify-between min-h-0">
+                <div className="flex-1 min-w-0 flex items-center space-x-3">
                   <h5 className="text-sm font-medium text-gray-900 truncate">
                     {clip.title}
                   </h5>
-                  {clip.description && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                      {clip.description}
-                    </p>
+                  <span className="text-xs text-gray-500 flex-shrink-0">
+                    {Math.floor((clip.duration || (clip.endTime - clip.startTime)) / 60)}:
+                    {((clip.duration || (clip.endTime - clip.startTime)) % 60).toString().padStart(2, '0')}
+                  </span>
+                  {clip.tags && clip.tags.length > 0 && (
+                    <div className="flex space-x-1">
+                      {clip.tags.slice(0, 2).map((tag, tagIndex) => (
+                        <span
+                          key={tagIndex}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {clip.tags.length > 2 && (
+                        <span className="text-xs text-gray-400">
+                          +{clip.tags.length - 2}
+                        </span>
+                      )}
+                    </div>
                   )}
-                  <div className="flex items-center space-x-3 mt-2">
-                    <span className="text-xs text-gray-500">
-                      {Math.floor((clip.duration || (clip.endTime - clip.startTime)) / 60)}:
-                      {((clip.duration || (clip.endTime - clip.startTime)) % 60).toString().padStart(2, '0')}
-                    </span>
-                    {clip.tags && clip.tags.length > 0 && (
-                      <div className="flex space-x-1">
-                        {clip.tags.slice(0, 2).map((tag, tagIndex) => (
-                          <span
-                            key={tagIndex}
-                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {clip.tags.length > 2 && (
-                          <span className="text-xs text-gray-400">
-                            +{clip.tags.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
                 </div>
-
                 {/* Remove Button */}
                 <button
                   type="button"
@@ -157,14 +152,7 @@ const DragDropClips = ({ clips, onOrderChange, onRemoveClip }) => {
                 </button>
               </div>
             </div>
-
-            {/* Order Indicator */}
-            <div className="absolute right-3 top-3">
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
-                {index + 1}
-              </span>
-            </div>
-          </div>
+          </React.Fragment>
         ))}
       </div>
 

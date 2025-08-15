@@ -68,5 +68,3 @@ print("\n🎯 Next steps:");
 print("1. Use the API to create a new creator_user");
 print("2. This will ensure correct password hashing");
 print("3. Test login with the new credentials");
-
-

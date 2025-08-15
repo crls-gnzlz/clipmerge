@@ -163,7 +163,7 @@ const createClip = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Datos de entrada inválidos',
+        message: 'Invalid input data',
         errors: Object.values(error.errors).map(err => ({
           field: err.path,
           message: err.message
@@ -184,46 +184,53 @@ const updateClip = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+    // Log para depuración
+    console.log('[updateClip] Incoming startTime:', updateData.startTime, 'endTime:', updateData.endTime);
+    // Validación explícita antes de actualizar
+    if (
+      typeof updateData.startTime !== 'undefined' &&
+      typeof updateData.endTime !== 'undefined' &&
+      Number(updateData.endTime) <= Number(updateData.startTime)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'End time must be greater than start time',
+        errors: [{ field: 'endTime', message: 'End time must be greater than start time' }]
+      });
+    }
     // No permitir cambiar el autor
     delete updateData.author;
-    
     const clip = await Clip.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     ).populate('author', 'username displayName avatar');
-    
     if (!clip) {
       return res.status(404).json({
         success: false,
-        message: 'Clip no encontrado'
+        message: 'Clip not found'
       });
     }
-    
     res.json({
       success: true,
-      message: 'Clip actualizado exitosamente',
+      message: 'Clip updated successfully',
       data: clip
     });
-    
   } catch (error) {
-    console.error('Error actualizando clip:', error);
-    
+    console.error('Error updating clip:', error);
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Datos de entrada inválidos',
+        message: error.message || 'Invalid input data',
         errors: Object.values(error.errors).map(err => ({
           field: err.path,
           message: err.message
         }))
       });
     }
-    
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor',
+      message: 'Internal server error',
       error: error.message
     });
   }

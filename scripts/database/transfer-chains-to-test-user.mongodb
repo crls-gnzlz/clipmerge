@@ -1,0 +1,151 @@
+// ========================================
+// 🔄 Transfer Chains from creator_user to test_user
+// ========================================
+// 
+// Instructions:
+// 1. Open MongoDB Compass
+// 2. Connect to your MongoDB instance
+// 3. Open the MongoDB Shell (mongosh) in Compass
+// 4. Copy and paste this script
+// 5. Press Enter to execute
+//
+// ========================================
+
+// Switch to clipchain database
+db = db.getSiblingDB('clipchain');
+
+print("🔄 Starting chain transfer from creator_user to test_user...");
+
+// Step 1: Find both users
+const creatorUser = db.users.findOne({ username: "creator_user" });
+const testUser = db.users.findOne({ username: "test_user" });
+
+if (!creatorUser) {
+  print("❌ creator_user not found. Cannot transfer chains.");
+  print("💡 Tip: Create creator_user first or check the username.");
+  quit();
+}
+
+if (!testUser) {
+  print("❌ test_user not found. Cannot transfer chains.");
+  print("💡 Tip: Create test_user first using the API.");
+  quit();
+}
+
+print("✅ Both users found:");
+print(`   creator_user: ${creatorUser.username} (ID: ${creatorUser._id})`);
+print(`   test_user: ${testUser.username} (ID: ${testUser._id})`);
+
+// Step 2: Find all chains belonging to creator_user
+const creatorChains = db.chains.find({ author: creatorUser._id }).toArray();
+const chainCount = creatorChains.length;
+
+print(`\n🔍 Found ${chainCount} chains belonging to creator_user`);
+
+if (chainCount === 0) {
+  print("ℹ️ No chains to transfer. creator_user has no chains.");
+  quit();
+}
+
+// Step 3: Display chains before transfer
+print("\n📋 Chains to transfer:");
+creatorChains.forEach((chain, index) => {
+  print(`   ${index + 1}. ${chain.title} (ID: ${chain._id})`);
+  print(`      Description: ${chain.description || 'No description'}`);
+  print(`      Clips count: ${chain.clips ? chain.clips.length : 0}`);
+  print(`      Created: ${chain.createdAt}`);
+});
+
+// Step 4: Transfer chains to test_user
+print("\n🔄 Starting chain transfer...");
+
+let transferredCount = 0;
+let errorCount = 0;
+
+creatorChains.forEach((chain, index) => {
+  try {
+    // Create a copy of the chain with new author
+    const newChain = {
+      ...chain,
+      _id: new ObjectId(), // Generate new ID
+      author: testUser._id, // Change author to test_user
+      title: `${chain.title} (Transferred)`, // Mark as transferred
+      createdAt: new Date(), // Update creation date
+      updatedAt: new Date(), // Update modification date
+      originalChainId: chain._id, // Keep reference to original
+      transferredFrom: creatorUser.username // Track source
+    };
+    
+    // Remove the _id field from the copy to let MongoDB generate a new one
+    delete newChain._id;
+    
+    // Insert the new chain
+    const insertResult = db.chains.insertOne(newChain);
+    
+    if (insertResult.insertedId) {
+      print(`   ✅ Chain "${chain.title}" transferred successfully (New ID: ${insertResult.insertedId})`);
+      transferredCount++;
+      
+      // Update clips to reference the new chain
+      if (chain.clips && chain.clips.length > 0) {
+        print(`      🔄 Updating ${chain.clips.length} clips...`);
+        
+        chain.clips.forEach(clipId => {
+          // Find the clip and update its chain reference
+          const updateResult = db.clips.updateOne(
+            { _id: clipId },
+            { 
+              $set: { 
+                chainId: insertResult.insertedId,
+                updatedAt: new Date()
+              }
+            }
+          );
+          
+          if (updateResult.modifiedCount > 0) {
+            print(`         ✅ Clip ${clipId} updated to new chain`);
+          } else {
+            print(`         ⚠️ Clip ${clipId} not found or already updated`);
+          }
+        });
+      }
+      
+    } else {
+      print(`   ❌ Failed to transfer chain "${chain.title}"`);
+      errorCount++;
+    }
+    
+  } catch (error) {
+    print(`   ❌ Error transferring chain "${chain.title}": ${error.message}`);
+    errorCount++;
+  }
+});
+
+// Step 5: Summary
+print("\n" + "=".repeat(50));
+print("📊 TRANSFER SUMMARY");
+print("=".repeat(50));
+print(`Total chains found: ${chainCount}`);
+print(`Successfully transferred: ${transferredCount}`);
+print(`Errors: ${errorCount}`);
+print(`Success rate: ${Math.round((transferredCount / chainCount) * 100)}%`);
+
+if (transferredCount > 0) {
+  print("\n🎯 Next steps:");
+  print("1. Login with test_user / test123");
+  print("2. Check that the transferred chains are visible");
+  print("3. Verify that clips are properly associated");
+  print("4. Test chain playback functionality");
+  
+  // Show final state
+  const finalChainCount = db.chains.countDocuments({ author: testUser._id });
+  print(`\n📈 test_user now has ${finalChainCount} chains`);
+  
+  const finalClipCount = db.clips.countDocuments({ chainId: { $in: db.chains.find({ author: testUser._id }).map(c => c._id) } });
+  print(`📹 test_user now has ${finalClipCount} clips in chains`);
+  
+} else {
+  print("\n⚠️ No chains were transferred. Check the errors above.");
+}
+
+print("\n✅ Transfer script completed!");

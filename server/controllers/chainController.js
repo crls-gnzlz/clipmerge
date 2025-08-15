@@ -87,13 +87,27 @@ const getChainById = async (req, res) => {
     
     const chain = await Chain.findById(id)
       .populate('author', 'username displayName avatar bio')
-      .populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl description tags');
+      .populate('clips.clip', 'title videoId videoUrl startTime endTime duration thumbnailUrl description tags');
     
     if (!chain) {
       return res.status(404).json({
         success: false,
         message: 'Chain no encontrada'
       });
+    }
+    
+    // LOG: Mostrar los datos de los clips después del populate
+    if (chain.clips && chain.clips.length > 0) {
+      console.log('🔍 ChainController: Clips after populate:');
+      chain.clips.forEach((c, idx) => {
+        if (c.clip) {
+          console.log(`  [${idx}] clipId: ${c.clip._id}, videoUrl: ${c.clip.videoUrl}, videoId: ${c.clip.videoId}`);
+        } else {
+          console.log(`  [${idx}] clip:`, c);
+        }
+      });
+    } else {
+      console.log('🔍 ChainController: No clips found in chain.');
     }
     
     // Verificar si el usuario puede ver la chain

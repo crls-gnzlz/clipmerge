@@ -20,7 +20,7 @@ const Header = () => {
           {/* Logo and Tagline */}
           <div className="flex items-center">
             <Link to="/" className="flex flex-col items-start group">
-              <img src="/logo2.svg" alt="clipchain" className="h-6 w-auto transition-opacity duration-200 group-hover:opacity-80" />
+              <img src="/logo-letters-blue.svg" alt="clipchain" className="h-6 w-auto transition-opacity duration-200 group-hover:opacity-80" />
               <span className="text-xs text-gray-500 mt-1 font-light">Turn video moments into powerful collections</span>
             </Link>
           </div>

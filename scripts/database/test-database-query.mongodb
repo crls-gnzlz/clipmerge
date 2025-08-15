@@ -1,0 +1,146 @@
+// ========================================
+// 🧪 Test Database Query Script
+// ========================================
+// 
+// Instructions:
+// 1. Open MongoDB Compass
+// 2. Connect to your MongoDB instance
+// 3. Open the MongoDB Shell (mongosh) in Compass
+// 4. Copy and paste this script
+// 5. Press Enter to execute
+//
+// ========================================
+
+// Switch to clipchain database
+db = db.getSiblingDB('clipchain');
+
+print("🔍 Starting database diagnostic...");
+
+// ========================================
+// 1. CHECK COLLECTIONS
+// ========================================
+
+print("\n📋 Checking collections...");
+const collections = db.getCollectionNames();
+print("Collections found:", collections);
+
+// ========================================
+// 2. CHECK USERS
+// ========================================
+
+print("\n👥 Checking users...");
+const users = db.users.find({}).toArray();
+print("Total users:", users.length);
+
+users.forEach(user => {
+  print(`- ${user.username} (${user.displayName || 'No display name'}) - ID: ${user._id}`);
+});
+
+// ========================================
+// 3. CHECK CLIPS
+// ========================================
+
+print("\n🎬 Checking clips...");
+const clips = db.clips.find({}).toArray();
+print("Total clips:", clips.length);
+
+clips.forEach(clip => {
+  print(`- ${clip.title} - Author: ${clip.author} - Views: ${clip.views || 0}`);
+});
+
+// ========================================
+// 4. CHECK CHAINS
+// ========================================
+
+print("\n🔗 Checking chains...");
+const chains = db.chains.find({}).toArray();
+print("Total chains:", chains.length);
+
+chains.forEach(chain => {
+  print(`- ${chain.name} - Author: ${chain.author} - Clips: ${chain.clips?.length || 0} - Public: ${chain.isPublic}`);
+});
+
+// ========================================
+// 5. CHECK SPECIFIC USER DATA
+// ========================================
+
+print("\n🔍 Checking specific user data...");
+
+// Find demo_user
+const demoUser = db.users.findOne({ username: "demo_user" });
+if (demoUser) {
+  print(`✅ Found demo_user: ${demoUser._id}`);
+  
+  // Check clips by demo_user
+  const userClips = db.clips.find({ author: demoUser._id }).toArray();
+  print(`📹 demo_user has ${userClips.length} clips:`);
+  userClips.forEach(clip => {
+    print(`  - ${clip.title}`);
+  });
+  
+  // Check chains by demo_user
+  const userChains = db.chains.find({ author: demoUser._id }).toArray();
+  print(`🔗 demo_user has ${userChains.length} chains:`);
+  userChains.forEach(chain => {
+    print(`  - ${chain.name} (${chain.clips?.length || 0} clips)`);
+  });
+  
+} else {
+  print("❌ demo_user not found!");
+}
+
+// Find content_creator
+const creatorUser = db.users.findOne({ username: "content_creator" });
+if (creatorUser) {
+  print(`✅ Found content_creator: ${creatorUser._id}`);
+  
+  // Check clips by content_creator
+  const creatorClips = db.clips.find({ author: creatorUser._id }).toArray();
+  print(`📹 content_creator has ${creatorClips.length} clips:`);
+  creatorClips.forEach(clip => {
+    print(`  - ${clip.title}`);
+  });
+  
+  // Check chains by content_creator
+  const creatorChains = db.chains.find({ author: creatorUser._id }).toArray();
+  print(`🔗 content_creator has ${creatorChains.length} chains:`);
+  creatorChains.forEach(chain => {
+    print(`  - ${chain.name} (${chain.clips?.length || 0} clips)`);
+  });
+  
+} else {
+  print("❌ content_creator not found!");
+}
+
+// ========================================
+// 6. TEST CHAIN QUERIES
+// ========================================
+
+print("\n🧪 Testing chain queries...");
+
+// Test 1: Get all chains
+const allChains = db.chains.find({}).toArray();
+print(`Total chains in database: ${allChains.length}`);
+
+// Test 2: Get public chains
+const publicChains = db.chains.find({ isPublic: true }).toArray();
+print(`Public chains: ${publicChains.length}`);
+
+// Test 3: Get chains by author (demo_user)
+if (demoUser) {
+  const demoUserChains = db.chains.find({ author: demoUser._id }).toArray();
+  print(`Chains by demo_user: ${demoUserChains.length}`);
+  
+  if (demoUserChains.length > 0) {
+    print("Sample chain data:");
+    print(JSON.stringify(demoUserChains[0], null, 2));
+  }
+}
+
+// Test 4: Get chains by author (content_creator)
+if (creatorUser) {
+  const creatorUserChains = db.chains.find({ author: creatorUser._id }).toArray();
+  print(`Chains by content_creator: ${creatorUserChains.length}`);
+}
+
+print("\n✅ Database diagnostic complete!");

@@ -63,7 +63,7 @@ const RecentChainsSection = () => {
           </p>
         </div>
         <Link 
-          to="/dashboard"
+          to="/workspace"
           className="text-primary-600 hover:text-primary-700 font-medium text-xs transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 rounded px-2 py-1"
         >
           View all in Workspace →

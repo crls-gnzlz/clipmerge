@@ -1,0 +1,223 @@
+// ========================================
+// 🚀 Quick Database Setup Script
+// ========================================
+// 
+// Instructions:
+// 1. Open MongoDB Compass
+// 2. Connect to your MongoDB instance
+// 3. Open the MongoDB Shell (mongosh) in Compass
+// 4. Copy and paste this script
+// 5. Press Enter to execute
+//
+// ========================================
+
+// Switch to clipchain database
+db = db.getSiblingDB('clipchain');
+
+print("🚀 Starting quick database setup...");
+
+// Check if data already exists
+const existingUsers = db.users.countDocuments({});
+const existingClips = db.clips.countDocuments({});
+const existingChains = db.chains.countDocuments({});
+
+if (existingUsers > 0 && existingClips > 0 && existingChains > 0) {
+  print("✅ Database already has data. Skipping setup.");
+  print(`Users: ${existingUsers}, Clips: ${existingClips}, Chains: ${existingChains}`);
+} else {
+  print("📝 Database is empty. Running setup...");
+  
+  // Create sample users
+  const demoUser = {
+    _id: ObjectId(),
+    username: "demo_user",
+    email: "demo@clipchain.com",
+    password: "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8HwqK8i", // demo123
+    displayName: "Demo User",
+    bio: "Demo user for testing",
+    isVerified: true,
+    stats: { totalClips: 0, totalChains: 0, totalViews: 0 },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  
+  const creatorUser = {
+    _id: ObjectId(),
+    username: "content_creator",
+    email: "creator@clipchain.com",
+    password: "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8HwqK8i", // demo123
+    displayName: "Content Creator",
+    bio: "Professional creator of clips and chains",
+    isVerified: true,
+    stats: { totalClips: 0, totalChains: 0, totalViews: 0 },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  
+  db.users.insertMany([demoUser, creatorUser]);
+  print("✅ Sample users created");
+  
+  // Create sample clips
+  const sampleClips = [
+    {
+      _id: ObjectId(),
+      title: "Introducción a React Hooks",
+      videoId: "TNhaISOU2GU",
+      startTime: 120,
+      endTime: 300,
+      description: "Explicación clara de useState y useEffect en React",
+      tags: ["programming", "react", "javascript", "hooks"],
+      author: demoUser._id,
+      isPublic: true,
+      duration: 180,
+      views: 45,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      _id: ObjectId(),
+      title: "Mejor momento del partido",
+      videoId: "dQw4w9WgXcQ",
+      startTime: 45,
+      endTime: 120,
+      description: "El gol más espectacular del partido",
+      tags: ["football", "goal", "sports", "highlight"],
+      author: demoUser._id,
+      isPublic: true,
+      duration: 75,
+      views: 128,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      _id: ObjectId(),
+      title: "Tutorial de cocina - Pasta perfecta",
+      videoId: "abc123def",
+      startTime: 60,
+      endTime: 180,
+      description: "Guía paso a paso para hacer pasta perfecta",
+      tags: ["cooking", "pasta", "tutorial", "food"],
+      author: creatorUser._id,
+      isPublic: true,
+      duration: 120,
+      views: 89,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ];
+  
+  db.clips.insertMany(sampleClips);
+  print("✅ Sample clips created");
+  
+  // Create sample chains
+  const sampleChains = [
+    {
+      _id: ObjectId(),
+      name: "Complete React Tutorial Series",
+      description: "A comprehensive series covering React from basics to advanced patterns",
+      clips: [
+        {
+          clip: sampleClips[0]._id,
+          order: 0,
+          transition: "fade",
+          transitionDuration: 0.5
+        }
+      ],
+      author: demoUser._id,
+      isPublic: true,
+      tags: ["react", "javascript", "programming", "tutorial"],
+      category: "tutorial",
+      difficulty: "beginner",
+      totalDuration: 180,
+      views: 78,
+      plays: 23,
+      isFeatured: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      _id: ObjectId(),
+      name: "Sports Highlights Compilation",
+      description: "Best moments from various sports including football",
+      clips: [
+        {
+          clip: sampleClips[1]._id,
+          order: 0,
+          transition: "cut",
+          transitionDuration: 0.3
+        }
+      ],
+      author: demoUser._id,
+      isPublic: true,
+      tags: ["sports", "highlights", "football", "amazing"],
+      category: "entertainment",
+      difficulty: "beginner",
+      totalDuration: 75,
+      views: 156,
+      plays: 89,
+      isFeatured: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      _id: ObjectId(),
+      name: "Cooking Tutorial Collection",
+      description: "Learn cooking techniques from professional chefs",
+      clips: [
+        {
+          clip: sampleClips[2]._id,
+          order: 0,
+          transition: "crossfade",
+          transitionDuration: 0.8
+        }
+      ],
+      author: creatorUser._id,
+      isPublic: true,
+      tags: ["cooking", "tutorial", "food", "chef"],
+      category: "education",
+      difficulty: "intermediate",
+      totalDuration: 120,
+      views: 234,
+      plays: 145,
+      isFeatured: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ];
+  
+  db.chains.insertMany(sampleChains);
+  print("✅ Sample chains created");
+  
+  // Update user statistics
+  db.users.updateOne(
+    { username: "demo_user" },
+    { 
+      $set: { 
+        stats: {
+          totalClips: 2,
+          totalChains: 2,
+          totalViews: 173
+        }
+      }
+    }
+  );
+  
+  db.users.updateOne(
+    { username: "content_creator" },
+    { 
+      $set: { 
+        stats: {
+          totalClips: 1,
+          totalChains: 1,
+          totalViews: 89
+        }
+      }
+    }
+  );
+  
+  print("✅ User statistics updated");
+}
+
+print("\n🎯 Setup complete! Now you can test the API.");
+print("👤 Login with: demo_user / demo123");
+print("🔗 This user should have 2 chains and 2 clips");

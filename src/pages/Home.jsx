@@ -5,25 +5,12 @@ import ClipchainPlayer from '../components/ClipChainPlayer.jsx'
 import GettingStartedSection from '../components/GettingStartedSection.jsx'
 import RecentChainsSection from '../components/RecentChainsSection.jsx'
 import { llmClips, chainMetadata } from '../data/exampleClips.js'
-import { useAuth } from '../contexts/AuthContext.jsx'
-
 const Home = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
   
   return (
     <LayoutWithSidebar>
       <div className="min-h-full bg-gradient-to-br from-primary-50 via-white to-secondary-50">
-        {/* Debug Info - Temporary */}
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">🔍 Debug: Auth Context Status</h3>
-            <div className="text-xs text-blue-700 space-y-1">
-              <p>isAuthenticated: {isAuthenticated ? '✅ true' : '❌ false'}</p>
-              <p>isLoading: {isLoading ? '🔄 true' : '⏸️ false'}</p>
-              <p>User: {user ? `✅ ${user.username} (${user.email})` : '❌ null'}</p>
-            </div>
-          </div>
-        </div>
+
         
         {/* Welcome Message */}
         <div className="max-w-7xl mx-auto px-6 py-8">

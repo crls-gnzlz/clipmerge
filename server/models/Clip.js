@@ -23,13 +23,7 @@ const clipSchema = new mongoose.Schema({
   endTime: {
     type: Number,
     required: [true, 'End time is required'],
-    min: [0, 'End time cannot be negative'],
-    validate: {
-      validator: function(value) {
-        return value > this.startTime;
-      },
-      message: 'End time must be greater than start time'
-    }
+    min: [0, 'End time cannot be negative']
   },
   
   description: {
@@ -101,14 +95,5 @@ clipSchema.methods.incrementViews = function() {
   this.views += 1;
   return this.save();
 };
-
-// Pre-save middleware to validate that endTime > startTime
-clipSchema.pre('save', function(next) {
-  if (this.endTime <= this.startTime) {
-    next(new Error('End time must be greater than start time'));
-  } else {
-    next();
-  }
-});
 
 export const Clip = mongoose.model('Clip', clipSchema);

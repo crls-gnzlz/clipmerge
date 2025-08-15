@@ -102,5 +102,3 @@ print("\n💡 Next steps:");
 print("1. Use test_user / test123 for login");
 print("2. If it fails, recreate users using the API");
 print("3. Check that password hashing is working correctly");
-
-

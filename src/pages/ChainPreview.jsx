@@ -14,169 +14,124 @@ const ChainPreview = () => {
   const [clips, setClips] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [useMockData, setUseMockData] = useState(false);
+
+  // Function to extract video ID from YouTube URL
+  const extractVideoId = (url) => {
+    if (!url) return null;
+    
+    // Handle different YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\n?#]+)/,
+      /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
+      /youtube\.com\/embed\/([^&\n?#]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    
+    console.warn('🔍 ChainPreview: Could not extract videoId from URL:', url);
+    return null;
+  };
+
+  // Utilidad para obtener videoId de un clip
+  const getVideoIdFromClip = (clip) => {
+    if (clip.videoUrl) {
+      const id = extractVideoId(clip.videoUrl);
+      if (id) return id;
+    }
+    if (clip.videoId) return clip.videoId;
+    return null;
+  };
 
   useEffect(() => {
     const loadChainData = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        if (useMockData) {
-          // Mock data for testing
-          await new Promise(resolve => setTimeout(resolve, 500));
-          setChain({
-            _id: 'mock-chain-1',
-            name: 'Sample Chain for Preview',
-            description: 'This is a sample chain to test the preview functionality',
-            author: user?.username || 'test_user',
-            createdAt: new Date().toISOString(),
-            tags: ['sample', 'preview', 'test'],
-            isPublic: true
-          });
-          setClips([
-            {
-              _id: 'mock-clip-1',
-              title: 'Sample Clip 1',
-              description: 'This is a sample clip for preview',
-              videoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
-              startTime: 0,
-              endTime: 30,
-              duration: 30
-            },
-            {
-              _id: 'mock-clip-2',
-              title: 'Sample Clip 2',
-              description: 'Another sample clip for preview',
-              videoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
-              startTime: 30,
-              endTime: 60,
-              duration: 30
-            }
-          ]);
-        } else {
+
+        if (isAuthenticated && user) {
           // Real API call
-          if (isAuthenticated && user) {
-            console.log('🔍 ChainPreview: Loading real chain data for ID:', chainId);
-            console.log('🔍 ChainPreview: Chain ID type:', typeof chainId);
-            console.log('🔍 ChainPreview: Chain ID value:', chainId);
-            
-            // Validate chain ID format
-            if (!chainId || typeof chainId !== 'string' || chainId.trim() === '') {
-              console.error('❌ ChainPreview: Invalid chain ID format:', chainId);
-              setError('Invalid chain ID format');
-              setIsLoading(false);
-              return;
-            }
-            
-            // Get chain data
-            try {
-              const chainResponse = await apiService.getChainById(chainId.trim());
-              if (chainResponse.success) {
-                const chainData = chainResponse.data;
-                console.log('✅ ChainPreview: Chain loaded:', chainData);
-                console.log('🔍 ChainPreview: Chain clips array:', chainData.clips);
-                console.log('🔍 ChainPreview: Chain data structure:', JSON.stringify(chainData, null, 2));
-                
-                // Extract clips from chain
-                const chainClips = [];
-                if (chainData.clips && Array.isArray(chainData.clips)) {
-                  console.log('🔍 ChainPreview: Processing', chainData.clips.length, 'clips');
-                  for (const clipItem of chainData.clips) {
-                    try {
-                      console.log('🔍 ChainPreview: Processing clip item:', clipItem);
-                      
-                      let clipData = null;
-                      
-                      if (typeof clipItem === 'string') {
-                        // Case 1: clipItem is just the ID
-                        console.log('🔍 ChainPreview: Clip item is ID string:', clipItem);
-                        if (clipItem.trim().length > 0) {
-                          console.log('🔍 ChainPreview: Fetching clip by ID:', clipItem);
-                          const clipResponse = await apiService.getClipById(clipItem.trim());
-                          if (clipResponse.success) {
-                            clipData = clipResponse.data;
-                            console.log('✅ ChainPreview: Clip loaded by ID successfully:', clipData);
-                          } else {
-                            console.warn('⚠️ ChainPreview: Failed to load clip by ID:', clipItem, clipResponse.message);
-                          }
-                        } else {
-                          console.warn('⚠️ ChainPreview: Empty clip ID string');
-                        }
-                      } else if (clipItem && typeof clipItem === 'object') {
-                        // Case 2: clipItem is the complete clip object
-                        if (clipItem._id) {
-                          console.log('🔍 ChainPreview: Clip item is complete object with ID:', clipItem._id);
-                          clipData = clipItem;
-                          console.log('✅ ChainPreview: Using embedded clip data:', clipData);
-                        } else if (clipItem.clip && typeof clipItem.clip === 'string') {
-                          // Case 3: clipItem has a clip property with ID
-                          console.log('🔍 ChainPreview: Clip item has clip property with ID:', clipItem.clip);
-                          if (clipItem.clip.trim().length > 0) {
-                            console.log('🔍 ChainPreview: Fetching clip by clip property ID:', clipItem.clip);
-                            const clipResponse = await apiService.getClipById(clipItem.clip.trim());
-                            if (clipResponse.success) {
-                              clipData = clipResponse.data;
-                              console.log('✅ ChainPreview: Clip loaded by clip property ID successfully:', clipData);
-                            } else {
-                              console.warn('⚠️ ChainPreview: Failed to load clip by clip property ID:', clipItem.clip, clipResponse.message);
-                            }
-                          } else {
-                            console.warn('⚠️ ChainPreview: Empty clip property ID');
-                          }
-                        } else {
-                          console.warn('⚠️ ChainPreview: Clip item object has no _id or clip property:', clipItem);
-                        }
-                      } else {
-                        console.warn('⚠️ ChainPreview: Invalid clip item format:', clipItem);
-                      }
-                      
-                      // Add clip to the list if we have valid data
-                      if (clipData) {
-                        chainClips.push(clipData);
-                      }
-                      
-                    } catch (clipError) {
-                      console.error('❌ ChainPreview: Error processing clip item:', clipError);
-                      // Continue with other clips instead of failing completely
-                    }
-                  }
-                } else {
-                  console.log('🔍 ChainPreview: No clips array found in chain data');
-                }
-                
-                setChain(chainData);
-                setClips(chainClips);
-                console.log('✅ ChainPreview: Clips loaded:', chainClips.length);
-              } else {
-                console.warn('⚠️ ChainPreview: Failed to load chain:', chainResponse.message);
-                setError(`Failed to load chain: ${chainResponse.message}`);
-              }
-            } catch (chainError) {
-              console.error('❌ ChainPreview: Error loading chain:', chainError);
-              setError(`Error loading chain: ${chainError.message}`);
-              
-              // Fallback to mock data if API fails
-              console.log('🔄 ChainPreview: Falling back to mock data due to API error');
-              setUseMockData(true);
-              return; // This will trigger the mock data loading
-            }
-          } else {
-            console.log('ℹ️ ChainPreview: User not authenticated, using mock data');
-            setUseMockData(true);
-            return; // This will trigger the mock data loading
+          if (!chainId || typeof chainId !== 'string' || chainId.trim() === '') {
+            setError('Invalid chain ID format');
+            setIsLoading(false);
+            return;
           }
+          try {
+            const chainResponse = await apiService.getChainById(chainId.trim());
+            if (chainResponse.success) {
+              const chainData = chainResponse.data;
+              // Extract clips from chain
+              const chainClips = [];
+              if (chainData.clips && Array.isArray(chainData.clips)) {
+                for (const clipItem of chainData.clips) {
+                  try {
+                    if (clipItem && typeof clipItem === 'object' && clipItem._id) {
+                      if (clipItem.clip && typeof clipItem.clip === 'object') {
+                        const actualClip = {
+                          ...clipItem.clip,
+                          order: clipItem.order,
+                          transition: clipItem.transition,
+                          transitionDuration: clipItem.transitionDuration,
+                          chainClipId: clipItem._id,
+                          videoId: getVideoIdFromClip(clipItem.clip)
+                        };
+                        chainClips.push(actualClip);
+                      } else {
+                        const actualClip = {
+                          ...clipItem,
+                          videoId: getVideoIdFromClip(clipItem)
+                        };
+                        chainClips.push(actualClip);
+                      }
+                    } else if (clipItem && typeof clipItem === 'string' && clipItem.trim().length > 0) {
+                      const clipResponse = await apiService.getClipById(clipItem.trim());
+                      if (clipResponse.success) {
+                        const actualClip = {
+                          ...clipResponse.data,
+                          videoId: getVideoIdFromClip(clipResponse.data)
+                        };
+                        chainClips.push(actualClip);
+                      }
+                    } else if (clipItem && clipItem.clip && typeof clipItem.clip === 'string') {
+                      const clipResponse = await apiService.getClipById(clipItem.clip.trim());
+                      if (clipResponse.success) {
+                        const actualClip = {
+                          ...clipResponse.data,
+                          videoId: getVideoIdFromClip(clipResponse.data)
+                        };
+                        chainClips.push(actualClip);
+                      }
+                    }
+                  } catch (clipError) {
+                    // Continue with other clips instead of failing completely
+                  }
+                }
+              }
+              setChain(chainData);
+              setClips(chainClips);
+            } else {
+              setError(`Failed to load chain: ${chainResponse.message}`);
+            }
+          } catch (chainError) {
+            setError(`Error loading chain: ${chainError.message}`);
+            return;
+          }
+        } else {
+          setError('User not authenticated');
+          return;
         }
       } catch (error) {
-        console.error('❌ ChainPreview: Error loading chain data:', error);
         setError('Error loading chain data');
       } finally {
         setIsLoading(false);
       }
     };
-
     loadChainData();
-  }, [chainId, useMockData, isAuthenticated, user]);
+  }, [chainId, isAuthenticated, user]);
 
   if (isLoading) {
     return (
@@ -217,19 +172,11 @@ const ChainPreview = () => {
               </p>
               <div className="flex justify-center space-x-3">
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/workspace')}
                   className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-all duration-200"
                 >
-                  Go to Dashboard
+                  Go to Workspace
                 </button>
-                {useMockData && (
-                  <button
-                    onClick={() => setUseMockData(false)}
-                    className="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-all duration-200"
-                  >
-                    Try Real Data
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -253,26 +200,6 @@ const ChainPreview = () => {
                   Preview how your chain will look when shared
                 </p>
               </div>
-              
-              {/* Data Source Indicator */}
-              <div className="flex items-center space-x-2">
-                {useMockData ? (
-                  <span className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200">
-                    🎭 Mock Data
-                  </span>
-                ) : (
-                  <span className="text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
-                    📡 Live Data
-                  </span>
-                )}
-                
-                <button
-                  onClick={() => setUseMockData(!useMockData)}
-                  className="text-xs text-gray-600 hover:text-gray-900 px-2 py-1 rounded border border-gray-200 hover:border-gray-300 transition-all duration-200"
-                >
-                  Toggle
-                </button>
-              </div>
             </div>
             
             {/* Chain Info */}
@@ -288,7 +215,7 @@ const ChainPreview = () => {
                     </p>
                   )}
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>By {chain.author || 'Unknown'}</span>
+                    <span>By {typeof chain.author === 'object' ? chain.author.displayName || chain.author.username || 'Unknown' : chain.author || 'Unknown'}</span>
                     <span>•</span>
                     <span>{new Date(chain.createdAt).toLocaleDateString()}</span>
                     <span>•</span>
@@ -324,10 +251,10 @@ const ChainPreview = () => {
                     Edit Chain
                   </button>
                   <button
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate('/workspace')}
                     className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-all duration-200"
                   >
-                    Back to Dashboard
+                    Back to Workspace
                   </button>
                 </div>
               </div>
@@ -351,7 +278,7 @@ const ChainPreview = () => {
                 title={chain.name}
                 description={chain.description || ''}
                 clips={clips}
-                author={chain.author || 'Unknown'}
+                author={typeof chain.author === 'object' ? chain.author.displayName || chain.author.username || 'Unknown' : chain.author || 'Unknown'}
                 createdAt={chain.createdAt}
                 tags={chain.tags || []}
               />

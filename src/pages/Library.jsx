@@ -239,7 +239,7 @@ const Library = () => {
           <div className="flex justify-between items-center">
             <div className="text-left">
               <div className="flex justify-start mb-1">
-                <img src="/logo2.svg" alt="clipchain" className="h-6 w-auto" />
+                <img src="/logo-letters-blue.svg" alt="clipchain" className="h-6 w-auto" />
               </div>
               <h1 className="text-xs font-medium text-gray-700 leading-tight">
                 Turn video moments into powerful collections

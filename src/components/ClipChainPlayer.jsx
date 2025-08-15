@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
-import CopyNotification from './CopyNotification.jsx'
+import AppNotification from './AppNotification.jsx'
 import { Link } from 'react-router-dom'
 
 const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tags, compact = false }) => {
@@ -22,6 +22,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   const [hasUserInteractedWithCaptions, setHasUserInteractedWithCaptions] = useState(false) // Track if user has clicked CC button
   const [showFullscreenControls, setShowFullscreenControls] = useState(false) // Control panel visibility in fullscreen
   const [controlsTimeout, setControlsTimeout] = useState(null) // Timeout for auto-hiding controls
+  const [notification, setNotification] = useState({ isVisible: false, type: 'success', title: '', message: '' })
   
   console.log('🔤 Component initialized with isCaptionsEnabled:', false)
   const iframeRef = useRef(null)
@@ -1020,7 +1021,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   const copyLink = () => {
     const shareUrl = `${window.location.origin}/chain/${id}`
     navigator.clipboard.writeText(shareUrl)
-    setShowCopyNotification(true)
+    setNotification({ isVisible: true, type: 'success', title: 'Link copied!', message: 'Share this chain with others.' })
   }
 
   // Calculate progress percentage for the clip
@@ -1798,9 +1799,12 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
               )}
             </div>
         </div>
-        <CopyNotification
-          isVisible={showCopyNotification}
-          onClose={() => setShowCopyNotification(false)}
+        <AppNotification
+          isVisible={notification.isVisible}
+          onClose={() => setNotification(n => ({ ...n, isVisible: false }))}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
         />
       </div>
     </>

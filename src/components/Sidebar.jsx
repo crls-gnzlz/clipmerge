@@ -1,8 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import CopyNotification from './CopyNotification.jsx'
+import AppNotification from './AppNotification.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import apiService from '../lib/api.js'
+import { createPortal } from 'react-dom'
 
 const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const location = useLocation()
@@ -27,7 +28,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const [startWidth, setStartWidth] = useState(0)
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [emails, setEmails] = useState([''])
-  const [showCopyNotification, setShowCopyNotification] = useState(false)
+  const [notification, setNotification] = useState({ isVisible: false, type: 'success', title: '', message: '' })
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [userClips, setUserClips] = useState([])
   const [userChains, setUserChains] = useState([])
@@ -126,18 +127,29 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         <div className="flex-1 min-w-0">
           <p className="text-xs text-gray-900 truncate font-medium">{clip.title}</p>
         </div>
-        {/* Hover menu with dots */}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <div className="relative">
-            <button 
-              className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
-              aria-label="Clip options"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-            </button>
-          </div>
+        <div className="relative">
+          <button
+            className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+            aria-label="Clip options"
+            onClick={e => {
+              e.stopPropagation();
+              openActionMenu('clip', clip._id, e.currentTarget)
+            }}
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/>
+            </svg>
+          </button>
+          {actionMenu.type === 'clip' && actionMenu.id === clip._id && (
+            <ActionMenu
+              type="clip"
+              id={clip._id}
+              x={actionMenu.x}
+              y={actionMenu.y}
+              onEdit={() => { closeActionMenu(); navigate(`/edit-clip/${clip._id}`) }}
+              onDelete={() => { closeActionMenu(); setDeleteTarget({ type: 'clip', id: clip._id }); setShowDeleteModal(true) }}
+            />
+          )}
         </div>
       </div>
     ))
@@ -177,18 +189,30 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         <div className="flex-1 min-w-0">
           <p className="text-xs text-gray-900 truncate font-medium">{chain.name}</p>
         </div>
-        {/* Hover menu with dots */}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <div className="relative">
-            <button 
-              className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
-              aria-label="Chain options"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-            </button>
-          </div>
+        <div className="relative">
+          <button
+            className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+            aria-label="Chain options"
+            onClick={e => {
+              e.stopPropagation();
+              openActionMenu('chain', chain._id, e.currentTarget)
+            }}
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/>
+            </svg>
+          </button>
+          {actionMenu.type === 'chain' && actionMenu.id === chain._id && (
+            <ActionMenu
+              type="chain"
+              id={chain._id}
+              x={actionMenu.x}
+              y={actionMenu.y}
+              onPreview={() => { closeActionMenu(); navigate(`/chain-preview/${chain._id}`) }}
+              onEdit={() => { closeActionMenu(); navigate(`/edit-chain/${chain._id}`) }}
+              onDelete={() => { closeActionMenu(); setDeleteTarget({ type: 'chain', id: chain._id }); setShowDeleteModal(true) }}
+            />
+          )}
         </div>
       </div>
     ))
@@ -253,10 +277,9 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const copyReferralLink = async () => {
     try {
       await navigator.clipboard.writeText('https://clipchain.com/ref/carlos')
-      setShowCopyNotification(true)
-      setTimeout(() => setShowCopyNotification(false), 2000)
+      setNotification({ isVisible: true, type: 'success', title: 'Copied!', message: 'Referral link copied to clipboard.' })
     } catch (err) {
-      console.error('Failed to copy: ', err)
+      setNotification({ isVisible: true, type: 'error', title: 'Error', message: 'Failed to copy link.' })
     }
   }
 
@@ -317,6 +340,85 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       }
     }
   }, [isOpen])
+
+  // Añade estados para el menú contextual y el elemento objetivo
+  const [actionMenu, setActionMenu] = useState({ type: null, id: null, x: 0, y: 0 })
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState({ type: null, id: null })
+
+  // Función para abrir el menú contextual
+  const openActionMenu = (type, id, anchor) => {
+    const rect = anchor.getBoundingClientRect()
+    setActionMenu({ type, id, x: rect.right - 120, y: rect.bottom + window.scrollY + 4 }) // 120px ancho menú, 4px offset
+  }
+  const closeActionMenu = () => setActionMenu({ type: null, id: null, x: 0, y: 0 })
+
+  // Función para borrar clip/chain
+  const handleDelete = async () => {
+    if (!deleteTarget.type || !deleteTarget.id) return
+    try {
+      if (deleteTarget.type === 'clip') {
+        await apiService.deleteClip(deleteTarget.id)
+        setUserClips(clips => clips.filter(c => c._id !== deleteTarget.id))
+        setNotification({ isVisible: true, type: 'success', title: 'Deleted', message: 'Clip deleted successfully.' })
+      } else if (deleteTarget.type === 'chain') {
+        await apiService.deleteChain(deleteTarget.id)
+        setUserChains(chains => chains.filter(c => c._id !== deleteTarget.id))
+        setNotification({ isVisible: true, type: 'success', title: 'Deleted', message: 'Chain deleted successfully.' })
+      }
+    } catch (e) {
+      setNotification({ isVisible: true, type: 'error', title: 'Error', message: 'Failed to delete.' })
+    } finally {
+      setShowDeleteModal(false)
+      setDeleteTarget({ type: null, id: null })
+    }
+  }
+
+  // Submenú contextual fuera del scroll, con iconos y estilo igual que Workspace
+  function ActionMenu({ type, id, x, y, onEdit, onDelete, onPreview }) {
+    return createPortal(
+      <div style={{ position: 'absolute', left: x, top: y, zIndex: 9999 }} className="w-32 bg-white border border-gray-100 rounded-lg shadow-lg animate-fade-in">
+        {type === 'chain' && (
+          <button
+            className="w-full flex items-center px-3 py-2 text-xs text-blue-700 hover:bg-blue-50 hover:text-blue-700 rounded-t-lg transition-colors"
+            onClick={onPreview}
+          >
+            <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            Preview
+          </button>
+        )}
+        <button
+          className={`w-full flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-primary-50 hover:text-primary-700 ${type === 'chain' ? '' : 'rounded-t-lg'} transition-colors`}
+          onClick={onEdit}
+        >
+          <svg className="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.586a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Edit
+        </button>
+        <button
+          className="w-full flex items-center px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
+          onClick={onDelete}
+        >
+          <svg className="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Delete
+        </button>
+      </div>,
+      document.body
+    )
+  }
+
+  // Cierra el menú contextual al hacer click fuera
+  useEffect(() => {
+    document.addEventListener('mousedown', (e) => {
+      if (actionMenu.type && !e.target.closest('.w-32.bg-white')) closeActionMenu()
+    })
+  }, [actionMenu.type])
 
   return (
     <>
@@ -440,9 +542,9 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
               </Link>
               
               <Link
-                to="/dashboard"
+                to="/workspace"
                 className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
-                  isActive('/dashboard') 
+                  isActive('/workspace') 
                     ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
@@ -467,45 +569,6 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 <span className="text-sm font-medium">Library</span>
               </Link>
             </nav>
-
-            {/* Subtle separator */}
-            <div className="border-t border-gray-100 mb-6"></div>
-
-            {/* Testing & Development Section - Hidden for now */}
-            {/* 
-            <div className="mb-6">
-              <h4 className="text-xs font-medium text-gray-700 mb-3">Testing & Development</h4>
-              <div className="space-y-1">
-                <Link
-                  to="/database-test"
-                  className={`flex items-center space-x-2 px-2 py-1.5 rounded text-xs transition-colors ${
-                    isActive('/database-test')
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Database Test</span>
-                </Link>
-                <Link
-                  to="/api-test"
-                  className={`flex items-center space-x-2 px-2 py-1.5 rounded text-xs transition-colors ${
-                    isActive('/api-test')
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>API Test</span>
-                </Link>
-              </div>
-            </div>
-            */}
-
             {/* Subtle separator */}
             <div className="border-t border-gray-100 mb-6"></div>
 
@@ -549,33 +612,31 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             {/* Subtle separator */}
             <div className="border-t border-gray-100 mb-6"></div>
 
-            {/* Invite Friends Section - Following Design System */}
+            {/* Invite Friends Section - Mejorado */}
             <div className="mb-6">
-              <h4 className="text-xs font-medium text-gray-700 mb-3">Invite Friends</h4>
+              <h4 className="text-xs font-medium text-gray-700 mb-1">Invite Friends</h4>
+              <p className="text-xs text-gray-500 mb-3">Share your referral link or invite by email to grow your network.</p>
               <div className="space-y-2">
-                {/* Email Invite Button */}
                 <button 
                   onClick={() => setShowEmailModal(true)}
-                  className="w-full bg-secondary-50 hover:bg-secondary-100 text-secondary-900 hover:text-secondary-700 text-xs font-medium py-2 px-3 rounded-lg border border-secondary-200 hover:border-secondary-300 transition-all duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50"
+                  className="w-full bg-primary-50 hover:bg-primary-100 text-primary-700 hover:text-primary-900 text-xs font-medium py-2 px-3 rounded-lg border border-primary-200 hover:border-primary-300 transition-all duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 shadow-sm"
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   <span>Send Email</span>
                 </button>
-                
-                {/* Copy Link Button with actual link display - Single line */}
-                <div className="py-2 px-3 bg-secondary-50 rounded-lg border border-secondary-200">
+                <div className="py-2 px-3 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-secondary-900 hover:text-secondary-700 cursor-pointer overflow-hidden text-xs" onClick={copyReferralLink}>
-                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center space-x-2 text-blue-900 hover:text-blue-700 cursor-pointer overflow-hidden text-xs" onClick={copyReferralLink}>
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
                       <span className="underline truncate">clipchain.com/ref/carlos</span>
                     </div>
                     <button 
                       onClick={copyReferralLink}
-                      className="ml-2 flex-shrink-0 text-secondary-900 hover:text-secondary-700 text-xs font-medium px-2 py-1 bg-white border border-secondary-300 rounded-md hover:bg-secondary-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50"
+                      className="ml-2 flex-shrink-0 text-blue-900 hover:text-blue-700 text-xs font-medium px-2 py-1 bg-white border border-blue-300 rounded-md hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                     >
                       Copy
                     </button>
@@ -591,7 +652,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
           <div className="flex items-center justify-between px-3">
             {/* Logo */}
             <img 
-              src="/logo2.svg" 
+              src="/logo-letters-blue.svg" 
               alt="Clipchain" 
               className="h-4 w-auto cursor-pointer hover:opacity-80 transition-opacity duration-200" 
               onClick={handleLogoClick}
@@ -599,24 +660,24 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             
             {/* Help Icon */}
             <div className="relative group">
-              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
-                <span className="text-gray-600 text-xs font-medium" style={{ fontSize: '12px' }}>?</span>
+              <div className="w-6 h-6 bg-blue-50 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              
-              {/* Help Hover Popup */}
-              <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto">
-                <div className="bg-gray-900 rounded-xl shadow-2xl p-4 w-48">
-                  <div className="text-center">
-                    <h3 className="text-white font-semibold text-sm mb-1">
-                      Help & Documentation
-                    </h3>
-                    <p className="text-gray-300 text-xs leading-relaxed">
-                      Access tutorials, FAQ and support resources
-                    </p>
+              {/* Help Hover Popup Mejorado */}
+              <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto">
+                <div className="bg-white border border-blue-200 rounded-xl shadow-2xl p-4 w-56 animate-fade-in">
+                  <div className="flex items-center mb-2">
+                    <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 className="text-blue-800 font-semibold text-sm">Help & Documentation</h3>
                   </div>
-                  
-                  {/* Arrow Pointer */}
-                  <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                  <p className="text-gray-500 text-xs leading-relaxed mb-1">Access tutorials, FAQ and support resources.</p>
+                  <a href="/docs" className="inline-block mt-2 text-xs text-blue-600 hover:underline font-medium">Go to Documentation</a>
+                  {/* Arrow Pointer Mejorado */}
+                  <div className="absolute top-full right-6 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-blue-200"></div>
                 </div>
               </div>
             </div>
@@ -637,26 +698,23 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       {/* Email Invitation Modal - Following Design System */}
       {showEmailModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Invite Friends</h3>
-                <button 
-                  onClick={() => setShowEmailModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 rounded p-1"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center space-x-3">
+              <svg className="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">Invite Friends</h3>
+              <button 
+                onClick={() => setShowEmailModal(false)}
+                className="ml-auto text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 rounded p-1"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            
-            <div className="px-6 py-4">
-              <p className="text-sm text-gray-600 mb-4">
-                Enter email addresses to send invitations:
-              </p>
-              
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-600 mb-4">Enter email addresses to send invitations:</p>
               <div className="space-y-3">
                 {emails.map((email, index) => (
                   <div key={index} className="flex items-center space-x-2">
@@ -665,12 +723,12 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                       value={email}
                       onChange={(e) => updateEmail(index, e.target.value)}
                       placeholder="Enter email address"
-                      className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-secondary-500 focus:border-secondary-500 transition-all duration-200"
+                      className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
                     />
                     {emails.length > 1 && (
                       <button
                         onClick={() => removeEmail(index)}
-                        className="text-red-500 hover:text-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 rounded p-1"
+                        className="text-red-400 hover:text-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 rounded p-1"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -679,10 +737,9 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                     )}
                   </div>
                 ))}
-                
                 <button
                   onClick={addEmail}
-                  className="flex items-center space-x-2 text-secondary-900 hover:text-secondary-700 text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50 rounded px-1 py-1"
+                  className="flex items-center space-x-2 text-primary-700 hover:text-primary-900 text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 rounded px-1 py-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -691,8 +748,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 </button>
               </div>
             </div>
-            
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
               <button
                 onClick={() => setShowEmailModal(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
@@ -701,7 +757,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
               </button>
               <button
                 onClick={handleSendInvites}
-                className="bg-secondary-900 hover:bg-secondary-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50"
+                className="bg-primary-700 hover:bg-primary-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 shadow"
               >
                 Send Invites
               </button>
@@ -710,10 +766,37 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         </div>
       )}
 
-      {/* Copy Notification */}
-      <CopyNotification 
-        isVisible={showCopyNotification} 
-        onClose={() => setShowCopyNotification(false)} 
+      {/* Modal de confirmación de borrado */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-xs w-full">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Deletion</h3>
+            <p className="text-sm text-gray-600 mb-4">This action cannot be undone. Are you sure you want to delete this {deleteTarget.type}?</p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteTarget({ type: null, id: null }) }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AppNotification para feedback global */}
+      <AppNotification
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(n => ({ ...n, isVisible: false }))}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
       />
     </>
   )

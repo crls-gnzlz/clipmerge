@@ -171,8 +171,8 @@ const CreateChain = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         console.log('✅ CreateChain: Mock chain created successfully');
         
-        // Navigate to dashboard after successful creation
-        navigate('/dashboard');
+        // Navigate to workspace after successful creation
+        navigate('/workspace');
       } else {
         // Real API call
         console.log('📡 CreateChain: Using real API mode');
@@ -199,14 +199,14 @@ const CreateChain = () => {
         console.log('📥 CreateChain: API response received:', response);
         
         if (response.success) {
-          console.log('✅ CreateChain: Chain created successfully, redirecting to dashboard');
+          console.log('✅ CreateChain: Chain created successfully, redirecting to workspace');
           
           // Show success message before redirecting
           if (formData.tags.some(tag => !existingTags.includes(tag))) {
             console.log('🏷️ CreateChain: New tags were created during chain creation');
           }
           
-          navigate('/dashboard');
+          navigate('/workspace');
         } else {
           console.log('❌ CreateChain: Failed to create chain:', response.message);
           setErrors({ submit: response.message || 'Failed to create chain' });
@@ -510,7 +510,7 @@ const CreateChain = () => {
               <div className="flex justify-end space-x-4 pt-4">
                 <button
                   type="button"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/workspace')}
                   className="px-6 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
                 >
                   Cancel

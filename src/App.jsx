@@ -2,7 +2,7 @@ import React from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header.jsx'
 import Home from './pages/Home.jsx'
-import Dashboard from './pages/Dashboard.jsx'
+import Workspace from './pages/Workspace.jsx'
 import Library from './pages/Library.jsx'
 import ClipchainLaunchpad from './pages/ClipchainLaunchpad.jsx'
 import LandingPage from './pages/LandingPage.jsx'
@@ -16,6 +16,7 @@ import ApiTest from './pages/ApiTest.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import ChainPreview from './pages/ChainPreview.jsx';
+import EditClip from './pages/EditClip.jsx';
 
 function App() {
   const location = useLocation()
@@ -34,13 +35,14 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/workspace" element={<Workspace />} />
           <Route path="/library" element={<Library />} />
           <Route path="/chain/:chainId" element={<ClipchainLaunchpad />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/custom" element={<CustomPage />} />
           <Route path="/embed/:chainId" element={<EmbedPage />} />
           <Route path="/edit-chain/:chainId" element={<EditChain />} />
+          <Route path="/edit-clip/:clipId" element={<EditClip />} />
           <Route path="/collections" element={
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
               <h1 className="text-3xl font-bold text-gray-900 mb-8">Collections</h1>
