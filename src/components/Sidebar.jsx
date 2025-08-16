@@ -36,6 +36,8 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const sidebarRef = useRef(null)
   const resizeHandleRef = useRef(null)
   const profileMenuRef = useRef(null)
+  const [profileMenuPos, setProfileMenuPos] = useState({ left: 0, top: 0, width: 0 })
+  const [sidebarRect, setSidebarRect] = useState({ left: 0, top: 0 })
 
   // Handle loading state changes
   useEffect(() => {
@@ -420,6 +422,17 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
     })
   }, [actionMenu.type])
 
+  // Añade un estado para controlar el hover/focus del help icon y del popup
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [helpHover, setHelpHover] = useState(false)
+  const [helpPopupHover, setHelpPopupHover] = useState(false)
+
+  // Función para lanzar el onboarding
+  const launchOnboarding = () => {
+    localStorage.setItem('clipchain_onboarding_steps_v2', JSON.stringify([false, false, false]))
+    window.location.reload()
+  }
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -433,145 +446,106 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-40`}
+        className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-40 flex flex-col`}
         style={{ width: `${width}px` }}
       >
-        {/* Content Area - Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            {/* User Profile Section - Only show when authenticated */}
-            {isAuthenticated && (
-              <div className="mb-6">
-                <div className="relative" ref={profileMenuRef}>
-                  {/* Clickable Profile Header */}
-                  <button
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="w-full flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
-                    aria-label="User profile menu"
-                    aria-expanded={showProfileMenu}
-                    aria-haspopup="true"
+        {/* Header (User Profile) */}
+        {isAuthenticated && (
+          <div className="p-4 border-b border-gray-100 bg-white sticky top-0 z-10">
+            <div className="mb-2">
+              <div className="relative" ref={profileMenuRef}>
+                <button
+                  onClick={e => {
+                    setShowProfileMenu(!showProfileMenu)
+                    if (!showProfileMenu && profileMenuRef.current) {
+                      const rect = profileMenuRef.current.getBoundingClientRect()
+                      setProfileMenuPos({
+                        top: rect.top - (sidebarRef.current?.getBoundingClientRect().top || 0),
+                        height: rect.height
+                      })
+                    }
+                  }}
+                  ref={profileMenuRef}
+                  className="w-full flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+                  aria-label="User profile menu"
+                  aria-expanded={showProfileMenu}
+                  aria-haspopup="true"
+                >
+                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center border-2 border-primary-200">
+                    <span className="text-primary-700 text-sm font-semibold">
+                      {user?.displayName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user?.displayName || user?.username}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate font-light">
+                      {user?.email}
+                    </p>
+                  </div>
+                  <svg 
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180 transform' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
                   >
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center border-2 border-primary-200">
-                      <span className="text-primary-700 text-sm font-semibold">
-                        {user?.displayName?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                      </span>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showProfileMenu ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'} />
+                  </svg>
+                </button>
+                {showProfileMenu && (
+                  <div
+                    className="bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+                    style={{
+                      position: 'absolute',
+                      left: width - 2, // superpuesto 2px al sidebar
+                      top: (() => {
+                        const menuHeight = 180;
+                        const btnHeight = profileMenuPos.height || 40;
+                        let t = (profileMenuPos.top || 0) + btnHeight / 2 - menuHeight / 2;
+                        if (typeof window !== 'undefined' && sidebarRef.current) {
+                          const sidebarRect = sidebarRef.current.getBoundingClientRect();
+                          if (t + menuHeight > window.innerHeight - sidebarRect.top) {
+                            t = Math.max(8, window.innerHeight - sidebarRect.top - menuHeight - 8);
+                          }
+                          if (t < 8) t = 8;
+                        }
+                        return t;
+                      })(),
+                      minWidth: 220,
+                      width: 240,
+                    }}
+                  >
+                    <div className="py-1">
+                      <Link to="/profile" onClick={() => setShowProfileMenu(false)} className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        <span>My Profile</span>
+                      </Link>
+                      <Link to="/settings" onClick={() => setShowProfileMenu(false)} className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <span>Settings</span>
+                      </Link>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button onClick={async () => { await logout(); setShowProfileMenu(false); navigate('/login'); }} className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 focus:outline-none focus:bg-red-50">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span>Logout</span>
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {user?.displayName || user?.username}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate font-light">
-                        {user?.email}
-                      </p>
-                    </div>
-                    {/* Dropdown Arrow */}
-                    <svg 
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {/* Profile Dropdown Menu */}
-                  {showProfileMenu && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                      <div className="py-1">
-                        <Link
-                          to="/profile"
-                          onClick={() => setShowProfileMenu(false)}
-                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          <span>My Profile</span>
-                        </Link>
-                        
-                        <Link
-                          to="/settings"
-                          onClick={() => setShowProfileMenu(false)}
-                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <span>Settings</span>
-                        </Link>
-                        
-                        <div className="border-t border-gray-100 my-1"></div>
-                        
-                        <button
-                          onClick={async () => {
-                            await logout();
-                            setShowProfileMenu(false);
-                            navigate('/login');
-                          }}
-                          className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 focus:outline-none focus:bg-red-50"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                          </svg>
-                          <span>Logout</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Navigation - Following Design System spacing */}
-            <nav className="space-y-2 mb-6">
-              <Link
-                to="/"
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
-                  isActive('/') 
-                    ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" />
-                </svg>
-                <span className="text-sm font-medium">Home</span>
-              </Link>
-              
-              <Link
-                to="/workspace"
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
-                  isActive('/workspace') 
-                    ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span className="text-sm font-medium">Workspace</span>
-              </Link>
-
-              <Link
-                to="/library"
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 ${
-                  isActive('/library') 
-                    ? 'bg-primary-50 text-primary-700 shadow-sm border border-primary-200' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <span className="text-sm font-medium">Library</span>
-              </Link>
-            </nav>
-            {/* Subtle separator */}
-            <div className="border-t border-gray-100 mb-6"></div>
-
+            </div>
+          </div>
+        )}
+        {/* Navigation - sticky below header */}
+        <nav className="space-y-2 mb-0 px-4 bg-white sticky top-[72px] z-10 border-b border-gray-100">
+          <Link to="/" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 ${isActive('/') ? 'bg-gray-50 text-primary-800 border border-primary-100' : 'text-gray-600 hover:bg-gray-50 hover:text-primary-700'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" /></svg><span className="text-sm font-medium">Home</span></Link>
+          <Link to="/workspace" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 ${isActive('/workspace') ? 'bg-gray-50 text-primary-800 border border-primary-100' : 'text-gray-600 hover:bg-gray-50 hover:text-primary-700'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg><span className="text-sm font-medium">Workspace</span></Link>
+          <Link to="/library" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 ${isActive('/library') ? 'bg-gray-50 text-primary-800 border border-primary-100' : 'text-gray-600 hover:bg-gray-50 hover:text-primary-700'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><span className="text-sm font-medium">Library</span></Link>
+        </nav>
+        {/* Scrollable content */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="p-4 pt-6"> {/* pt-6 para igualar la separación entre bloques internos */}
             {/* Clips Section - Following Design System */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
@@ -619,16 +593,16 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
               <div className="space-y-2">
                 <button 
                   onClick={() => setShowEmailModal(true)}
-                  className="w-full bg-primary-50 hover:bg-primary-100 text-primary-700 hover:text-primary-900 text-xs font-medium py-2 px-3 rounded-lg border border-primary-200 hover:border-primary-300 transition-all duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 shadow-sm"
+                  className="w-full bg-gray-50 hover:bg-gray-100 text-primary-700 hover:text-primary-800 text-xs font-medium py-2 px-3 rounded-lg border border-primary-100 hover:border-primary-200 transition-all duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 shadow-none"
                 >
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   <span>Send Email</span>
                 </button>
-                <div className="py-2 px-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="py-2 px-3 bg-gray-50 rounded-lg border border-primary-100">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-blue-900 hover:text-blue-700 cursor-pointer overflow-hidden text-xs" onClick={copyReferralLink}>
+                    <div className="flex items-center space-x-2 text-primary-700 hover:text-primary-800 cursor-pointer overflow-hidden text-xs" onClick={copyReferralLink}>
                       <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
@@ -636,7 +610,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                     </div>
                     <button 
                       onClick={copyReferralLink}
-                      className="ml-2 flex-shrink-0 text-blue-900 hover:text-blue-700 text-xs font-medium px-2 py-1 bg-white border border-blue-300 rounded-md hover:bg-blue-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                      className="ml-2 flex-shrink-0 text-primary-600 hover:text-primary-800 text-xs font-medium px-2 py-1 bg-white border border-primary-100 rounded-md hover:bg-gray-50 hover:border-primary-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50"
                     >
                       Copy
                     </button>
@@ -646,44 +620,51 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             </div>
           </div>
         </div>
-
-        {/* Footer with Logo - Fixed at bottom */}
-        <div className="border-t border-gray-200 bg-white p-3 absolute bottom-0 left-0 right-0">
+        {/* Footer - sticky at bottom */}
+        <div className="border-t border-gray-200 bg-white p-3 sticky bottom-0 z-10">
           <div className="flex items-center justify-between px-3">
-            {/* Logo */}
-            <img 
-              src="/logo-letters-blue.svg" 
-              alt="Clipchain" 
-              className="h-4 w-auto cursor-pointer hover:opacity-80 transition-opacity duration-200" 
-              onClick={handleLogoClick}
-            />
-            
-            {/* Help Icon */}
+            <img src="/logo-letters-blue.svg" alt="Clipchain" className="h-4 w-auto cursor-pointer hover:opacity-80 transition-opacity duration-200" onClick={handleLogoClick} />
             <div className="relative group">
-              <div className="w-6 h-6 bg-blue-50 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div
+                className="w-6 h-6 bg-blue-50 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                onMouseEnter={() => setHelpHover(true)}
+                onMouseLeave={() => setTimeout(() => { if (!helpPopupHover) setHelpHover(false) }, 100)}
+                onFocus={() => setHelpHover(true)}
+                onBlur={() => setTimeout(() => { if (!helpPopupHover) setHelpHover(false) }, 100)}
+                tabIndex={0}
+                aria-label="Help & Documentation"
+              >
+                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
-              {/* Help Hover Popup Mejorado */}
-              <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto">
-                <div className="bg-white border border-blue-200 rounded-xl shadow-2xl p-4 w-56 animate-fade-in">
-                  <div className="flex items-center mb-2">
-                    <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 className="text-blue-800 font-semibold text-sm">Help & Documentation</h3>
+              {(helpHover || helpPopupHover) && (
+                <div
+                  className="absolute bottom-full right-0 mb-2 opacity-100 transition-all duration-300 pointer-events-auto z-50"
+                  onMouseEnter={() => setHelpPopupHover(true)}
+                  onMouseLeave={() => { setHelpPopupHover(false); setHelpHover(false) }}
+                  onFocus={() => setHelpPopupHover(true)}
+                  onBlur={() => { setHelpPopupHover(false); setHelpHover(false) }}
+                  tabIndex={0}
+                >
+                  <div className="bg-white border border-blue-200 rounded-xl shadow-2xl p-4 w-56 animate-fade-in">
+                    <div className="flex items-center mb-2">
+                      <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <h3 className="text-blue-800 font-semibold text-sm">Help & Documentation</h3>
+                    </div>
+                    <p className="text-gray-500 text-xs leading-relaxed mb-1">Access tutorials, FAQ and support resources.</p>
+                    <a href="/docs" className="inline-block mt-2 text-xs text-blue-600 hover:underline font-medium">Go to Documentation</a>
+                    <button
+                      onClick={launchOnboarding}
+                      className="mt-4 w-full px-3 py-2 bg-primary-50 border border-primary-200 text-primary-700 text-xs font-medium rounded-lg hover:bg-primary-100 hover:text-primary-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                    >
+                      Launch onboarding
+                    </button>
+                    <div className="absolute top-full right-6 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-blue-200"></div>
                   </div>
-                  <p className="text-gray-500 text-xs leading-relaxed mb-1">Access tutorials, FAQ and support resources.</p>
-                  <a href="/docs" className="inline-block mt-2 text-xs text-blue-600 hover:underline font-medium">Go to Documentation</a>
-                  {/* Arrow Pointer Mejorado */}
-                  <div className="absolute top-full right-6 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-blue-200"></div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
-
         {/* Resize Handle - Improved with reduced border */}
         <div
           ref={resizeHandleRef}
@@ -697,25 +678,26 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
 
       {/* Email Invitation Modal - Following Design System */}
       {showEmailModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center space-x-3">
-              <svg className="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl shadow-blue-200 max-w-sm w-full mx-4 border border-primary-200" style={{ boxShadow: '0 8px 32px 0 rgba(16, 112, 202, 0.12)' }}>
+            <div className="px-6 py-5 border-b border-primary-100 flex items-center space-x-3 rounded-t-2xl relative">
+              <svg className="w-7 h-7 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <h3 className="text-lg font-semibold text-gray-900">Invite Friends</h3>
+              <h3 className="text-lg font-semibold text-primary-800">Invite Friends</h3>
               <button 
                 onClick={() => setShowEmailModal(false)}
-                className="ml-auto text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 rounded p-1"
+                aria-label="Close invite dialog"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-primary-300 hover:text-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 rounded p-1"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 mb-4">Enter email addresses to send invitations:</p>
-              <div className="space-y-3">
+              <p className="text-sm text-primary-700 mb-3">Enter email addresses to send invitations:</p>
+              <div className="space-y-2">
                 {emails.map((email, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <input
@@ -723,14 +705,16 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                       value={email}
                       onChange={(e) => updateEmail(index, e.target.value)}
                       placeholder="Enter email address"
-                      className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                      className="flex-1 text-sm bg-white border border-primary-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-100 focus:border-primary-400 hover:border-primary-300 transition-all duration-200 font-light text-primary-900 placeholder-primary-300"
+                      aria-label={`Email address ${index+1}`}
                     />
                     {emails.length > 1 && (
                       <button
                         onClick={() => removeEmail(index)}
-                        className="text-red-400 hover:text-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 rounded p-1"
+                        aria-label="Remove email"
+                        className="text-red-300 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-100 rounded p-1"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
@@ -739,25 +723,27 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 ))}
                 <button
                   onClick={addEmail}
-                  className="flex items-center space-x-2 text-primary-700 hover:text-primary-900 text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 rounded px-1 py-1"
+                  className="flex items-center space-x-2 text-primary-600 hover:text-primary-800 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary-100 rounded px-1 py-1 hover:bg-primary-50"
+                  aria-label="Add another email"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span>Add another email</span>
+                  <span>Add another</span>
                 </button>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+            <div className="px-6 py-4 border-t border-primary-100 flex justify-end space-x-2 rounded-b-2xl">
               <button
                 onClick={() => setShowEmailModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+                className="px-4 py-2 text-xs font-medium text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-100"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSendInvites}
-                className="bg-primary-700 hover:bg-primary-800 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 shadow"
+                className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary-200 shadow shadow-blue-100"
+                aria-label="Send invites"
               >
                 Send Invites
               </button>

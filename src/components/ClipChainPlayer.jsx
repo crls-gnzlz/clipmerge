@@ -1109,15 +1109,17 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
         {/* Header with Logo and Copy Link */}
         <div className="flex items-center justify-between px-0 pt-4 pb-4 border-gray-100" style={{paddingLeft: '1.5rem', paddingRight: '1.5rem'}}>
-          {/* Left side - Logo */}
+          {/* Left side - Logo as link to landing */}
           <div className="flex items-center min-w-0">
-            <img src="/logo-blue.svg" alt="clipchain" className="h-5 w-auto mr-2" />
+            <a href="https://clipchain.com" target="_blank" rel="noopener noreferrer" title="Go to Clipchain landing page">
+              <img src="/logo-letters-blue.svg" alt="clipchain" className="h-5 w-auto mr-2" />
+            </a>
           </div>
           
           {/* Right side - Copy Link */}
           <button
             onClick={copyLink}
-            className="flex items-center px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-50 ml-auto"
+            className="flex items-center px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 active:scale-95 text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 ml-auto"
             aria-label="Copy share link"
           >
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

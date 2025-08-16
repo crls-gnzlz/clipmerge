@@ -9,12 +9,12 @@ const Home = () => {
   
   return (
     <LayoutWithSidebar>
-      <div className="min-h-full bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+      <div className="min-h-full bg-white">
 
         
         {/* Welcome Message */}
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
               <img src="/logo-blue.svg" alt="Clipchain" className="h-8 w-8 mr-3" />
               <h1 className="text-3xl font-light text-gray-900">
@@ -22,7 +22,7 @@ const Home = () => {
               </h1>
             </div>
             <p className="text-lg text-gray-600 font-light max-w-2xl mx-auto">
-              Organize, curate, and share your favorite video moments with intelligent clip chains
+              Organize and share your favorite video moments with powerful clip collections
             </p>
           </div>
         </div>
@@ -62,6 +62,44 @@ const Home = () => {
               <div className="space-y-8">
                 <GettingStartedSection />
                 <RecentChainsSection />
+                {/* Tutoriales - Bloque de acceso a vídeos */}
+                <div className="mt-8">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">Tutorials</h2>
+                  <div className="grid grid-cols-1 gap-4">
+                    <a
+                      href="#"
+                      className="flex items-center bg-gray-50 border border-gray-200 rounded-xl p-4 hover:bg-gray-100 transition-all duration-200 group"
+                      tabIndex={0}
+                    >
+                      <span className="flex-shrink-0 w-10 h-10 bg-primary-50 border border-primary-100 rounded-full flex items-center justify-center mr-4">
+                        <svg className="w-6 h-6 text-primary-500 group-hover:text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-5.197-3.027A1 1 0 008 9.027v5.946a1 1 0 001.555.832l5.197-3.027a1 1 0 000-1.664z" />
+                          <rect width="20" height="14" x="2" y="5" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+                        </svg>
+                      </span>
+                      <div>
+                        <h3 className="text-base font-semibold text-gray-900 mb-1">How to embed my clipchain in an external web or blog</h3>
+                        <p className="text-xs text-gray-600 font-light">Learn how to integrate your clipchains into your own website or blog with a simple embed.</p>
+                      </div>
+                    </a>
+                    <a
+                      href="#"
+                      className="flex items-center bg-gray-50 border border-gray-200 rounded-xl p-4 hover:bg-gray-100 transition-all duration-200 group"
+                      tabIndex={0}
+                    >
+                      <span className="flex-shrink-0 w-10 h-10 bg-primary-50 border border-primary-100 rounded-full flex items-center justify-center mr-4">
+                        <svg className="w-6 h-6 text-primary-500 group-hover:text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-5.197-3.027A1 1 0 008 9.027v5.946a1 1 0 001.555.832l5.197-3.027a1 1 0 000-1.664z" />
+                          <rect width="20" height="14" x="2" y="5" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+                        </svg>
+                      </span>
+                      <div>
+                        <h3 className="text-base font-semibold text-gray-900 mb-1">How to create my own content web with clipchains</h3>
+                        <p className="text-xs text-gray-600 font-light">Discover how to build a personal content site powered by your curated clip collections.</p>
+                      </div>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

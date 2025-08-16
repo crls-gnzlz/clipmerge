@@ -1,5 +1,12 @@
 # Design System - Clipchain
 
+## 2024 Visual Refresh
+- **Fondos principales**: blanco puro (`bg-white`) en Home y modales, gris muy suave (`bg-gray-50`, `bg-gray-100`) en botones secundarios, bloques y navegación.
+- **Azul solo como acento**: El azul de la paleta `primary` se usa para bordes, iconos, texto destacado y botones principales, pero no como fondo de componentes secundarios.
+- **Botones secundarios y modales**: Usan fondo blanco o gris suave, nunca azul. El modal de invitar amigos es blanco, con bordes/acento azul.
+- **Navegación**: El estado seleccionado y hover usan fondo gris suave, no azul. El azul queda solo en el texto y el borde.
+- **Minimalismo**: El diseño prioriza la neutralidad y limpieza, usando el azul solo para guiar la atención y no saturar la interfaz.
+
 ## Design Philosophy
 Our design philosophy centers around **clarity**, **elegance**, and **accessibility**. We prioritize:
 - **Simplicity over complexity**: Clean, uncluttered interfaces that guide users naturally
