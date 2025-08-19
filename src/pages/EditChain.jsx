@@ -6,6 +6,7 @@ import EnhancedClipSelector from '../components/ClipSelector.jsx';
 import DragDropClips from '../components/DragDropClips.jsx';
 import apiService from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { ArrowPathIcon } from '@heroicons/react/24/solid'
 
 const EditChain = () => {
   const { chainId } = useParams();
@@ -172,10 +173,12 @@ const EditChain = () => {
   if (isLoading) {
     return (
       <LayoutWithSidebar>
-        <div className="min-h-full bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary-950 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading chain...</p>
+        <div className="min-h-full bg-gray-50 relative">
+          <div className="fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="flex flex-col items-center justify-center">
+              <ArrowPathIcon className="w-12 h-12 text-primary-600 animate-spin drop-shadow-lg mb-4" />
+              <p className="text-xs text-gray-500 font-medium tracking-wide">Loading chain...</p>
+            </div>
           </div>
         </div>
       </LayoutWithSidebar>
@@ -266,7 +269,7 @@ const EditChain = () => {
                       type="button"
                       onClick={handleTagSubmit}
                       disabled={!tagInput.trim()}
-                      className="px-4 py-2.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+                      className="bg-primary-50 text-primary-600 px-4 py-2 rounded-lg font-medium border border-transparent hover:bg-primary-100 hover:text-primary-700 hover:border-primary-200 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50 transition-all duration-200 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add
                     </button>
@@ -292,7 +295,7 @@ const EditChain = () => {
                   {/* New Tag Indicator */}
                   {tagInput.trim() && !tagSuggestions.some(tag => tag.toLowerCase() === tagInput.toLowerCase()) && (
                     <div className="mt-2 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                      💡 Press "Add" or Enter to create new tag: <strong>"{tagInput}"</strong>
+                      Press "Add" or Enter to create new tag: <strong>"{tagInput}"</strong>
                     </div>
                   )}
                 </div>

@@ -5,6 +5,7 @@ import { getChainsWithClips, getUnassignedClips } from '../data/mockWorkspace.js
 import { useAuth } from '../contexts/AuthContext.jsx';
 import apiService from '../lib/api.js';
 import AppNotification from '../components/AppNotification.jsx';
+import { PlayCircleIcon, FolderPlusIcon } from '@heroicons/react/24/solid'
 
 const Workspace = () => {
   const { user, isAuthenticated } = useAuth();
@@ -407,18 +408,10 @@ const Workspace = () => {
                           <tr key={chain._id} className="hover:bg-gray-50 transition-colors duration-200">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8">
-                                  <div className="h-8 w-8 rounded-lg bg-primary-100 flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                    </svg>
-                                  </div>
-                                </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
-                                    {chain.name}
-                                  </div>
-                                </div>
+                                <FolderPlusIcon className="w-5 h-5 text-gray-900 mr-2 flex-shrink-0" />
+                                <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                  {chain.name}
+                                </span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -579,18 +572,10 @@ const Workspace = () => {
                           <tr key={clip._id} className="hover:bg-gray-50 transition-colors duration-200">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <div className="flex-shrink-0 h-8 w-8">
-                                  <div className="h-8 w-8 rounded-lg bg-secondary-100 flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg>
-                                  </div>
-                                </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
-                                    {clip.title}
-                                  </div>
-                                </div>
+                                <PlayCircleIcon className="w-5 h-5 text-gray-900 mr-2 flex-shrink-0" />
+                                <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                  {clip.title}
+                                </span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

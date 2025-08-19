@@ -18,9 +18,9 @@ Our design philosophy centers around **clarity**, **elegance**, and **accessibil
 ## Color Palette
 
 ### Primary Colors
-- **Primary Blue**: `#2563eb` (`primary-600`) - Main brand color, CTAs, links
-- **Primary Dark**: `#1d4ed8` (`primary-700`) - Hover states, active elements
-- **Primary Light**: `#dbeafe` (`primary-50`) - Backgrounds, subtle highlights
+- **Primary Blue**: `#0355d2` (`primary-600`) - Main brand color, CTAs, links
+- **Primary Dark**: `#023e97` (`primary-700`) - Hover states, active elements
+- **Primary Light**: `#eaf2fb` (`primary-50`) - Backgrounds, subtle highlights
 
 ### Secondary Colors
 - **Secondary Gray**: `#64748b` (`secondary-600`) - Supporting text, borders
@@ -89,6 +89,15 @@ Our design philosophy centers around **clarity**, **elegance**, and **accessibil
 - **Secondary**: `bg-white border border-gray-200 hover:bg-gray-50`
 - **Text**: `text-primary-600 hover:text-primary-700` with focus rings
 - **Transitions**: `transition-all duration-200` for smooth interactions
+- **Tertiary**: `bg-primary-50 text-primary-600 px-4 py-2 rounded-lg font-medium border border-transparent hover:bg-primary-100 hover:text-primary-700 hover:border-primary-200 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50 transition-all duration-200` (para acciones secundarias en formularios, icono opcional)
+
+#### Ejemplo de uso:
+```jsx
+<button className="bg-primary-50 text-primary-600 px-4 py-2 rounded-lg font-medium border border-transparent hover:bg-primary-100 hover:text-primary-700 hover:border-primary-200 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50 transition-all duration-200 flex items-center gap-2">
+  <svg className="w-4 h-4" ... />
+  Analyze
+</button>
+```
 
 ### Form Elements
 - **Inputs**: `border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500`

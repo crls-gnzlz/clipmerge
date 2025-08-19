@@ -24,18 +24,8 @@ const CreateChain = () => {
   const [tagInput, setTagInput] = useState('');
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [showClipSelector, setShowClipSelector] = useState(false);
-  const [useMockData, setUseMockData] = useState(false); // Use real data by default when authenticated
-
-  // Set mock data mode based on authentication status
-  useEffect(() => {
-    if (!isAuthenticated || !user) {
-      setUseMockData(true);
-      console.log('🎭 CreateChain: User not authenticated, using mock data');
-    } else {
-      setUseMockData(false);
-      console.log('📡 CreateChain: User authenticated, using real data');
-    }
-  }, [isAuthenticated, user]);
+  // Elimina el estado useMockData, el useEffect relacionado, el toggle y los indicadores visuales de mock/real/test_user en el header.
+  // En EnhancedClipSelector, pasa useMockData={false} o simplemente elimina la prop si no es necesaria.
 
   // Fetch existing tags for suggestions
   useEffect(() => {
@@ -165,52 +155,42 @@ const CreateChain = () => {
       console.log('📝 CreateChain: Form data:', formData);
       console.log('🎬 CreateChain: Selected clips:', selectedClips.length);
       
-      if (useMockData) {
-        // Simulate API call with mock data
-        console.log('🎭 CreateChain: Using mock data mode');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('✅ CreateChain: Mock chain created successfully');
+      // Real API call
+      console.log('📡 CreateChain: Using real API mode');
+      
+      const chainData = {
+        name: formData.name, // Backend expects 'name' not 'title'
+        description: formData.description,
+        tags: formData.tags,
+        isPublic: formData.status === 'public', // Convert status to boolean
+        clips: selectedClips.length > 0 ? selectedClips.map((clip, index) => ({
+          clip: clip._id, // Backend expects 'clip' not 'clipId'
+          order: index
+        })) : [] // Empty array for chains without clips
+      };
+      
+      console.log('📤 CreateChain: Sending chain data to API:', chainData);
+      console.log('🏷️ CreateChain: Tags being sent:', formData.tags);
+      console.log('🎬 CreateChain: Clips count:', selectedClips.length);
+      console.log('🔒 CreateChain: Public status:', chainData.isPublic);
+      console.log('📋 CreateChain: Full form data:', formData);
+      console.log('🎬 CreateChain: Selected clips details:', selectedClips);
+      
+      const response = await apiService.createChain(chainData);
+      console.log('📥 CreateChain: API response received:', response);
+      
+      if (response.success) {
+        console.log('✅ CreateChain: Chain created successfully, redirecting to workspace');
         
-        // Navigate to workspace after successful creation
+        // Show success message before redirecting
+        if (formData.tags.some(tag => !existingTags.includes(tag))) {
+          console.log('🏷️ CreateChain: New tags were created during chain creation');
+        }
+        
         navigate('/workspace');
       } else {
-        // Real API call
-        console.log('📡 CreateChain: Using real API mode');
-        
-        const chainData = {
-          name: formData.name, // Backend expects 'name' not 'title'
-          description: formData.description,
-          tags: formData.tags,
-          isPublic: formData.status === 'public', // Convert status to boolean
-          clips: selectedClips.length > 0 ? selectedClips.map((clip, index) => ({
-            clip: clip._id, // Backend expects 'clip' not 'clipId'
-            order: index
-          })) : [] // Empty array for chains without clips
-        };
-        
-        console.log('📤 CreateChain: Sending chain data to API:', chainData);
-        console.log('🏷️ CreateChain: Tags being sent:', formData.tags);
-        console.log('🎬 CreateChain: Clips count:', selectedClips.length);
-        console.log('🔒 CreateChain: Public status:', chainData.isPublic);
-        console.log('📋 CreateChain: Full form data:', formData);
-        console.log('🎬 CreateChain: Selected clips details:', selectedClips);
-        
-        const response = await apiService.createChain(chainData);
-        console.log('📥 CreateChain: API response received:', response);
-        
-        if (response.success) {
-          console.log('✅ CreateChain: Chain created successfully, redirecting to workspace');
-          
-          // Show success message before redirecting
-          if (formData.tags.some(tag => !existingTags.includes(tag))) {
-            console.log('🏷️ CreateChain: New tags were created during chain creation');
-          }
-          
-          navigate('/workspace');
-        } else {
-          console.log('❌ CreateChain: Failed to create chain:', response.message);
-          setErrors({ submit: response.message || 'Failed to create chain' });
-        }
+        console.log('❌ CreateChain: Failed to create chain:', response.message);
+        setErrors({ submit: response.message || 'Failed to create chain' });
       }
     } catch (error) {
       console.error('❌ CreateChain: Error occurred:', error);
@@ -248,40 +228,7 @@ const CreateChain = () => {
             </p>
             
             {/* Mock Data Toggle */}
-            <div className="mt-4 flex items-center space-x-3">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={useMockData}
-                  onChange={(e) => setUseMockData(e.target.checked)}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus:ring-opacity-50"
-                />
-                <span className="text-xs text-gray-600">Use mock data for testing</span>
-              </label>
-              
-              {/* Data Mode Indicator */}
-              <div className="flex items-center space-x-2">
-                {useMockData ? (
-                  <span className="text-xs text-orange-600 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-200">
-                    🎭 Mock Mode
-                  </span>
-                ) : (
-                  <span className="text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
-                    📡 Real Data
-                  </span>
-                )}
-                
-                {isAuthenticated && user ? (
-                  <span className="text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200">
-                    👤 {user.username}
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-600 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200">
-                    🔒 Not Authenticated
-                  </span>
-                )}
-              </div>
-            </div>
+            {/* Removed Mock Data Toggle */}
           </div>
 
           {/* Form */}
@@ -345,7 +292,7 @@ const CreateChain = () => {
                       type="button"
                       onClick={handleTagSubmit}
                       disabled={!tagInput.trim()}
-                      className="px-4 py-2.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+                      className="bg-primary-50 text-primary-600 px-4 py-2 rounded-lg font-medium border border-transparent hover:bg-primary-100 hover:text-primary-700 hover:border-primary-200 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50 transition-all duration-200 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add
                     </button>
@@ -373,7 +320,7 @@ const CreateChain = () => {
                   {/* New Tag Indicator */}
                   {tagInput.trim() && !tagSuggestions.some(tag => tag.toLowerCase() === tagInput.toLowerCase()) && (
                     <div className="mt-2 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                      💡 Press "Add" or Enter to create new tag: <strong>"{tagInput}"</strong>
+                      Press "Add" or Enter to create new tag: <strong>"{tagInput}"</strong>
                     </div>
                   )}
                 </div>
@@ -455,7 +402,7 @@ const CreateChain = () => {
                         <EnhancedClipSelector 
                           onAddClips={handleAddClips}
                           existingClipIds={selectedClips.map(clip => clip._id)}
-                          useMockData={useMockData}
+                          useMockData={false}
                         />
                       </div>
                     </div>

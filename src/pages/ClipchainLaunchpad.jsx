@@ -76,7 +76,7 @@ const ClipchainLaunchpad = () => {
                 
                 <Link 
                   to="/library" 
-                  className="text-secondary-950 hover:text-secondary-700 font-medium transition-colors duration-200 ml-6 hover:underline"
+                  className="text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200 ml-6 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50"
                 >
                   Browse Library
                 </Link>

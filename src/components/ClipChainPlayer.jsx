@@ -1111,8 +1111,8 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         <div className="flex items-center justify-between px-0 pt-4 pb-4 border-gray-100" style={{paddingLeft: '1.5rem', paddingRight: '1.5rem'}}>
           {/* Left side - Logo as link to landing */}
           <div className="flex items-center min-w-0">
-            <a href="https://clipchain.com" target="_blank" rel="noopener noreferrer" title="Go to Clipchain landing page">
-              <img src="/logo-letters-blue.svg" alt="clipchain" className="h-5 w-auto mr-2" />
+            <a href="http://localhost:5173/landing" target="_blank" rel="noopener noreferrer" title="Go to Clipchain landing page">
+              <img src="/logo-letters-blue.svg" alt="clipchain" className="h-6 w-auto mr-2" />
             </a>
           </div>
           
@@ -1209,7 +1209,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
                     <button
                       onClick={togglePlay}
-                      className="p-4 bg-secondary-950 bg-opacity-90 rounded-full shadow-lg hover:bg-opacity-100 transition-all duration-200 transform hover:scale-110"
+                      className="p-4 bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-600 focus:outline-none rounded-full shadow-lg hover:scale-110 transition-all duration-200 transform"
                       title={currentClip ? 'Play' : 'Select a clip to play'}
                     >
                       <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -1418,13 +1418,13 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                         >
                           {/* Progress track */}
                           <div 
-                            className="absolute left-0 top-0 h-full bg-secondary-950 rounded-full transition-all duration-300 ease-in-out"
+                            className="absolute left-0 top-0 h-full bg-primary-100 rounded-full transition-all duration-300 ease-in-out"
                             style={{ width: `${getProgressPercentage()}%` }}
                           ></div>
                           
                           {/* Progress handle */}
                           <div 
-                            className="absolute top-1/2 w-4 h-4 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-2 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
+                            className="absolute top-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-2 cursor-pointer hover:scale-110 transition-transform border-2 border-white"
                             style={{ left: `${getProgressPercentage()}%` }}
                           ></div>
                         </div>
@@ -1553,7 +1553,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                               )}
                             </div>
                           </div>
-
+                           
                           {/* Right side - CC and Time */}
                           <div className="flex items-center space-x-3">
                             {/* Captions Control */}
@@ -1569,6 +1569,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                                 <span className="font-bold text-xs">CC</span>
                               </button>
                             </div>
+                            
 
                             {/* Time info */}
                             <div className="w-16 text-right">
@@ -1617,13 +1618,13 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                   >
                     {/* Progress track */}
                     <div 
-                      className="absolute left-0 top-0 h-full bg-secondary-950 rounded-full transition-all duration-300 ease-in-out"
+                      className="absolute left-0 top-0 h-full bg-primary-100 rounded-full transition-all duration-300 ease-in-out"
                       style={{ width: `${getProgressPercentage()}%` }}
                     ></div>
                     
                     {/* Progress handle */}
                     <div 
-                      className={`absolute top-1/2 bg-secondary-950 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-1.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white ${compact ? 'w-2 h-2' : 'w-3 h-3'}`}
+                      className={`absolute top-1/2 bg-primary-600 rounded-full shadow-lg transform -translate-y-1/2 -translate-x-1.5 cursor-pointer hover:scale-110 transition-transform border-2 border-white ${compact ? 'w-2 h-2' : 'w-3 h-3'}`}
                       style={{ left: `${getProgressPercentage()}%` }}
                     ></div>
                   </div>

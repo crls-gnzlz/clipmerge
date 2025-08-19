@@ -12,7 +12,7 @@ const LandingPage = () => {
       title: 'Content Creators',
       description: 'Share the most engaging parts of your content across social platforms.',
       icon: (
-        <svg className="w-8 h-8 text-secondary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       )
@@ -22,7 +22,7 @@ const LandingPage = () => {
       title: 'Educators',
       description: 'Build thematic lessons from videos, lectures or courses.',
       icon: (
-        <svg className="w-8 h-8 text-secondary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       )
@@ -32,7 +32,7 @@ const LandingPage = () => {
       title: 'Marketing Teams',
       description: 'Curate customer testimonials and brand moments.',
       icon: (
-        <svg className="w-8 h-8 text-secondary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       )
@@ -42,7 +42,7 @@ const LandingPage = () => {
       title: 'Support and Internal Training Teams',
       description: 'Create training materials and support documentation from internal videos and webinars.',
       icon: (
-        <svg className="w-8 h-8 text-secondary-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       )
@@ -112,16 +112,11 @@ const LandingPage = () => {
               <div className="space-y-4">
                 <h1 className="text-5xl font-bold text-gray-900 leading-tight">
                   Turn video moments into{' '}
-                  <span className="text-secondary-950">powerful collections</span>
+                  <span className="text-primary-600">powerful collections</span>
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed">
                   Curate, merge and share the most important moments from videos, podcasts and more.
                 </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button className="bg-secondary-950 hover:bg-secondary-900 text-white font-semibold py-4 px-8 rounded-lg text-lg transition-colors duration-200 shadow-lg hover:shadow-xl">
-                  Create free account
-                </button>
               </div>
             </div>
             
@@ -185,19 +180,19 @@ const LandingPage = () => {
             </p>
             <div className="flex items-center justify-center space-x-8 text-sm text-gray-500 mb-8">
               <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-secondary-950" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                 </svg>
                 <span>Profesores que comparten clases</span>
               </div>
               <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-secondary-950" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                 </svg>
                 <span>Periodistas que organizan clips</span>
               </div>
               <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-secondary-950" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                 </svg>
                 <span>Creadores que venden cursos</span>
@@ -205,7 +200,7 @@ const LandingPage = () => {
             </div>
             <Link
               to="/custom"
-              className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-white bg-secondary-950 hover:bg-secondary-900 transition-colors duration-200 shadow-lg hover:shadow-xl"
+              className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold text-lg transition-colors duration-200 hover:underline"
             >
               Ver ejemplo de página personalizada
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,12 +212,12 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-secondary-950">
+      <section className="py-20 bg-primary-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-8">
             Start your first Clipchain today
           </h2>
-          <button className="bg-white hover:bg-gray-100 text-secondary-950 font-semibold py-4 px-8 rounded-lg text-lg transition-colors duration-200 shadow-lg hover:shadow-xl">
+          <button className="bg-white hover:bg-gray-100 text-primary-600 font-semibold py-4 px-8 rounded-lg text-lg transition-colors duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50">
             Create free account
           </button>
         </div>
@@ -259,7 +254,7 @@ const LandingPage = () => {
           <div className="text-center">
             <Link 
               to="/library" 
-              className="inline-flex items-center text-secondary-950 hover:text-secondary-700 font-semibold text-lg transition-colors duration-200 hover:underline"
+              className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold text-lg transition-colors duration-200 hover:underline"
             >
               <span>View full library</span>
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

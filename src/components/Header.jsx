@@ -36,7 +36,7 @@ const Header = () => {
               </Link>
               <Link
                 to="/register"
-                className="bg-secondary-900 hover:bg-secondary-800 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-opacity-50"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50"
               >
                 Get Started
               </Link>

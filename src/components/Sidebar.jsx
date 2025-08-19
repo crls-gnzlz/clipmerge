@@ -4,6 +4,7 @@ import AppNotification from './AppNotification.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import apiService from '../lib/api.js'
 import { createPortal } from 'react-dom'
+import { HomeIcon, BriefcaseIcon, BookOpenIcon, FolderPlusIcon, PlayCircleIcon } from '@heroicons/react/24/solid'
 
 const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const location = useLocation()
@@ -126,8 +127,11 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
     
     return userClips.slice(0, 5).map((clip) => (
       <div key={clip._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-gray-900 truncate font-medium">{clip.title}</p>
+        <div className="flex-1 min-w-0" onClick={(e) => { if (!e.target.closest('button')) navigate(`/edit-clip/${clip._id}`) }}>
+          <div className="flex items-center">
+            <PlayCircleIcon className="w-4 h-4 text-primary-400 mr-2 flex-shrink-0" />
+            <p className="text-xs text-gray-900 truncate font-medium">{clip.title}</p>
+          </div>
         </div>
         <div className="relative">
           <button
@@ -139,7 +143,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             }}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/>
+              <circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/>
             </svg>
           </button>
           {actionMenu.type === 'clip' && actionMenu.id === clip._id && (
@@ -188,8 +192,11 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
     
     return userChains.slice(0, 5).map((chain) => (
       <div key={chain._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-gray-900 truncate font-medium">{chain.name}</p>
+        <div className="flex-1 min-w-0" onClick={(e) => { if (!e.target.closest('button')) navigate(`/edit-chain/${chain._id}`) }}>
+          <div className="flex items-center">
+            <FolderPlusIcon className="w-4 h-4 text-primary-600 mr-2 flex-shrink-0" />
+            <p className="text-xs text-gray-900 truncate font-medium">{chain.name}</p>
+          </div>
         </div>
         <div className="relative">
           <button
@@ -201,7 +208,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             }}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/>
+              <circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/>
             </svg>
           </button>
           {actionMenu.type === 'chain' && actionMenu.id === chain._id && (
@@ -351,7 +358,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   // Función para abrir el menú contextual
   const openActionMenu = (type, id, anchor) => {
     const rect = anchor.getBoundingClientRect()
-    setActionMenu({ type, id, x: rect.right - 120, y: rect.bottom + window.scrollY + 4 }) // 120px ancho menú, 4px offset
+    setActionMenu({ type, id, x: rect.right + 8, y: rect.bottom + window.scrollY + 4 }) // 120px ancho menú, 4px offset
   }
   const closeActionMenu = () => setActionMenu({ type: null, id: null, x: 0, y: 0 })
 
@@ -379,37 +386,41 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   // Submenú contextual fuera del scroll, con iconos y estilo igual que Workspace
   function ActionMenu({ type, id, x, y, onEdit, onDelete, onPreview }) {
     return createPortal(
-      <div style={{ position: 'absolute', left: x, top: y, zIndex: 9999 }} className="w-32 bg-white border border-gray-100 rounded-lg shadow-lg animate-fade-in">
-        {type === 'chain' && (
+      <div style={{ position: 'absolute', left: x, top: y, zIndex: 9999 }} className="flex flex-col bg-white border border-gray-100 rounded-lg shadow-lg animate-fade-in divide-y divide-gray-100">
+        {type === 'clip' && (
           <button
-            className="w-full flex items-center px-3 py-2 text-xs text-blue-700 hover:bg-blue-50 hover:text-blue-700 rounded-t-lg transition-colors"
-            onClick={onPreview}
+            className="flex-1 flex items-center justify-center px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-r-lg transition-colors"
+            onClick={onDelete}
           >
-            <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <svg className="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Preview
+            Delete
           </button>
         )}
-        <button
-          className={`w-full flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-primary-50 hover:text-primary-700 ${type === 'chain' ? '' : 'rounded-t-lg'} transition-colors`}
-          onClick={onEdit}
-        >
-          <svg className="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.586a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          Edit
-        </button>
-        <button
-          className="w-full flex items-center px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
-          onClick={onDelete}
-        >
-          <svg className="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          Delete
-        </button>
+        {type === 'chain' && (
+          <>
+            <button
+              className="flex-1 flex items-center justify-center px-3 py-2 text-xs text-blue-700 hover:bg-blue-50 hover:text-blue-700 rounded-l-lg transition-colors"
+              onClick={onPreview}
+            >
+              <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Preview
+            </button>
+            <button
+              className="flex-1 flex items-center justify-center px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-r-lg transition-colors"
+              onClick={onDelete}
+            >
+              <svg className="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </button>
+          </>
+        )}
       </div>,
       document.body
     )
@@ -539,9 +550,18 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         )}
         {/* Navigation - sticky below header */}
         <nav className="space-y-2 mb-0 px-4 bg-white sticky top-[72px] z-10 border-b border-gray-100">
-          <Link to="/" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 ${isActive('/') ? 'bg-gray-50 text-primary-800 border border-primary-100' : 'text-gray-600 hover:bg-gray-50 hover:text-primary-700'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z" /></svg><span className="text-sm font-medium">Home</span></Link>
-          <Link to="/workspace" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 ${isActive('/workspace') ? 'bg-gray-50 text-primary-800 border border-primary-100' : 'text-gray-600 hover:bg-gray-50 hover:text-primary-700'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg><span className="text-sm font-medium">Workspace</span></Link>
-          <Link to="/library" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 ${isActive('/library') ? 'bg-gray-50 text-primary-800 border border-primary-100' : 'text-gray-600 hover:bg-gray-50 hover:text-primary-700'}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><span className="text-sm font-medium">Library</span></Link>
+          <Link to="/" className={`flex items-center space-x-3 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 text-sm font-medium transition-all duration-200 ${isActive('/') ? 'bg-primary-50 text-primary-700 border border-primary-100 shadow-sm' : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'}`}> 
+            <HomeIcon className="w-4 h-4" />
+            <span>Home</span>
+          </Link>
+          <Link to="/workspace" className={`flex items-center space-x-3 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 text-sm font-medium transition-all duration-200 ${isActive('/workspace') ? 'bg-primary-50 text-primary-700 border border-primary-100 shadow-sm' : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'}`}> 
+            <BriefcaseIcon className="w-4 h-4" />
+            <span>Workspace</span>
+          </Link>
+          <Link to="/library" className={`flex items-center space-x-3 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 text-sm font-medium transition-all duration-200 ${isActive('/library') ? 'bg-primary-50 text-primary-700 border border-primary-100 shadow-sm' : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'}`}> 
+            <BookOpenIcon className="w-4 h-4" />
+            <span>Library</span>
+          </Link>
         </nav>
         {/* Scrollable content */}
         <div className="flex-1 min-h-0 overflow-y-auto">

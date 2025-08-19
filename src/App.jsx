@@ -17,6 +17,7 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import ChainPreview from './pages/ChainPreview.jsx';
 import EditClip from './pages/EditClip.jsx';
+import DesignSystem from './pages/DesignSystem.jsx'
 
 function App() {
   const location = useLocation()
@@ -40,6 +41,7 @@ function App() {
           <Route path="/chain/:chainId" element={<ClipchainLaunchpad />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/custom" element={<CustomPage />} />
+          <Route path="/design-system" element={<DesignSystem />} />
           <Route path="/embed/:chainId" element={<EmbedPage />} />
           <Route path="/edit-chain/:chainId" element={<EditChain />} />
           <Route path="/edit-clip/:clipId" element={<EditClip />} />

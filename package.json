@@ -29,6 +29,7 @@
     "start:full": "concurrently --names \"Backend,Frontend\" --prefix-colors \"blue,green\" --kill-others \"npm run server:dev\" \"sleep 5 && npm run dev\""
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",

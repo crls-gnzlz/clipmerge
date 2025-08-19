@@ -250,13 +250,13 @@ const Library = () => {
             <div className="flex items-center space-x-4">
               <Link
                 to="/login"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="text-primary-600 hover:text-primary-700 px-3 py-2 text-sm font-medium transition-colors border border-primary-200 rounded-lg hover:bg-primary-50"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="bg-secondary-950 hover:bg-secondary-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50"
               >
                 Get Started
               </Link>
@@ -359,7 +359,7 @@ const Library = () => {
               ) : (
                 <Link
                   to="/create"
-                  className="inline-flex items-center px-6 py-3 bg-secondary-950 text-white rounded-lg font-medium hover:bg-secondary-900 transition-colors duration-200"
+                  className="inline-flex items-center px-6 py-3 bg-white border border-gray-200 text-gray-900 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
                 >
                   Create Your First Clipchain
                 </Link>

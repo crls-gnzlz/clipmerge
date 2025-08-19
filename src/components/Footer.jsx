@@ -9,7 +9,7 @@ const Footer = () => {
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center mb-4">
-              <img src="/logo.svg" alt="clipchain" className="h-8 brightness-0 invert" />
+              <img src="/logo.svg" alt="clipchain" className="h-10 brightness-0 invert" />
             </div>
             <p className="text-gray-300 mb-6 max-w-md leading-relaxed text-sm">
               Turn video moments into powerful collections. Create, curate, and share meaningful video content with clipchain.

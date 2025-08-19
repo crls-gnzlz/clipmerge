@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import LayoutWithSidebar from '../components/LayoutWithSidebar.jsx';
 import apiService from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { ArrowPathIcon } from '@heroicons/react/24/solid'
 
 const EditClip = () => {
   const { clipId } = useParams();
@@ -323,10 +324,12 @@ const EditClip = () => {
   if (isLoading) {
     return (
       <LayoutWithSidebar>
-        <div className="min-h-full bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary-950 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading clip...</p>
+        <div className="min-h-full bg-gray-50 relative">
+          <div className="fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="flex flex-col items-center justify-center">
+              <ArrowPathIcon className="w-12 h-12 text-primary-600 animate-spin drop-shadow-lg mb-4" />
+              <p className="text-xs text-gray-500 font-medium tracking-wide">Loading clip...</p>
+            </div>
           </div>
         </div>
       </LayoutWithSidebar>
@@ -370,7 +373,7 @@ const EditClip = () => {
                       type="button"
                       onClick={() => detectVideoDuration(formData.videoUrl)}
                       disabled={!formData.videoUrl || isLoading}
-                      className="px-5 py-2.5 bg-secondary-600 text-white text-sm rounded-lg hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                      className="bg-primary-50 text-primary-600 px-4 py-2 rounded-lg font-medium border border-transparent hover:bg-primary-100 hover:text-primary-700 hover:border-primary-200 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50 transition-all duration-200 flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? 'Analyzing...' : 'Analyze'}
                     </button>
@@ -520,11 +523,7 @@ const EditClip = () => {
                         onClick={() => copyCurrentTime('startTime')}
                         data-copy-time="startTime"
                         disabled={!videoId || !youtubePlayer}
-                        className={`px-3 py-2.5 text-white text-xs rounded-lg transition-all duration-200 font-medium whitespace-nowrap ${
-                          !videoId || !youtubePlayer
-                            ? 'bg-gray-400 cursor-not-allowed opacity-50'
-                            : 'bg-secondary-600 hover:bg-blue-500'
-                        }`}
+                        className="bg-primary-50 text-primary-600 px-4 py-2 rounded-lg font-medium border border-transparent hover:bg-primary-100 hover:text-primary-700 hover:border-primary-200 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50 transition-all duration-200 flex items-center gap-2 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         title={!videoId ? 'Enter a video URL first' : !youtubePlayer ? 'Video player not ready yet' : 'Copy current video time'}
                       >
                         {!videoId ? 'No Video' : !youtubePlayer ? 'Loading...' : 'Copy Time'}
@@ -572,11 +571,7 @@ const EditClip = () => {
                         onClick={() => copyCurrentTime('endTime')}
                         data-copy-time="endTime"
                         disabled={!videoId || !youtubePlayer}
-                        className={`px-3 py-2.5 text-white text-xs rounded-lg transition-all duration-200 font-medium whitespace-nowrap ${
-                          !videoId || !youtubePlayer
-                            ? 'bg-gray-400 cursor-not-allowed opacity-50'
-                            : 'bg-secondary-600 hover:bg-blue-500'
-                        }`}
+                        className="bg-primary-50 text-primary-600 px-4 py-2 rounded-lg font-medium border border-transparent hover:bg-primary-100 hover:text-primary-700 hover:border-primary-200 focus:ring-2 focus:ring-primary-600 focus:ring-opacity-50 transition-all duration-200 flex items-center gap-2 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                         title={!videoId ? 'Enter a video URL first' : !youtubePlayer ? 'Video player not ready yet' : 'Copy current video time'}
                       >
                         {!videoId ? 'No Video' : !youtubePlayer ? 'Loading...' : 'Copy Time'}
