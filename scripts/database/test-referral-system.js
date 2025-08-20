@@ -46,7 +46,7 @@ const testReferralSystem = async () => {
     console.log('\n2️⃣ Referral IDs generados:');
     usersWithReferralId.forEach(user => {
       console.log(`   👤 ${user.username}: ${user.referralId}`);
-      console.log(`      📊 Stats: Total=${user.referralStats?.totalReferrals || 0}, Successful=${user.referralStats?.successfulReferrals || 0}`);
+      console.log(`      📊 Stats: Total Referrals=${user.referralStats?.totalReferrals || 0}`);
     });
     
     // 3. Verificar unicidad de referral IDs
@@ -83,10 +83,9 @@ const testReferralSystem = async () => {
     // 6. Estadísticas generales
     console.log('\n6️⃣ Estadísticas generales:');
     const totalReferrals = usersWithReferralId.reduce((sum, user) => sum + (user.referralStats?.totalReferrals || 0), 0);
-    const totalSuccessful = usersWithReferralId.reduce((sum, user) => sum + (user.referralStats?.successfulReferrals || 0), 0);
     
-    console.log(`   📈 Total de referidos generados: ${totalReferrals}`);
-    console.log(`   🎯 Total de referidos exitosos: ${totalSuccessful}`);
+    console.log(`   📈 Total de referidos exitosos: ${totalReferrals}`);
+    console.log(`   🎯 Cada referral representa un usuario que completó su registro`);
     console.log(`   📊 Promedio por usuario: ${(totalReferrals / usersWithReferralId.length).toFixed(2)}`);
     
     console.log('\n🎉 Sistema de referidos funcionando correctamente!');

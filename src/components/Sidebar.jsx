@@ -110,10 +110,10 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const renderClipsList = () => {
     if (authLoading || isLoading) {
       return (
-        <div className="space-y-2">
-          {[...Array(5)].map((_, i) => (
+        <div className="space-y-0.5">
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
             </div>
           ))}
         </div>
@@ -136,8 +136,8 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       )
     }
     
-    return userClips.slice(0, 5).map((clip) => (
-      <div key={clip._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+    return userClips.slice(0, 6).map((clip) => (
+      <div key={clip._id} className="group relative flex items-center p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
         <div className="flex-1 min-w-0" onClick={(e) => { if (!e.target.closest('button')) navigate(`/edit-clip/${clip._id}`) }}>
           <div className="flex items-center">
             <PlayCircleIcon className="w-4 h-4 text-gray-900 mr-2 flex-shrink-0" />
@@ -175,10 +175,10 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const renderChainsList = () => {
     if (authLoading || isLoading) {
       return (
-        <div className="space-y-2">
-          {[...Array(5)].map((_, i) => (
+        <div className="space-y-0.5">
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
             </div>
           ))}
         </div>
@@ -201,8 +201,8 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       )
     }
     
-    return userChains.slice(0, 5).map((chain) => (
-      <div key={chain._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+    return userChains.slice(0, 6).map((chain) => (
+      <div key={chain._id} className="group relative flex items-center p-1.5 rounded-lg hover:bg-gray-50 cursor-pointer">
         <div className="flex-1 min-w-0" onClick={(e) => { if (!e.target.closest('button')) navigate(`/edit-chain/${chain._id}`) }}>
           <div className="flex items-center">
             <FolderPlusIcon className="w-4 h-4 text-gray-900 mr-2 flex-shrink-0" />
@@ -594,7 +594,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 </Link>
               </div>
               
-              <div className={`overflow-y-auto space-y-1 pr-1 ${userClips.length === 0 ? 'h-8' : 'h-28'}`}>
+              <div className={`overflow-y-auto space-y-0.5 pr-1 ${userClips.length === 0 ? 'h-8' : 'h-32'}`}>
                 {renderClipsList()}
               </div>
             </div>
@@ -614,7 +614,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 </Link>
               </div>
               
-              <div className={`overflow-y-auto space-y-1 pr-1 ${userChains.length === 0 ? 'h-8' : 'h-28'}`}>
+              <div className={`overflow-y-auto space-y-0.5 pr-1 ${userChains.length === 0 ? 'h-8' : 'h-32'}`}>
                 {renderChainsList()}
               </div>
             </div>
@@ -655,19 +655,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                   </div>
                 </div>
                 
-                {/* Estadísticas de referidos */}
-                {referralStats && (
-                  <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-100">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-blue-700">Total referrals:</span>
-                      <span className="font-medium text-blue-800">{referralStats.totalReferrals}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs mt-1">
-                      <span className="text-blue-700">Successful:</span>
-                      <span className="font-medium text-blue-800">{referralStats.successfulReferrals}</span>
-                    </div>
-                  </div>
-                )}
+                
               </div>
             </div>
           </div>

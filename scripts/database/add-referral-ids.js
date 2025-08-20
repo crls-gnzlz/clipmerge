@@ -73,8 +73,7 @@ const addReferralIdsToUsers = async () => {
         // Actualizar usuario
         user.referralId = referralId;
         user.referralStats = {
-          totalReferrals: 0,
-          successfulReferrals: 0
+          totalReferrals: 0
         };
         
         await user.save();

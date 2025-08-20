@@ -50,9 +50,13 @@ referralStats: {
 
 #### Sidebar Component
 - Muestra el enlace de referidos del usuario
-- Estadísticas de referidos (total y exitosos)
 - Botón para copiar el enlace
 - Estado de carga mientras se obtiene el enlace
+
+#### Profile Page
+- Muestra estadísticas completas de referidos
+- Total de referidos exitosos
+- Enlace para copiar
 
 #### API Service
 - `getReferralLink()` - Obtiene el enlace de referidos
@@ -71,8 +75,7 @@ referralStats: {
 - Fácil de compartir y recordar
 
 ### 3. Estadísticas de Referidos
-- Total de referidos generados
-- Referidos exitosos (usuarios que se registraron)
+- Total de referidos exitosos (usuarios que completaron su registro)
 - Actualización en tiempo real
 
 ### 4. Interfaz de Usuario

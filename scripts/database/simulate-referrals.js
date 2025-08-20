@@ -30,12 +30,12 @@ const simulateReferrals = async () => {
     
     // Simular referidos aleatorios
     const referralSimulations = [
-      { username: 'demo_user', total: 5, successful: 3 },
-      { username: 'admin', total: 12, successful: 8 },
-      { username: 'test_user', total: 3, successful: 1 },
-      { username: 'creator_user', total: 8, successful: 6 },
-      { username: 'carlosg', total: 15, successful: 12 },
-      { username: 'carlos_test', total: 2, successful: 0 }
+      { username: 'demo_user', total: 5 },
+      { username: 'admin', total: 12 },
+      { username: 'test_user', total: 3 },
+      { username: 'creator_user', total: 8 },
+      { username: 'carlosg', total: 15 },
+      { username: 'carlos_test', total: 2 }
     ];
     
     let successCount = 0;
@@ -52,13 +52,12 @@ const simulateReferrals = async () => {
         
         // Actualizar estadísticas
         user.referralStats = {
-          totalReferrals: simulation.total,
-          successfulReferrals: simulation.successful
+          totalReferrals: simulation.total
         };
         
         await user.save();
         
-        console.log(`✅ ${user.username}: ${simulation.total} referidos totales, ${simulation.successful} exitosos`);
+        console.log(`✅ ${user.username}: ${simulation.total} referidos exitosos`);
         successCount++;
         
       } catch (error) {
@@ -76,21 +75,17 @@ const simulateReferrals = async () => {
     const updatedUsers = await User.find({}).select('username referralId referralStats');
     
     updatedUsers.forEach(user => {
-      const stats = user.referralStats || { totalReferrals: 0, successfulReferrals: 0 };
-      const successRate = stats.totalReferrals > 0 ? ((stats.successfulReferrals / stats.totalReferrals) * 100).toFixed(1) : 0;
+      const stats = user.referralStats || { totalReferrals: 0 };
       
-      console.log(`   👤 ${user.username}: ${stats.totalReferrals} total, ${stats.successfulReferrals} exitosos (${successRate}% éxito)`);
+      console.log(`   👤 ${user.username}: ${stats.totalReferrals} referidos exitosos`);
     });
     
     // Calcular estadísticas generales
     const totalReferrals = updatedUsers.reduce((sum, user) => sum + (user.referralStats?.totalReferrals || 0), 0);
-    const totalSuccessful = updatedUsers.reduce((sum, user) => sum + (user.referralStats?.successfulReferrals || 0), 0);
-    const overallSuccessRate = totalReferrals > 0 ? ((totalSuccessful / totalReferrals) * 100).toFixed(1) : 0;
     
     console.log('\n🎯 Estadísticas generales:');
-    console.log(`   📈 Total de referidos: ${totalReferrals}`);
-    console.log(`   🎯 Total exitosos: ${totalSuccessful}`);
-    console.log(`   📊 Tasa de éxito general: ${overallSuccessRate}%`);
+    console.log(`   📈 Total de referidos exitosos: ${totalReferrals}`);
+    console.log(`   🎯 Cada referral representa un usuario que completó su registro`);
     
     console.log('\n🎉 Simulación completada! Ahora puedes probar el sistema con datos realistas.');
     

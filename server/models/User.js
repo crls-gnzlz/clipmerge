@@ -118,10 +118,6 @@ const userSchema = new mongoose.Schema({
     totalReferrals: {
       type: Number,
       default: 0
-    },
-    successfulReferrals: {
-      type: Number,
-      default: 0
     }
   }
 }, {
@@ -256,15 +252,8 @@ userSchema.methods.getReferralLink = function() {
 };
 
 // Method to update referral stats
-userSchema.methods.updateReferralStats = function(type, increment = 1) {
-  switch (type) {
-    case 'total':
-      this.referralStats.totalReferrals += increment;
-      break;
-    case 'successful':
-      this.referralStats.successfulReferrals += increment;
-      break;
-  }
+userSchema.methods.updateReferralStats = function(increment = 1) {
+  this.referralStats.totalReferrals += increment;
   return this.save();
 };
 

@@ -52,8 +52,8 @@ const register = async (req, res) => {
     // Actualizar estadísticas del referidor
     if (referrer) {
       try {
-        await referrer.updateReferralStats('total');
-        console.log(`✅ Estadísticas actualizadas para referidor: ${referrer.username}`);
+        await referrer.updateReferralStats(1); // ✅ Incrementa el total de referrals exitosos
+        console.log(`✅ Estadísticas actualizadas para referidor: ${referrer.username} - Total Referrals: +1`);
       } catch (error) {
         console.error('❌ Error actualizando estadísticas del referidor:', error);
       }
