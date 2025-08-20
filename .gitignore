@@ -12,6 +12,9 @@ lerna-debug.log*
 .env.local
 .env.production
 
+# ngrok configuration (contains sensitive auth tokens)
+ngrok.yml
+
 node_modules
 dist
 dist-ssr

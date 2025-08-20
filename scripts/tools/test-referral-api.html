@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Referral API</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .url-test { background-color: #fff3cd; border-color: #ffeaa7; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Referral API</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Información del Sistema</h3>
+        <p><strong>Backend:</strong> <span id="backend-status">Verificando...</span></p>
+        <p><strong>Frontend:</strong> <span id="frontend-status">Verificando...</span></p>
+        <p><strong>URLs de Prueba:</strong></p>
+        <div class="url-test">
+            <p><strong>Landing de Referidos:</strong></p>
+            <ul>
+                <li><a href="http://localhost:5173/ref/S74L7OQV" target="_blank">http://localhost:5173/ref/S74L7OQV</a> (carlos_test)</li>
+                <li><a href="http://localhost:5173/ref/343JGWBW" target="_blank">http://localhost:5173/ref/343JGWBW</a> (demo_user)</li>
+                <li><a href="http://localhost:5173/ref/12KKG9QM" target="_blank">http://localhost:5173/ref/12KKG9QM</a> (admin)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔗 Test API: Buscar Usuario por Referral ID</h3>
+        <input type="text" id="referralId" placeholder="Ingresa un referral ID" value="S74L7OQV" style="padding: 8px; margin-right: 10px; width: 200px;">
+        <button class="btn-primary" onclick="testFindUserByReferralId()">Buscar Usuario</button>
+        <div id="findUserResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Test API: Obtener Referral Link (Requiere Auth)</h3>
+        <button class="btn-primary" onclick="testGetReferralLink()">Obtener Referral Link</button>
+        <div id="referralLinkResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>📈 Test API: Obtener Referral Stats (Requiere Auth)</h3>
+        <button class="btn-primary" onclick="testGetReferralStats()">Obtener Estadísticas</button>
+        <div id="referralStatsResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Test de URLs de Referidos</h3>
+        <button class="btn-success" onclick="testReferralUrls()">Probar URLs</button>
+        <div id="urlTestResult"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:9000/api';
+        const FRONTEND_BASE = 'http://localhost:5173';
+
+        // Verificar estado de servicios
+        async function checkServices() {
+            try {
+                // Verificar backend
+                const backendResponse = await fetch(`${API_BASE}/users/referral/S74L7OQV`);
+                document.getElementById('backend-status').innerHTML = 
+                    backendResponse.ok ? '✅ Conectado' : '❌ Error';
+                
+                // Verificar frontend
+                const frontendResponse = await fetch(FRONTEND_BASE);
+                document.getElementById('frontend-status').innerHTML = 
+                    frontendResponse.ok ? '✅ Conectado' : '❌ Error';
+                    
+            } catch (error) {
+                document.getElementById('backend-status').innerHTML = '❌ Error de conexión';
+                document.getElementById('frontend-status').innerHTML = '❌ Error de conexión';
+            }
+        }
+
+        // Test: Buscar usuario por referral ID
+        async function testFindUserByReferralId() {
+            const referralId = document.getElementById('referralId').value;
+            const resultDiv = document.getElementById('findUserResult');
+            
+            try {
+                resultDiv.innerHTML = '<p>🔄 Buscando...</p>';
+                
+                const response = await fetch(`${API_BASE}/users/referral/${referralId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Usuario encontrado</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Error</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error de conexión</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test: Obtener referral link (requiere auth)
+        async function testGetReferralLink() {
+            const resultDiv = document.getElementById('referralLinkResult');
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <p>⚠️ Este endpoint requiere autenticación</p>
+                    <p>Para probarlo, necesitas estar logueado en la aplicación</p>
+                </div>
+            `;
+        }
+
+        // Test: Obtener referral stats (requiere auth)
+        async function testGetReferralStats() {
+            const resultDiv = document.getElementById('referralStatsResult');
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <p>⚠️ Este endpoint requiere autenticación</p>
+                    <p>Para probarlo, necesitas estar logueado en la aplicación</p>
+                </div>
+            `;
+        }
+
+        // Test: Probar URLs de referidos
+        async function testReferralUrls() {
+            const resultDiv = document.getElementById('urlTestResult');
+            const testUrls = [
+                'http://localhost:5173/ref/S74L7OQV',
+                'http://localhost:5173/ref/343JGWBW',
+                'http://localhost:5173/ref/12KKG9QM'
+            ];
+            
+            resultDiv.innerHTML = '<p>🔄 Probando URLs...</p>';
+            
+            let results = '';
+            for (const url of testUrls) {
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        results += `<p>✅ ${url} - Funciona</p>`;
+                    } else {
+                        results += `<p>❌ ${url} - Error ${response.status}</p>`;
+                    }
+                } catch (error) {
+                    results += `<p>❌ ${url} - Error de conexión</p>`;
+                }
+            }
+            
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <h4>📋 Resultados de URLs</h4>
+                    ${results}
+                    <p><strong>Nota:</strong> Las URLs ahora redirigen <strong>directamente al registro</strong> con la información del referidor</p>
+                </div>
+            `;
+        }
+
+        // Inicializar
+        checkServices();
+    </script>
+</body>
+</html>

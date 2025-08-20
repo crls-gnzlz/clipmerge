@@ -99,6 +99,30 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
     default: Date.now
+  },
+  
+  // Sistema de referidos
+  referralId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    sparse: true
+  },
+  
+  referralStats: {
+    totalReferrals: {
+      type: Number,
+      default: 0
+    },
+    successfulReferrals: {
+      type: Number,
+      default: 0
+    }
   }
 }, {
   timestamps: true,
@@ -111,6 +135,8 @@ userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ isVerified: 1 });
 userSchema.index({ createdAt: -1 });
+userSchema.index({ referralId: 1 }, { unique: true, sparse: true });
+userSchema.index({ referredBy: 1 });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {
@@ -187,7 +213,59 @@ userSchema.statics.findByUsernameOrEmail = function(query) {
 userSchema.statics.exists = function(field, value) {
   const query = {};
   query[field] = value;
-  return this.exists(query);
+  return this.countDocuments(query).then(count => count > 0);
+};
+
+// Static method to generate unique referral ID
+userSchema.statics.generateReferralId = async function() {
+  const generateId = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  let referralId;
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  do {
+    referralId = generateId();
+    attempts++;
+    
+    if (attempts > maxAttempts) {
+      throw new Error('Unable to generate unique referral ID after multiple attempts');
+    }
+  } while (await this.countDocuments({ referralId }).then(count => count > 0));
+
+  return referralId;
+};
+
+// Method to get referral link
+userSchema.methods.getReferralLink = function() {
+  if (!this.referralId) return null;
+  
+  // Nota: Este método no tiene acceso a config, se recomienda usar el controlador
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://clipchain.app' 
+    : 'http://localhost:5173';
+    
+  return `${baseUrl}/ref/${this.referralId}`;
+};
+
+// Method to update referral stats
+userSchema.methods.updateReferralStats = function(type, increment = 1) {
+  switch (type) {
+    case 'total':
+      this.referralStats.totalReferrals += increment;
+      break;
+    case 'successful':
+      this.referralStats.successfulReferrals += increment;
+      break;
+  }
+  return this.save();
 };
 
 export const User = mongoose.model('User', userSchema);

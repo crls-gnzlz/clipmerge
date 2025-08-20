@@ -11,7 +11,7 @@ const generateToken = (userId) => {
 // Registrar un nuevo usuario
 const register = async (req, res) => {
   try {
-    const { username, email, password, displayName } = req.body;
+    const { username, email, password, displayName, referralId } = req.body;
     
     // Verificar si el usuario ya existe
     const existingUser = await User.findByUsernameOrEmail(username);
@@ -21,16 +21,43 @@ const register = async (req, res) => {
         message: 'Username or email already in use'
       });
     }
+
+    // Procesar referral si existe
+    let referrer = null;
+    if (referralId) {
+      referrer = await User.findOne({ referralId });
+      if (!referrer) {
+        console.log(`⚠️ Referral ID no encontrado: ${referralId}`);
+        // No fallar el registro si el referral no es válido
+      }
+    }
     
     // Crear nuevo usuario
     const user = new User({
       username,
       email,
       password,
-      displayName: displayName || username
+      displayName: displayName || username,
+      referredBy: referrer?._id // Asociar con el usuario referidor si existe
     });
     
     await user.save();
+    
+    // Generar referralId para el nuevo usuario
+    if (!user.referralId) {
+      user.referralId = await User.generateReferralId();
+      await user.save();
+    }
+    
+    // Actualizar estadísticas del referidor
+    if (referrer) {
+      try {
+        await referrer.updateReferralStats('total');
+        console.log(`✅ Estadísticas actualizadas para referidor: ${referrer.username}`);
+      } catch (error) {
+        console.error('❌ Error actualizando estadísticas del referidor:', error);
+      }
+    }
     
     // Generar token
     const token = generateToken(user._id);
@@ -47,7 +74,11 @@ const register = async (req, res) => {
       message: 'User registered successfully',
       data: {
         user: userResponse,
-        token
+        token,
+        referralInfo: referrer ? {
+          referredBy: referrer.username,
+          referralId: referralId
+        } : null
       }
     });
     
@@ -447,6 +478,115 @@ const logout = async (req, res) => {
   }
 };
 
+// Obtener enlace de referidos del usuario
+const getReferralLink = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Generar referralId si no existe
+    if (!user.referralId) {
+      user.referralId = await User.generateReferralId();
+      await user.save();
+    }
+    
+    // Construir el enlace completo - debe apuntar al frontend, no al backend
+    const baseUrl = config.frontendUrl;
+    
+    const referralLink = `${baseUrl}/ref/${user.referralId}`;
+    
+    res.json({
+      success: true,
+      data: {
+        referralId: user.referralId,
+        referralLink,
+        referralStats: user.referralStats
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error getting referral link:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// Obtener estadísticas de referidos
+const getReferralStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select('referralStats referralId');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        referralId: user.referralId,
+        referralStats: user.referralStats
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error getting referral stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// Buscar usuario por referral ID
+const findUserByReferralId = async (req, res) => {
+  try {
+    const { referralId } = req.params;
+    
+    const user = await User.findOne({ referralId }).select('username displayName avatar');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Referral ID not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        user: {
+          username: user.username,
+          displayName: user.displayName,
+          avatar: user.avatar
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error finding user by referral ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
 export {
   register,
   login,
@@ -458,5 +598,8 @@ export {
   searchUsers,
   checkAvailability,
   refreshToken,
-  logout
+  logout,
+  getReferralLink,
+  getReferralStats,
+  findUserByReferralId
 };

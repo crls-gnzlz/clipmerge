@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
 const Register = () => {
@@ -7,13 +7,14 @@ const Register = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    displayName: '' // Added displayName field
+    confirmPassword: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [referralInfo, setReferralInfo] = useState(null);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,7 +35,7 @@ const Register = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        displayName: formData.displayName || formData.username // Use displayName if provided, otherwise username
+        referralId: referralInfo?.referralId // Include referral ID if available
       };
       
       const result = await register(userData);
@@ -42,6 +43,13 @@ const Register = () => {
       
       if (result.success) {
         console.log('✅ Register: Successful, redirecting to home');
+        
+        // Limpiar referralId del localStorage después del registro exitoso
+        if (referralInfo?.referralId) {
+          localStorage.removeItem('referralId');
+          console.log('🧹 Referral ID limpiado del localStorage');
+        }
+        
         navigate('/');
       } else {
         console.log('❌ Register: Failed with error:', result.error);
@@ -86,6 +94,26 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Capturar información del referido al cargar el componente
+  useEffect(() => {
+    // Verificar si hay información del referido en el estado de navegación
+    if (location.state?.referralId) {
+      setReferralInfo({
+        referralId: location.state.referralId,
+        referrer: location.state.referrer
+      });
+    } else {
+      // Verificar si hay referralId en localStorage (fallback)
+      const storedReferralId = localStorage.getItem('referralId');
+      if (storedReferralId) {
+        setReferralInfo({
+          referralId: storedReferralId,
+          referrer: null
+        });
+      }
+    }
+  }, [location.state]);
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -112,6 +140,33 @@ const Register = () => {
             Join us to start organizing your video content
           </p>
         </div>
+
+        {/* Referral Info */}
+        {referralInfo && (
+          <div className="mt-4 text-center">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-800">
+                    {referralInfo.referrer ? (
+                      <>Has sido invitado por <strong className="text-indigo-700">{referralInfo.referrer.displayName || referralInfo.referrer.username}</strong></>
+                    ) : (
+                      <>Registrándote con referral <strong className="text-indigo-700">{referralInfo.referralId}</strong></>
+                    )}
+                  </p>
+                  {referralInfo.referrer && (
+                    <p className="text-xs text-blue-600">@{referralInfo.referrer.username}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -141,22 +196,7 @@ const Register = () => {
               )}
             </div>
 
-            {/* Display Name Field */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Display Name <span className="text-gray-400">(Optional)</span>
-              </label>
-              <input
-                type="text"
-                value={formData.displayName || ''}
-                onChange={(e) => handleInputChange('displayName', e.target.value)}
-                placeholder="How you want to be displayed (defaults to username)"
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                This is how your name will appear to other users
-              </p>
-            </div>
+
 
             {/* Email Field */}
             <div>

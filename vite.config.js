@@ -8,7 +8,8 @@ export default defineConfig({
     allowedHosts: [
       'kinn-merger.dhaquantastic.onrender.com',
       'https://kinn-merger.dhaquantastic.onrender.com',
-      '069fd8d69da5.ngrok-free.app'
+      '069fd8d69da5.ngrok-free.app',
+      'f77fbd4e18be.ngrok-free.app'
     ],
   },
 })

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test CORS - Clip Merger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test CORS - Clip Merger</h1>
+    
+    <div class="test-section">
+        <h2>🔧 Configuración</h2>
+        <p><strong>Backend URL:</strong> <span id="backendUrl">http://localhost:9000</span></p>
+        <p><strong>Frontend Origin:</strong> <span id="frontendOrigin">Detectando...</span></p>
+        <button onclick="detectOrigin()">Detectar Origin</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📡 Test de CORS</h2>
+        <p>Prueba las diferentes endpoints de la API:</p>
+        
+        <button onclick="testHealth()">Test Health Check</button>
+        <button onclick="testUsers()">Test Users API</button>
+        <button onclick="testClips()">Test Clips API</button>
+        <button onclick="testChains()">Test Chains API</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 Test con ngrok</h2>
+        <p>Si estás usando ngrok, actualiza la URL del backend:</p>
+        <input type="text" id="ngrokUrl" placeholder="https://tu-dominio.ngrok-free.app" style="width: 100%; padding: 8px; margin: 10px 0;">
+        <button onclick="updateBackendUrl()">Actualizar URL</button>
+        <button onclick="testNgrok()">Test con ngrok</button>
+    </div>
+
+    <script>
+        // Detectar el origin actual
+        function detectOrigin() {
+            const origin = window.location.origin;
+            document.getElementById('frontendOrigin').textContent = origin;
+            document.getElementById('frontendOrigin').className = origin.includes('ngrok') ? 'success' : 'info';
+        }
+
+        // Actualizar URL del backend
+        function updateBackendUrl() {
+            const url = document.getElementById('ngrokUrl').value;
+            if (url) {
+                document.getElementById('backendUrl').textContent = url;
+                document.getElementById('backendUrl').className = 'success';
+            }
+        }
+
+        // Función para hacer requests
+        async function makeRequest(endpoint, method = 'GET', body = null) {
+            const backendUrl = document.getElementById('backendUrl').textContent;
+            const url = `${backendUrl}${endpoint}`;
+            
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                
+                return {
+                    success: true,
+                    status: response.status,
+                    data: data,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    type: error.name
+                };
+            }
+        }
+
+        // Función para mostrar resultados
+        function showResult(title, result) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result';
+            
+            if (result.success) {
+                resultDiv.innerHTML = `
+                    <h4 class="success">✅ ${title}</h4>
+                    <p><strong>Status:</strong> ${result.status}</p>
+                    <p><strong>Data:</strong> <pre>${JSON.stringify(result.data, null, 2)}</pre></p>
+                    <p><strong>CORS Headers:</strong></p>
+                    <ul>
+                        ${Object.entries(result.headers)
+                            .filter(([key]) => key.toLowerCase().includes('access-control'))
+                            .map(([key, value]) => `<li><strong>${key}:</strong> ${value}</li>`)
+                            .join('')}
+                    </ul>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <h4 class="error">❌ ${title}</h4>
+                    <p><strong>Error:</strong> ${result.error}</p>
+                    <p><strong>Type:</strong> ${result.type}</p>
+                `;
+            }
+            
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        // Tests individuales
+        async function testHealth() {
+            const result = await makeRequest('/');
+            showResult('Health Check', result);
+        }
+
+        async function testUsers() {
+            const result = await makeRequest('/api/users');
+            showResult('Users API', result);
+        }
+
+        async function testClips() {
+            const result = await makeRequest('/api/clips');
+            showResult('Clips API', result);
+        }
+
+        async function testChains() {
+            const result = await makeRequest('/api/chains');
+            showResult('Chains API', result);
+        }
+
+        async function testNgrok() {
+            const result = await makeRequest('/');
+            showResult('ngrok Test', result);
+        }
+
+        // Auto-detect origin al cargar
+        window.onload = function() {
+            detectOrigin();
+        };
+    </script>
+</body>
+</html>

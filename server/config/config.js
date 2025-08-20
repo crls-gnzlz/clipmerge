@@ -20,9 +20,18 @@ const config = {
     'http://127.0.0.1:5173',
     'http://127.0.0.1:4173',
     'file://', // Permitir archivos locales para testing
+    // Dominios ngrok específicos (para compatibilidad)
     'https://299f7f6130cd.ngrok-free.app',
-    'https://069fd8d69da5.ngrok-free.app' // <--- Añadido ngrok temporalmente
+    'https://069fd8d69da5.ngrok-free.app',
+    'https://f77fbd4e18be.ngrok-free.app'
   ],
+  
+  // Frontend URL configuration
+  frontendUrl: process.env.FRONTEND_URL || (
+    process.env.NODE_ENV === 'production' 
+      ? 'https://clipchain.app' 
+      : 'http://localhost:5173'
+  ),
   
   // Optional: MongoDB Atlas (for production)
   // mongoUri: process.env.MONGODB_URI || 'mongodb+srv://username:password@cluster.mongodb.net/clip-merger'

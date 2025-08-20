@@ -219,4 +219,21 @@ router.post('/logout',
   userController.logout
 );
 
+// Rutas del sistema de referidos
+router.get('/referral-link',
+  authenticateToken,
+  userController.getReferralLink
+);
+
+router.get('/referral-stats',
+  authenticateToken,
+  userController.getReferralStats
+);
+
+// Ruta pública para buscar usuario por referral ID
+router.get('/referral/:referralId',
+  param('referralId').trim().notEmpty().withMessage('Referral ID is required'),
+  userController.findUserByReferralId
+);
+
 export default router;

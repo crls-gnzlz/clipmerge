@@ -34,6 +34,8 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   const [userClips, setUserClips] = useState([])
   const [userChains, setUserChains] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [referralLink, setReferralLink] = useState('')
+  const [referralStats, setReferralStats] = useState({ totalReferrals: 0, successfulReferrals: 0 })
   const sidebarRef = useRef(null)
   const resizeHandleRef = useRef(null)
   const profileMenuRef = useRef(null)
@@ -60,13 +62,20 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       if (isAuthenticated && user) {
         try {
           setIsLoading(true)
-          const [clipsResponse, chainsResponse] = await Promise.all([
+          const [clipsResponse, chainsResponse, referralResponse] = await Promise.all([
             apiService.getUserClips(),
-            apiService.getUserChains()
+            apiService.getUserChains(),
+            apiService.getReferralLink()
           ])
           
           setUserClips(clipsResponse.data || [])
           setUserChains(chainsResponse.data || [])
+          
+          // Set referral data
+          if (referralResponse.success) {
+            setReferralLink(referralResponse.data.referralLink)
+            setReferralStats(referralResponse.data.referralStats)
+          }
         } catch (error) {
           console.error('Error fetching user data:', error)
         } finally {
@@ -77,6 +86,8 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
         setUserClips([])
         setUserChains([])
         setIsLoading(false)
+        setReferralLink('')
+        setReferralStats({ totalReferrals: 0, successfulReferrals: 0 })
       }
     }
 
@@ -284,8 +295,13 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
   }
 
   const copyReferralLink = async () => {
+    if (!referralLink) {
+      setNotification({ isVisible: true, type: 'error', title: 'Error', message: 'Referral link not available.' })
+      return
+    }
+    
     try {
-      await navigator.clipboard.writeText('https://clipchain.com/ref/carlos')
+      await navigator.clipboard.writeText(referralLink)
       setNotification({ isVisible: true, type: 'success', title: 'Copied!', message: 'Referral link copied to clipboard.' })
     } catch (err) {
       setNotification({ isVisible: true, type: 'error', title: 'Error', message: 'Failed to copy link.' })
@@ -606,11 +622,12 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             {/* Subtle separator */}
             <div className="border-t border-gray-100 mb-6"></div>
 
-            {/* Invite Friends Section - Mejorado */}
+            {/* Invite Friends Section - Con sistema de referidos */}
             <div className="mb-6">
               <h4 className="text-xs font-medium text-gray-700 mb-1">Invite Friends</h4>
-              <p className="text-xs text-gray-500 mb-3">Share your referral link or invite by email to grow your network.</p>
+              <p className="text-xs text-gray-500 mb-3">Share your referral link to grow your network.</p>
               <div className="space-y-2">
+                {/*
                 <button 
                   onClick={() => setShowEmailModal(true)}
                   className="w-full bg-gray-50 hover:bg-gray-100 text-primary-700 hover:text-primary-800 text-xs font-medium py-2 px-3 rounded-lg border border-primary-100 hover:border-primary-200 transition-all duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 shadow-none"
@@ -620,13 +637,14 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                   </svg>
                   <span>Send Email</span>
                 </button>
+                */}
                 <div className="py-2 px-3 bg-gray-50 rounded-lg border border-primary-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 text-primary-700 hover:text-primary-800 cursor-pointer overflow-hidden text-xs" onClick={copyReferralLink}>
                       <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
-                      <span className="underline truncate">clipchain.com/ref/carlos</span>
+                                              <span className="underline truncate">{referralLink ? referralLink.replace(/^https?:\/\//, '') : 'Loading...'}</span>
                     </div>
                     <button 
                       onClick={copyReferralLink}
@@ -636,6 +654,20 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                     </button>
                   </div>
                 </div>
+                
+                {/* Estadísticas de referidos */}
+                {referralStats && (
+                  <div className="px-3 py-2 bg-blue-50 rounded-lg border border-blue-100">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-blue-700">Total referrals:</span>
+                      <span className="font-medium text-blue-800">{referralStats.totalReferrals}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs mt-1">
+                      <span className="text-blue-700">Successful:</span>
+                      <span className="font-medium text-blue-800">{referralStats.successfulReferrals}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

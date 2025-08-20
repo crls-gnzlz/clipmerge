@@ -15,6 +15,34 @@ scripts/
 
 ## 🚀 Scripts de Lanzamiento (`launch/`)
 
+### `start-app-with-ngrok.sh` - Lanzamiento Completo con ngrok
+Script que inicia la aplicación completa junto con túneles ngrok para acceso remoto.
+
+**Uso:**
+```bash
+./scripts/launch/start-app-with-ngrok.sh
+```
+
+**Características:**
+- ✅ Inicia frontend, backend y ngrok simultáneamente
+- ✅ Crea túneles seguros para acceso remoto
+- ✅ Manejo automático de procesos en background
+- ✅ Limpieza automática al salir
+- ✅ Dashboard ngrok en http://localhost:4040
+
+### `start-ngrok-all.sh` - Solo Túneles ngrok
+Script para iniciar únicamente los túneles ngrok sin la aplicación.
+
+**Uso:**
+```bash
+./scripts/launch/start-ngrok-all.sh
+```
+
+**Características:**
+- ✅ Inicia túneles frontend (puerto 5173) y backend (puerto 9000)
+- ✅ Usa configuración desde `ngrok.yml`
+- ✅ Dashboard ngrok en http://localhost:4040
+
 ### `start-app.sh` - Lanzamiento Principal
 Script completo con verificaciones previas, manejo de errores y logging detallado.
 
@@ -158,6 +186,72 @@ npm run db:reset
 - **MongoDB** (instalado y ejecutándose)
 - **Bash** (para scripts de Unix/macOS)
 - **curl** (para verificaciones de conectividad)
+
+## 🌐 Configuración de ngrok
+
+### Archivo `ngrok.yml.example`
+El archivo `ngrok.yml.example` es una plantilla para configurar ngrok de forma segura:
+
+```yaml
+version: "2"
+authtoken: YOUR_NGROK_AUTH_TOKEN_HERE
+tunnels:
+  frontend:
+    addr: 5173
+    proto: http
+    inspect: true
+  backend:
+    addr: 9000
+    proto: http
+    inspect: true
+```
+
+### Configuración inicial
+```bash
+# 1. Copiar la plantilla
+cp ngrok.yml.example ngrok.yml
+
+# 2. Editar y agregar tu auth token real
+nano ngrok.yml
+
+# 3. Verificar configuración
+ngrok config check
+```
+
+**⚠️ Importante**: El archivo `ngrok.yml` está en `.gitignore` para proteger tu auth token.
+
+```yaml
+version: "2"
+authtoken: 30zxt2ukNpn3HyIHChs9cRlVJ87_4a5T8Gc8LtS5Hh8qM9sxR
+tunnels:
+  frontend:
+    addr: 5173
+    proto: http
+    inspect: true
+  backend:
+    addr: 9000
+    proto: http
+    inspect: true
+```
+
+### Uso de ngrok
+- **Acceso remoto**: Comparte tu aplicación con otros desarrolladores
+- **Testing móvil**: Prueba en dispositivos móviles
+- **Webhooks**: Recibe callbacks de servicios externos
+- **Debugging**: Inspecciona tráfico HTTP en tiempo real
+
+### Comandos ngrok útiles
+```bash
+# Iniciar todos los túneles
+ngrok start --all --config ngrok.yml
+
+# Iniciar túneles individuales
+ngrok start frontend --config ngrok.yml
+ngrok start backend --config ngrok.yml
+
+# Ver estado de túneles
+ngrok status
+```
 
 ## 🔧 Personalización
 

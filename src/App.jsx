@@ -21,6 +21,7 @@ import DesignSystem from './pages/DesignSystem.jsx'
 import Settings from './pages/Settings.jsx'
 import Profile from './pages/Profile.jsx'
 import DocsHome from './pages/DocsHome.jsx'
+import ReferralLanding from './pages/ReferralLanding.jsx'
 
 function App() {
   const location = useLocation()
@@ -39,6 +40,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/ref/:referralId" element={<ReferralLanding />} />
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/library" element={<Library />} />
           <Route path="/chain/:chainId" element={<ClipchainLaunchpad />} />

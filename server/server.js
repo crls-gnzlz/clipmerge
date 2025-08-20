@@ -29,7 +29,40 @@ logger.serverStart(PORT, process.env.NODE_ENV || 'development');
 
 // Middleware
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como apps móviles, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Permitir localhost y dominios locales
+    if (origin.startsWith('http://localhost:') || 
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.startsWith('file://')) {
+      logger.info(`✅ CORS: Permitiendo localhost/origin vacío`);
+      return callback(null, true);
+    }
+    
+    // Permitir cualquier dominio de ngrok
+    if (origin.includes('ngrok-free.app') || origin.includes('ngrok.io')) {
+      logger.info(`✅ CORS: Permitiendo dominio ngrok: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Verificar si está en la lista de dominios permitidos
+    if (config.corsOrigin.includes(origin)) {
+      logger.info(`✅ CORS: Dominio permitido: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // En desarrollo, permitir todos los dominios
+    if (process.env.NODE_ENV === 'development') {
+      logger.info(`✅ CORS: Permitiendo en desarrollo: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // En producción, solo dominios específicos
+    logger.warn(`❌ CORS: Dominio bloqueado: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());

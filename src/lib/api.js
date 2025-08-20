@@ -282,6 +282,18 @@ class ApiService {
     return this.request(`/users/check-availability?field=${field}&value=${value}`);
   }
 
+  async getReferralLink() {
+    return this.request('/users/referral-link');
+  }
+
+  async getReferralStats() {
+    return this.request('/users/referral-stats');
+  }
+
+  async findUserByReferralId(referralId) {
+    return this.request(`/users/referral/${referralId}`);
+  }
+
   refreshToken() {
     this.initializeToken();
   }
