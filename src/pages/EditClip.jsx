@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import LayoutWithSidebar from '../components/LayoutWithSidebar.jsx';
+import ChainSelector from '../components/ChainSelector.jsx';
 import apiService from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { ArrowPathIcon } from '@heroicons/react/24/solid'
@@ -24,9 +25,14 @@ const EditClip = () => {
   const [videoId, setVideoId] = useState(null);
   const [youtubePlayer, setYoutubePlayer] = useState(null);
   const iframeRef = useRef(null);
+  
+  // New state for Save and Chain functionality
+  const [showChainSelector, setShowChainSelector] = useState(false);
 
   // Load clip data on mount
   useEffect(() => {
+    console.log('EditClip mounted with clipId:', clipId);
+    
     const fetchClip = async () => {
       setIsLoading(true);
       try {
@@ -64,7 +70,14 @@ const EditClip = () => {
         setIsLoading(false);
       }
     };
-    fetchClip();
+    
+    if (clipId) {
+      fetchClip();
+    } else {
+      console.error('clipId is undefined or null');
+      setErrors({ submit: 'Clip ID is missing' });
+      setIsLoading(false);
+    }
   }, [clipId]);
 
   // Extract YouTube video ID from URL
@@ -210,6 +223,88 @@ const EditClip = () => {
       }
     } catch (error) {
       setErrors({ submit: error.message || 'An error occurred while updating the clip' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Save and Chain functionality
+  const handleSaveAndChain = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    
+    try {
+      setIsLoading(true);
+      setErrors({});
+      
+      // First, update the clip
+      const clipData = {
+        title: formData.title,
+        description: formData.description,
+        videoUrl: formData.videoUrl,
+        startTime: timeToSeconds(formData.startTime),
+        endTime: timeToSeconds(formData.endTime)
+      };
+      
+      const updateResponse = await apiService.updateClip(clipId, clipData);
+      if (!updateResponse.success) {
+        if (updateResponse.errors && Array.isArray(updateResponse.errors)) {
+          const fieldErrors = {};
+          updateResponse.errors.forEach(err => {
+            fieldErrors[err.field] = err.message;
+          });
+          setErrors(fieldErrors);
+        } else {
+          setErrors({ submit: updateResponse.message || 'Failed to update clip' });
+        }
+        return;
+      }
+      
+      // If clip update successful, show chain selector
+      setSuccessMessage('Clip updated successfully! Now select clips to add to your chain.');
+      setShowChainSelector(true);
+      
+    } catch (error) {
+      setErrors({ submit: error.message || 'An error occurred while updating the clip' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle adding selected clips to chain (this will be handled by ChainSelector)
+  const handleAddClipsToChain = async (selectedChain) => {
+    try {
+      setIsLoading(true);
+      
+      console.log('Adding clip to chain:', {
+        chainId: selectedChain._id,
+        clipId: clipId,
+        clipIdType: typeof clipId,
+        clipIdLength: clipId ? clipId.length : 'undefined',
+        chainName: selectedChain.name
+      });
+      
+      // Validate clipId format (MongoDB ObjectId should be 24 characters)
+      if (!clipId || typeof clipId !== 'string' || clipId.length !== 24) {
+        throw new Error(`Invalid clipId: ${clipId}. Expected 24-character MongoDB ObjectId.`);
+      }
+      
+      // Add the current clip to the selected chain
+      const response = await apiService.addClipToChain(selectedChain._id, clipId);
+      console.log('API response:', response);
+      
+      if (response.success) {
+        setShowChainSelector(false);
+        setSuccessMessage(`Clip successfully added to chain "${selectedChain.name}"! Redirecting to edit chain...`);
+        
+        // Redirect to Edit Chain page instead of workspace
+        setTimeout(() => navigate(`/edit-chain/${selectedChain._id}`), 1500);
+      } else {
+        setErrors({ submit: response.message || 'Failed to add clip to chain' });
+      }
+    } catch (error) {
+      console.error('Error adding clip to chain:', error);
+      setErrors({ submit: error.message || 'An error occurred while adding clip to chain' });
     } finally {
       setIsLoading(false);
     }
@@ -684,11 +779,50 @@ const EditClip = () => {
                 >
                   {isLoading ? 'Saving...' : 'Save Changes'}
                 </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAndChain}
+                  disabled={isLoading}
+                  className="px-6 py-2.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                >
+                  {isLoading ? 'Saving...' : 'Save & Chain'}
+                </button>
               </div>
             </form>
           </div>
         </div>
       </div>
+      
+      {/* Chain Selector Modal */}
+      {showChainSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Select Chain</h3>
+                <button 
+                  onClick={() => setShowChainSelector(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 rounded p-1"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                Choose a chain to add your clip to
+              </p>
+            </div>
+            
+            <div className="px-6 py-4">
+              <ChainSelector 
+                onChainSelected={handleAddClipsToChain}
+                onClose={() => setShowChainSelector(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </LayoutWithSidebar>
   );
 };

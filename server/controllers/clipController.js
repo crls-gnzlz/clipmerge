@@ -137,8 +137,11 @@ const getClipById = async (req, res) => {
 // Crear un nuevo clip
 const createClip = async (req, res) => {
   try {
+    const videoUrl = req.body.videoUrl;
+    const videoId = extractYouTubeVideoId(videoUrl);
     const clipData = {
       ...req.body,
+      videoId,
       author: req.user._id
     };
     
@@ -572,6 +575,17 @@ const generateMockMetadata = (youtubeId) => {
     category: 'Education',
     tags: ['Tutorial', 'Web Development', 'JavaScript']
   };
+};
+
+const extractYouTubeVideoId = (url) => {
+  if (!url) return '';
+  // Typical YouTube URL patterns
+  const regex = /(?:v=|youtu.be\/|embed\/|\/v\/|\/e\/|watch\?v=|\&v=)([\w-]{8,})/;
+  const match = url.match(regex);
+  if (match && match[1]) return match[1];
+  // Fallback: try to get last part after /
+  const parts = url.split('/');
+  return parts[parts.length - 1].split('?')[0];
 };
 
 export {

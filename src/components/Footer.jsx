@@ -80,6 +80,9 @@ const Footer = () => {
                   Visit our website
                 </Link>
               </li>
+              <li>
+                <Link to="/docs" className="text-gray-300 hover:text-white transition-colors duration-200 hover:underline text-sm">Help & Docs</Link>
+              </li>
             </ul>
           </div>
           

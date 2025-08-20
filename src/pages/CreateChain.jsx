@@ -6,6 +6,7 @@ import EnhancedClipSelector from '../components/ClipSelector.jsx';
 import DragDropClips from '../components/DragDropClips.jsx';
 import apiService from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import AppNotification from '../components/AppNotification.jsx';
 
 const CreateChain = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const CreateChain = () => {
   const [tagInput, setTagInput] = useState('');
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [showClipSelector, setShowClipSelector] = useState(false);
+  const [notification, setNotification] = useState({ isVisible: false, type: 'success', title: '', message: '' });
   // Elimina el estado useMockData, el useEffect relacionado, el toggle y los indicadores visuales de mock/real/test_user en el header.
   // En EnhancedClipSelector, pasa useMockData={false} o simplemente elimina la prop si no es necesaria.
 
@@ -180,21 +182,51 @@ const CreateChain = () => {
       console.log('📥 CreateChain: API response received:', response);
       
       if (response.success) {
-        console.log('✅ CreateChain: Chain created successfully, redirecting to workspace');
+        console.log('✅ CreateChain: Chain created successfully');
         
-        // Show success message before redirecting
+        // Show success notification instead of redirecting
+        setNotification({
+          isVisible: true,
+          type: 'success',
+          title: 'Chain Created Successfully!',
+          message: `"${formData.name}" has been created with ${selectedClips.length} clip${selectedClips.length !== 1 ? 's' : ''}.`,
+          action: {
+            label: 'Go to Workspace',
+            onClick: () => navigate('/workspace')
+          }
+        });
+        
+        // Clear form after successful creation
+        setFormData({
+          name: '',
+          description: '',
+          tags: [],
+          status: 'public'
+        });
+        setSelectedClips([]);
+        setErrors({});
+        
+        // Show success message about new tags if any were created
         if (formData.tags.some(tag => !existingTags.includes(tag))) {
           console.log('🏷️ CreateChain: New tags were created during chain creation');
         }
-        
-        navigate('/workspace');
       } else {
         console.log('❌ CreateChain: Failed to create chain:', response.message);
-        setErrors({ submit: response.message || 'Failed to create chain' });
+        setNotification({
+          isVisible: true,
+          type: 'error',
+          title: 'Failed to Create Chain',
+          message: response.message || 'Failed to create chain. Please try again.'
+        });
       }
     } catch (error) {
       console.error('❌ CreateChain: Error occurred:', error);
-      setErrors({ submit: error.message || 'An error occurred while creating the chain' });
+      setNotification({
+        isVisible: true,
+        type: 'error',
+        title: 'Error Creating Chain',
+        message: error.message || 'An error occurred while creating the chain. Please try again.'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -474,6 +506,14 @@ const CreateChain = () => {
           </div>
         </div>
       </div>
+      <AppNotification
+        isVisible={notification.isVisible}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        action={notification.action}
+        onClose={() => setNotification({ ...notification, isVisible: false })}
+      />
     </LayoutWithSidebar>
   );
 };

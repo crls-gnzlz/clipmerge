@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import AppNotification from './AppNotification.jsx'
+import apiService from '../lib/api.js'
 
 const LOCAL_STORAGE_KEY = 'clipchain_onboarding_steps_v2'
 
@@ -64,7 +65,7 @@ const getDescriptions = (handleAction) => ([
   </span>
 ])
 
-const GettingStartedSection = () => {
+const GettingStartedSection = ({ user, updateUser }) => {
   // Estado: solo array de booleanos
   const [completed, setCompleted] = useState(() => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY)
@@ -83,7 +84,15 @@ const GettingStartedSection = () => {
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(completed))
-  }, [completed])
+    // Si todos los pasos están completos y el usuario está autenticado y no tiene el flag, márcalo en backend y contexto
+    if (completed.every(Boolean) && user && !user.onboardingCompleted) {
+      apiService.updateProfile({ onboardingCompleted: true })
+        .then(() => {
+          updateUser({ ...user, onboardingCompleted: true })
+        })
+        .catch(() => {})
+    }
+  }, [completed, user, updateUser])
 
   // Handler para marcar como completado y navegar
   const handleAction = (idx, to) => {
@@ -119,6 +128,7 @@ const GettingStartedSection = () => {
   }
 
   // Renderiza solo si no están todos los pasos completados
+  if (user && user.onboardingCompleted) return null;
   if (completed.every(Boolean)) return null;
 
   return (

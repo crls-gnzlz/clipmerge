@@ -6,12 +6,19 @@ import EnhancedClipSelector from '../components/ClipSelector.jsx';
 import DragDropClips from '../components/DragDropClips.jsx';
 import apiService from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import AppNotification from '../components/AppNotification.jsx';
 import { ArrowPathIcon } from '@heroicons/react/24/solid'
 
 const EditChain = () => {
   const { chainId } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+
+  // Debug auth context changes
+  useEffect(() => {
+    console.log('EditChain: useEffect [user] triggered - user:', user);
+  }, [user]);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -25,6 +32,8 @@ const EditChain = () => {
   const [tagInput, setTagInput] = useState('');
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [showClipSelector, setShowClipSelector] = useState(false);
+  const [notification, setNotification] = useState({ isVisible: false, type: 'success', title: '', message: '' });
+
 
   // Fetch chain data on mount
   useEffect(() => {
@@ -149,12 +158,31 @@ const EditChain = () => {
       };
       const response = await apiService.updateChain(chainId, chainData);
       if (response.success) {
-        navigate('/workspace');
+        setNotification({
+          isVisible: true,
+          type: 'success',
+          title: 'Chain Updated Successfully!',
+          message: `"${formData.name}" has been updated with ${selectedClips.length} clip${selectedClips.length !== 1 ? 's' : ''}.`,
+          action: {
+            label: 'Go to Workspace',
+            onClick: () => navigate('/workspace')
+          }
+        });
       } else {
-        setErrors({ submit: response.message || 'Failed to update chain' });
+        setNotification({
+          isVisible: true,
+          type: 'error',
+          title: 'Failed to Update Chain',
+          message: response.message || 'Failed to update chain. Please try again.'
+        });
       }
     } catch (error) {
-      setErrors({ submit: error.message || 'An error occurred while updating the chain' });
+      setNotification({
+        isVisible: true,
+        type: 'error',
+        title: 'Error Updating Chain',
+        message: error.message || 'An error occurred while updating the chain. Please try again.'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -355,6 +383,7 @@ const EditChain = () => {
                 {/* Clip Selector Modal */}
                 {showClipSelector && (
                   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+
                     <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
                       <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
@@ -370,6 +399,7 @@ const EditChain = () => {
                         </div>
                       </div>
                       <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-120px)]">
+
                         <EnhancedClipSelector 
                           onAddClips={handleAddClips}
                           existingClipIds={selectedClips.map(clip => clip._id)}
@@ -434,6 +464,14 @@ const EditChain = () => {
           </div>
         </div>
       </div>
+      <AppNotification
+        isVisible={notification.isVisible}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        action={notification.action}
+        onClose={() => setNotification({ ...notification, isVisible: false })}
+      />
     </LayoutWithSidebar>
   );
 };

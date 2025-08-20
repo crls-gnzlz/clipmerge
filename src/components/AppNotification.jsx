@@ -54,7 +54,7 @@ const COLORS = {
   },
 };
 
-const AppNotification = ({ isVisible, onClose, type = 'info', title, message, duration = 2500 }) => {
+const AppNotification = ({ isVisible, onClose, type = 'info', title, message, duration = 2500, action }) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -82,11 +82,30 @@ const AppNotification = ({ isVisible, onClose, type = 'info', title, message, du
       role="alert"
       aria-live="assertive"
     >
-      <div className={`rounded-lg shadow-lg p-5 max-w-sm border flex items-start space-x-3 ${color.bg} ${color.border}`}> 
+      <div className={`rounded-lg shadow-lg p-5 ${action ? 'max-w-md' : 'max-w-sm'} border flex items-start space-x-3 ${color.bg} ${color.border}`}> 
         <div className="flex-shrink-0 mt-1">{icon}</div>
         <div className="flex-1">
           {title && <p className={`text-sm font-semibold mb-1 ${color.title}`}>{title}</p>}
           <p className={`text-sm ${color.text}`}>{message}</p>
+          {action && (
+            <button
+              onClick={() => {
+                action.onClick();
+                onClose();
+              }}
+              className={`mt-3 px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                type === 'success' 
+                  ? 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500' 
+                  : type === 'error'
+                  ? 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
+                  : type === 'warning'
+                  ? 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
+              }`}
+            >
+              {action.label}
+            </button>
+          )}
         </div>
         <button
           onClick={() => {

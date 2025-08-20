@@ -32,11 +32,12 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   const volumeSliderRef = useRef(null)
   const playerRef = useRef(null)
   
+  const safeClips = Array.isArray(clips) ? clips : []
   const clipsPerPage = 6 // Show 6 clips per page
-  const totalPages = Math.ceil(clips.length / clipsPerPage)
-  const currentClips = clips.slice(currentPage * clipsPerPage, (currentPage + 1) * clipsPerPage)
+  const totalPages = Math.ceil(safeClips.length / clipsPerPage)
+  const currentClips = safeClips.slice(currentPage * clipsPerPage, (currentPage + 1) * clipsPerPage)
   
-  const currentClip = currentClipIndex >= 0 && currentClipIndex < clips.length ? clips[currentClipIndex] : null
+  const currentClip = currentClipIndex >= 0 && currentClipIndex < safeClips.length ? safeClips[currentClipIndex] : null
 
   // Effect to monitor captions state changes
   useEffect(() => {
@@ -46,10 +47,10 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       currentTime,
       playerReady,
       currentClipIndex,
-      hasClips: !!clips.length,
+      hasClips: !!safeClips.length,
       hasUserInteractedWithCaptions
     })
-  }, [isCaptionsEnabled, currentClip, currentTime, playerReady, currentClipIndex, clips.length, hasUserInteractedWithCaptions])
+  }, [isCaptionsEnabled, currentClip, currentTime, playerReady, currentClipIndex, safeClips.length, hasUserInteractedWithCaptions])
 
   // Function to update visible clip range
   const updateVisibleClipRange = useCallback((clipIndex) => {
@@ -62,15 +63,15 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       if (clipIndex >= maxClipsPerView) {
         // If clip is beyond the first 10, adjust the range
         start = Math.floor(clipIndex / maxClipsPerView) * maxClipsPerView
-        end = Math.min(start + maxClipsPerView, clips.length)
+        end = Math.min(start + maxClipsPerView, safeClips.length)
       } else if (clipIndex < prevRange.start) {
         // If clip is before the current range, go back to previous range
         start = Math.max(0, prevRange.start - maxClipsPerView)
-        end = Math.min(start + maxClipsPerView, clips.length)
+        end = Math.min(start + maxClipsPerView, safeClips.length)
       } else if (clipIndex >= prevRange.end) {
         // If clip is beyond the current range, go to next range
         start = Math.floor(clipIndex / maxClipsPerView) * maxClipsPerView
-        end = Math.min(start + maxClipsPerView, clips.length)
+        end = Math.min(start + maxClipsPerView, safeClips.length)
       } else {
         // If clip is within the current range, don't change anything
         return prevRange
@@ -78,7 +79,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
       return { start, end }
     })
-  }, [clips.length])
+  }, [safeClips.length])
 
   // Function to format time in MM:SS format
   const formatTime = (seconds) => {
@@ -260,6 +261,10 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   }, [])
 
   const createPlayer = () => {
+    if (!safeClips.length) {
+      console.warn('No clips available, skipping player creation')
+      return
+    }
     console.log('createPlayer called for:', title, 'iframeRef:', !!iframeRef.current)
     
     // Create iframe for video player
@@ -278,9 +283,9 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       iframe.allowFullscreen = true
       
       // Set initial video (first clip) - disable captions initially, disable other controls
-      const initialVideoId = clips[0].videoId
+      const initialVideoId = safeClips[0].videoId
       // Enhanced parameters to remove "More videos" and other unwanted elements
-      const iframeSrc = `https://www.youtube.com/embed/${initialVideoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${clips[0].startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${initialVideoId}&host=https://www.youtube-nocookie.com&wmode=transparent&vq=hd1080&autohide=1&egm=0&hd=1&t=0&version=3&enablejsapi=1&playerapiid=ytplayer`
+      const iframeSrc = `https://www.youtube.com/embed/${initialVideoId}?enablejsapi=1&origin=${window.location.origin}&autoplay=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&fs=0&start=${safeClips[0].startTime}&disablekb=1&playsinline=1&cc_load_policy=0&color=white&theme=dark&loop=0&playlist=${initialVideoId}&host=https://www.youtube-nocookie.com&wmode=transparent&vq=hd1080&autohide=1&egm=0&hd=1&t=0&version=3&enablejsapi=1&playerapiid=ytplayer`
       console.log('🔤 createPlayer: Setting iframe src with enhanced parameters:', iframeSrc)
       console.log('🔤 createPlayer: Captions initially disabled (cc_load_policy=0)')
       console.log('🔤 createPlayer: YouTube embed URL parameters:', {
@@ -501,7 +506,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
           clearInterval(timerRef.current)
           
           // Auto-advance to next clip if available
-          if (currentClipIndex < clips.length - 1) {
+          if (currentClipIndex < safeClips.length - 1) {
             setTimeout(() => {
               const nextIndex = currentClipIndex + 1
               setCurrentClipIndex(nextIndex)
@@ -524,7 +529,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         clearInterval(timerRef.current)
       }
     }
-  }, [isPlaying, currentClip?.endTime, currentClipIndex, clips, updateVisibleClipRange, isManualNavigation])
+  }, [isPlaying, currentClip?.endTime, currentClipIndex, safeClips, updateVisibleClipRange, isManualNavigation])
 
   // Effect to periodically clean YouTube elements (especially when paused)
   useEffect(() => {
@@ -667,7 +672,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
               console.log('YouTube player ended')
               setIsPlaying(false)
               // Auto-advance to next clip if available
-              if (currentClipIndex < clips.length - 1) {
+              if (currentClipIndex < safeClips.length - 1) {
                 setTimeout(() => {
                   const nextIndex = currentClipIndex + 1
                   setCurrentClipIndex(nextIndex)
@@ -978,11 +983,11 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
   }
 
   const nextClip = useCallback(() => {
-    if (!clips || !clips.length) return
+    if (!safeClips || !safeClips.length) return
     
     setIsManualNavigation(true)
     
-    if (currentClipIndex >= clips.length - 1) {
+    if (currentClipIndex >= safeClips.length - 1) {
       // If we're at the end, go to the beginning
       setCurrentClipIndex(0)
       updateVisibleClipRange(0)
@@ -995,16 +1000,16 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
     
     // Reset the flag after a short delay
     setTimeout(() => setIsManualNavigation(false), 1000)
-  }, [currentClipIndex, clips, updateVisibleClipRange])
+  }, [currentClipIndex, safeClips, updateVisibleClipRange])
 
   const previousClip = useCallback(() => {
-    if (!clips || !clips.length) return
+    if (!safeClips || !safeClips.length) return
     
     setIsManualNavigation(true)
     
     if (currentClipIndex <= 0) {
       // If we're at the beginning, go to the end
-      const lastIndex = clips.length - 1
+      const lastIndex = safeClips.length - 1
       setCurrentClipIndex(lastIndex)
       updateVisibleClipRange(lastIndex)
     } else {
@@ -1016,7 +1021,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
     
     // Reset the flag after a short delay
     setTimeout(() => setIsManualNavigation(false), 1000)
-  }, [currentClipIndex, clips, updateVisibleClipRange])
+  }, [currentClipIndex, safeClips, updateVisibleClipRange])
 
   const copyLink = () => {
     const shareUrl = `${window.location.origin}/chain/${id}`
@@ -1102,6 +1107,12 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
     }
   }, [isDragging, currentClip])
 
+  // LOG para depuración
+  console.log('safeClips:', safeClips)
+  console.log('currentClipIndex:', currentClipIndex)
+
+  
+
   return (
     <>
       <div className={`bg-white border border-gray-100 hover:bg-blue-100/30 rounded-xl shadow-md transition-all duration-300 group ${compact ? 'compact-player' : ''}`}>
@@ -1131,7 +1142,15 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
         {/* Title and Description */}
         <div className="px-6 pb-2 text-xs text-gray-400 font-light mt-2">
-          {author && <Link to={`/user/${author}`} className="text-primary-600 hover:underline" title={`View ${author}'s profile`}>By {author}</Link>}
+          {author && (
+            <Link
+              to={typeof author === 'object' && author.username ? `/user/${author.username}` : `/user/${author}`}
+              className="text-primary-600 hover:underline"
+              title={`View ${typeof author === 'object' && author.username ? author.username : author}'s profile`}
+            >
+              By {typeof author === 'object' && author.username ? author.username : author}
+            </Link>
+          )}
           {author && createdAt && <> • </>}
           {createdAt && <>{new Date(createdAt).toLocaleDateString()}</>}
         </div>
@@ -1139,7 +1158,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
 
         {/* Chapter Indicators - Moved to area above video player (pink rectangle area) */}
         <div className="flex space-x-2 px-6 pb-2">
-          {clips.map((clip, idx) => (
+          {safeClips.map((clip, idx) => (
             <button
               key={clip.id || idx}
               className={`flex items-center justify-center rounded-full text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 ${compact ? 'w-5 h-5' : 'w-7 h-7'} ${idx === currentClipIndex ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-primary-50'}`}
@@ -1534,7 +1553,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                             
                             {/* Clip Navigation Pills */}
                             <div className="flex space-x-2 flex-wrap justify-center">
-                              {clips && clips.length > 0 ? clips.map((_, index) => (
+                              {safeClips && safeClips.length > 0 ? safeClips.map((_, index) => (
                                 <button
                                   key={index}
                                   onClick={() => {

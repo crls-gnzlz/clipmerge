@@ -18,6 +18,9 @@ import Register from './pages/Register.jsx'
 import ChainPreview from './pages/ChainPreview.jsx';
 import EditClip from './pages/EditClip.jsx';
 import DesignSystem from './pages/DesignSystem.jsx'
+import Settings from './pages/Settings.jsx'
+import Profile from './pages/Profile.jsx'
+import DocsHome from './pages/DocsHome.jsx'
 
 function App() {
   const location = useLocation()
@@ -56,6 +59,9 @@ function App() {
           <Route path="/database-test" element={<DatabaseTest />} />
           <Route path="/api-test" element={<ApiTest />} />
           <Route path="/chain-preview/:chainId" element={<ChainPreview />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/docs" element={<DocsHome />} />
         </Routes>
       </main>
     </div>

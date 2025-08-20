@@ -129,7 +129,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       <div key={clip._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
         <div className="flex-1 min-w-0" onClick={(e) => { if (!e.target.closest('button')) navigate(`/edit-clip/${clip._id}`) }}>
           <div className="flex items-center">
-            <PlayCircleIcon className="w-4 h-4 text-primary-400 mr-2 flex-shrink-0" />
+            <PlayCircleIcon className="w-4 h-4 text-gray-900 mr-2 flex-shrink-0" />
             <p className="text-xs text-gray-900 truncate font-medium">{clip.title}</p>
           </div>
         </div>
@@ -194,7 +194,7 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       <div key={chain._id} className="group relative flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
         <div className="flex-1 min-w-0" onClick={(e) => { if (!e.target.closest('button')) navigate(`/edit-chain/${chain._id}`) }}>
           <div className="flex items-center">
-            <FolderPlusIcon className="w-4 h-4 text-primary-600 mr-2 flex-shrink-0" />
+            <FolderPlusIcon className="w-4 h-4 text-gray-900 mr-2 flex-shrink-0" />
             <p className="text-xs text-gray-900 truncate font-medium">{chain.name}</p>
           </div>
         </div>
@@ -558,10 +558,10 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
             <BriefcaseIcon className="w-4 h-4" />
             <span>Workspace</span>
           </Link>
-          <Link to="/library" className={`flex items-center space-x-3 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 text-sm font-medium transition-all duration-200 ${isActive('/library') ? 'bg-primary-50 text-primary-700 border border-primary-100 shadow-sm' : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'}`}> 
+          <a href="/library" target="_blank" rel="noopener noreferrer" className={`flex items-center space-x-3 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-100 focus:ring-opacity-50 text-sm font-medium transition-all duration-200 ${isActive('/library') ? 'bg-primary-50 text-primary-700 border border-primary-100 shadow-sm' : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'}`}> 
             <BookOpenIcon className="w-4 h-4" />
             <span>Library</span>
-          </Link>
+          </a>
         </nav>
         {/* Scrollable content */}
         <div className="flex-1 min-h-0 overflow-y-auto">

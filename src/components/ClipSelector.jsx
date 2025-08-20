@@ -4,13 +4,10 @@ import { mockClips, getMockClipsSorted } from '../data/mockClips.js';
 
 const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = false }) => {
   const [availableClips, setAvailableClips] = useState([]);
-  const [userChains, setUserChains] = useState([]);
   const [selectedClips, setSelectedClips] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingChains, setIsLoadingChains] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('available'); // 'available' or 'chains'
-  const [expandedChains, setExpandedChains] = useState(new Set());
+
 
   // Fetch available clips (not assigned to any chain)
   useEffect(() => {
@@ -44,6 +41,8 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
             );
             
             setAvailableClips(sorted);
+          } else {
+            setAvailableClips([]);
           }
         }
       } catch (error) {
@@ -51,7 +50,6 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
         
         // Fallback to mock data if API fails
         if (!useMockData) {
-          console.log('Falling back to mock data due to API error');
           const available = getMockClipsSorted().filter(clip => 
             !existingClipIds.includes(clip._id)
           );
@@ -65,72 +63,10 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
     fetchAvailableClips();
   }, [existingClipIds, useMockData]);
 
-  // Fetch user chains for reusing clips
-  useEffect(() => {
-    const fetchUserChains = async () => {
-      try {
-        setIsLoadingChains(true);
-        
-        if (useMockData) {
-          // Use mock data for testing
-          await new Promise(resolve => setTimeout(resolve, 300));
-          // For mock data, we'll create some sample chains
-          setUserChains([
-            {
-              _id: 'mock-chain-1',
-              name: 'Sample Chain 1',
-              clips: [
-                { clip: { _id: 'mock-clip-1', title: 'Sample Clip 1', description: 'From chain 1' }, order: 0 },
-                { clip: { _id: 'mock-clip-2', title: 'Sample Clip 2', description: 'From chain 1' }, order: 1 }
-              ]
-            },
-            {
-              _id: 'mock-chain-2',
-              name: 'Sample Chain 2',
-              clips: [
-                { clip: { _id: 'mock-clip-3', title: 'Sample Clip 3', description: 'From chain 2' }, order: 0 }
-              ]
-            }
-          ]);
-        } else {
-          // Use real API
-          const response = await apiService.getUserChains();
-          
-          if (response.success) {
-            // Only show chains that have clips
-            const chainsWithClips = (response.data || []).filter(chain => 
-              chain.clips && chain.clips.length > 0
-            );
-            
-            setUserChains(chainsWithClips);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user chains:', error);
-        setUserChains([]);
-      } finally {
-        setIsLoadingChains(false);
-      }
-    };
-
-    fetchUserChains();
-  }, [useMockData]);
-
   // Filter clips based on search
   const filteredAvailableClips = availableClips.filter(clip => {
     const matchesSearch = clip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (clip.description && clip.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    return matchesSearch;
-  });
-
-  // Filter chains based on search
-  const filteredChains = userChains.filter(chain => {
-    const matchesSearch = chain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         chain.clips.some(clipItem => 
-                           clipItem.clip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (clipItem.clip.description && clipItem.clip.description.toLowerCase().includes(searchTerm.toLowerCase()))
-                         );
     
     return matchesSearch;
   });
@@ -146,19 +82,6 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
     });
   };
 
-  // Toggle chain expansion
-  const toggleChainExpansion = (chainId) => {
-    setExpandedChains(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(chainId)) {
-        newSet.delete(chainId);
-      } else {
-        newSet.add(chainId);
-      }
-      return newSet;
-    });
-  };
-
   // Add selected clips to chain
   const handleAddClips = () => {
     const clipsToAdd = [];
@@ -167,21 +90,12 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
     const availableClipsToAdd = availableClips.filter(clip => selectedClips.includes(clip._id));
     clipsToAdd.push(...availableClipsToAdd);
     
-    // Get clips from chains
-    userChains.forEach(chain => {
-      chain.clips.forEach(clipItem => {
-        if (selectedClips.includes(clipItem.clip._id)) {
-          clipsToAdd.push(clipItem.clip);
-        }
-      });
-    });
-    
     onAddClips(clipsToAdd);
     setSelectedClips([]);
     setSearchTerm('');
   };
 
-  if (isLoading && isLoadingChains) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="animate-pulse">
@@ -197,9 +111,8 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
   }
 
   const hasAvailableClips = availableClips.length > 0;
-  const hasChainsWithClips = userChains.length > 0;
 
-  if (!hasAvailableClips && !hasChainsWithClips) {
+  if (!hasAvailableClips) {
     return (
       <div className="text-center py-8 bg-gray-50 border border-gray-200 rounded-lg">
         <div className="mx-auto w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-4">
@@ -234,6 +147,7 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
           <span className="text-xs text-gray-500">
             {selectedClips.length} selected
           </span>
+          
         </div>
       </div>
 
@@ -243,7 +157,7 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search clips by title, description, or chain name..."
+          placeholder="Search clips by title or description..."
           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
         />
         <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -253,54 +167,22 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-        {hasAvailableClips && (
-          <button
-            onClick={() => setActiveTab('available')}
-            className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
-              activeTab === 'available'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
-              </svg>
-              <span>Available Clips</span>
-              <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
-                {filteredAvailableClips.length}
-              </span>
-            </div>
-          </button>
-        )}
-        
-        {hasChainsWithClips && (
-          <button
-            onClick={() => setActiveTab('chains')}
-            className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
-              activeTab === 'chains'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span>From Chains</span>
-              <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
-                {filteredChains.length}
-              </span>
-            </div>
-          </button>
-        )}
+      {/* Header with clip count */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 002 2v8a2 2 0 002 2z" />
+          </svg>
+          <span className="text-sm font-medium text-gray-900">Unassigned Clips</span>
+          <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
+            {filteredAvailableClips.length}
+          </span>
+        </div>
       </div>
 
-      {/* Content based on active tab */}
+      {/* Clips List */}
       <div className="max-h-64 overflow-y-auto">
-        {activeTab === 'available' && hasAvailableClips && (
+        {hasAvailableClips ? (
           <div className="space-y-2">
             {filteredAvailableClips.map(clip => (
               <ClipItem
@@ -308,24 +190,13 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
                 clip={clip}
                 isSelected={selectedClips.includes(clip._id)}
                 onToggle={() => toggleClipSelection(clip._id)}
-                showChainInfo={false}
               />
             ))}
           </div>
-        )}
-
-        {activeTab === 'chains' && hasChainsWithClips && (
-          <div className="space-y-3">
-            {filteredChains.map(chain => (
-              <ChainClipGroup
-                key={chain._id}
-                chain={chain}
-                selectedClips={selectedClips}
-                onToggleClip={toggleClipSelection}
-                isExpanded={expandedChains.has(chain._id)}
-                onToggleExpansion={() => toggleChainExpansion(chain._id)}
-              />
-            ))}
+        ) : (
+          <div className="text-center py-6 text-gray-500">
+            <p className="text-xs">No unassigned clips found</p>
+            <p className="text-xs mt-1">All your clips are already assigned to chains</p>
           </div>
         )}
       </div>
@@ -345,7 +216,7 @@ const EnhancedClipSelector = ({ onAddClips, existingClipIds = [], useMockData = 
 };
 
 // Individual clip item component
-const ClipItem = ({ clip, isSelected, onToggle, showChainInfo = false }) => (
+const ClipItem = ({ clip, isSelected, onToggle }) => (
   <div
     className={`
       relative group border border-gray-200 rounded-lg p-3 cursor-pointer
@@ -392,63 +263,8 @@ const ClipItem = ({ clip, isSelected, onToggle, showChainInfo = false }) => (
             <span>• Tags: {clip.tags.slice(0, 2).join(', ')}{clip.tags.length > 2 ? ` +${clip.tags.length - 2}` : ''}</span>
           )}
         </div>
-        {showChainInfo && (
-          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-            From Chain
-          </span>
-        )}
       </div>
     </div>
-  </div>
-);
-
-// Chain with clips group component
-const ChainClipGroup = ({ chain, selectedClips, onToggleClip, isExpanded, onToggleExpansion }) => (
-  <div className="border border-gray-200 rounded-lg overflow-hidden">
-    {/* Chain Header */}
-    <div
-      className="bg-gray-50 px-3 py-2 cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-      onClick={onToggleExpansion}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <svg 
-            className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-              isExpanded ? 'rotate-90' : ''
-            }`} 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          <h5 className="text-sm font-medium text-gray-900">{chain.name}</h5>
-          <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
-            {chain.clips.length} clip{chain.clips.length !== 1 ? 's' : ''}
-          </span>
-        </div>
-        <div className="text-xs text-gray-500">
-          {chain.clips.filter(clipItem => selectedClips.includes(clipItem.clip._id)).length} selected
-        </div>
-      </div>
-    </div>
-
-    {/* Chain Clips */}
-    {isExpanded && (
-      <div className="bg-white border-t border-gray-200">
-        <div className="space-y-1 p-2">
-          {chain.clips.map((clipItem, index) => (
-            <ClipItem
-              key={clipItem.clip._id}
-              clip={clipItem.clip}
-              isSelected={selectedClips.includes(clipItem.clip._id)}
-              onToggle={() => onToggleClip(clipItem.clip._id)}
-              showChainInfo={true}
-            />
-          ))}
-        </div>
-      </div>
-    )}
   </div>
 );
 

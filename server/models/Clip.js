@@ -13,6 +13,12 @@ const clipSchema = new mongoose.Schema({
     required: [true, 'Video URL is required'],
     trim: true
   },
+  videoId: {
+    type: String,
+    required: [true, 'Video ID is required'],
+    trim: true,
+    minlength: [8, 'Video ID must be at least 8 characters']
+  },
   
   startTime: {
     type: Number,

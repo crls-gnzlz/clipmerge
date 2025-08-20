@@ -5,7 +5,9 @@ import ClipchainPlayer from '../components/ClipChainPlayer.jsx'
 import GettingStartedSection from '../components/GettingStartedSection.jsx'
 import RecentChainsSection from '../components/RecentChainsSection.jsx'
 import { llmClips, chainMetadata } from '../data/exampleClips.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
 const Home = () => {
+  const { user, updateUser, isAuthenticated } = useAuth();
   
   return (
     <LayoutWithSidebar>
@@ -60,7 +62,9 @@ const Home = () => {
             {/* Right Column - Getting Started Section + Recent Chains */}
             <div className="order-1 lg:order-2">
               <div className="space-y-8">
-                <GettingStartedSection />
+                {isAuthenticated && user && user.onboardingCompleted !== true && (
+                  <GettingStartedSection user={user} updateUser={updateUser} />
+                )}
                 <RecentChainsSection />
                 {/* Tutoriales - Bloque de acceso a vídeos */}
                 <div className="mt-8">

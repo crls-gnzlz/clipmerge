@@ -189,9 +189,10 @@ class ApiService {
   }
 
   async addClipToChain(chainId, clipId, order = null) {
+    const body = order !== null ? { clipId, order } : { clipId };
     return this.request(`/chains/${chainId}/clips`, {
       method: 'POST',
-      body: JSON.stringify({ clipId, order }),
+      body: JSON.stringify(body),
     });
   }
 

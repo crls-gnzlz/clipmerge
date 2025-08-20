@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import Sidebar from './Sidebar.jsx'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { useNavigate } from 'react-router-dom'
 
 const LayoutWithSidebar = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(320)
   const [isDesktop, setIsDesktop] = useState(false)
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -22,7 +32,6 @@ const LayoutWithSidebar = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Ensure sidebar is properly positioned on desktop
   useEffect(() => {
     if (isDesktop && !sidebarOpen) {
       setSidebarOpen(true)

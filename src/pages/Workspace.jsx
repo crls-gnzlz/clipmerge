@@ -546,7 +546,7 @@ const Workspace = () => {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
                             Duration
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors duration-200 min-w-[200px]"
                               onClick={() => handleSort('inChain')}>
                             <div className="flex items-center space-x-1">
                               <span>In Chain</span>
@@ -631,8 +631,8 @@ const Workspace = () => {
 
 // Component to display chain status for a clip
 const ChainStatusCell = ({ clip, chains }) => {
-  // Find which chain this clip belongs to
-  const parentChain = chains.find(chain => {
+  // Find all chains this clip belongs to
+  const parentChains = chains.filter(chain => {
     if (!chain.clips || !Array.isArray(chain.clips)) {
       return false;
     }
@@ -648,7 +648,7 @@ const ChainStatusCell = ({ clip, chains }) => {
     });
   });
 
-  if (!parentChain) {
+  if (parentChains.length === 0) {
     return (
       <div className="flex items-center space-x-2">
         <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -661,17 +661,48 @@ const ChainStatusCell = ({ clip, chains }) => {
     );
   }
 
+  if (parentChains.length === 1) {
+    // Single chain - show as before
+    const parentChain = parentChains[0];
+    return (
+      <Link
+        to={`/edit-chain/${parentChain._id}`}
+        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors duration-200 max-w-[180px] truncate"
+        title={parentChain.name}
+      >
+        <svg className="w-3 h-3 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span className="truncate">{parentChain.name}</span>
+      </Link>
+    );
+  }
+
+  // Multiple chains - show compact list
   return (
-    <Link
-      to={`/edit-chain/${parentChain._id}`}
-      className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors duration-200 max-w-[180px] truncate"
-      title={parentChain.name}
-    >
-      <svg className="w-3 h-3 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-      <span className="truncate">{parentChain.name}</span>
-    </Link>
+    <div className="flex flex-wrap gap-1 max-w-[220px]">
+      {parentChains.slice(0, 3).map((chain, index) => (
+        <Link
+          key={chain._id}
+          to={`/edit-chain/${chain._id}`}
+          className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded-md bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors duration-200 truncate max-w-[95px]"
+          title={chain.name}
+        >
+          <svg className="w-2.5 h-2.5 mr-1 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span className="truncate">{chain.name}</span>
+        </Link>
+      ))}
+      {parentChains.length > 3 && (
+        <span 
+          className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded-md bg-blue-50 text-blue-600 border border-blue-200 cursor-help"
+          title={`Also in: ${parentChains.slice(3).map(c => c.name).join(', ')}`}
+        >
+          +{parentChains.length - 3}
+        </span>
+      )}
+    </div>
   );
 };
 

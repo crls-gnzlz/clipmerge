@@ -19,7 +19,9 @@ const config = {
     'http://127.0.0.1:3000',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:4173',
-    'file://' // Permitir archivos locales para testing
+    'file://', // Permitir archivos locales para testing
+    'https://299f7f6130cd.ngrok-free.app',
+    'https://069fd8d69da5.ngrok-free.app' // <--- Añadido ngrok temporalmente
   ],
   
   // Optional: MongoDB Atlas (for production)
