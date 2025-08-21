@@ -11,7 +11,7 @@ const generateToken = (userId) => {
 // Registrar un nuevo usuario
 const register = async (req, res) => {
   try {
-    const { username, email, password, displayName, referralId } = req.body;
+    const { username, email, password, referralId } = req.body;
     
     // Verificar si el usuario ya existe
     const existingUser = await User.findByUsernameOrEmail(username);
@@ -37,7 +37,6 @@ const register = async (req, res) => {
       username,
       email,
       password,
-      displayName: displayName || username,
       referredBy: referrer?._id // Asociar con el usuario referidor si existe
     });
     
@@ -213,18 +212,46 @@ const updateProfile = async (req, res) => {
   try {
     const updateData = req.body;
     
+    console.log('🔧 updateProfile called with data:', updateData);
+    console.log('🔧 Current user:', req.user._id);
+    
     // No permitir cambiar campos sensibles
     delete updateData.password;
     delete updateData.email;
-    delete updateData.username;
     delete updateData.isAdmin;
     delete updateData.isVerified;
+    
+    console.log('🔧 Update data after cleanup:', updateData);
+    
+    // Si se está actualizando el username, verificar que sea único
+    if (updateData.username) {
+      console.log('🔧 Checking username uniqueness for:', updateData.username);
+      
+      const existingUser = await User.findOne({ 
+        username: updateData.username, 
+        _id: { $ne: req.user._id } 
+      });
+      
+      if (existingUser) {
+        console.log('❌ Username already exists:', updateData.username);
+        return res.status(400).json({
+          success: false,
+          message: 'Username already exists'
+        });
+      }
+      
+      console.log('✅ Username is unique');
+    }
+    
+    console.log('🔧 Attempting to update user with data:', updateData);
     
     const user = await User.findByIdAndUpdate(
       req.user._id,
       updateData,
       { new: true, runValidators: true }
     ).select('-password');
+    
+    console.log('✅ User updated successfully:', user);
     
     res.json({
       success: true,
@@ -233,9 +260,10 @@ const updateProfile = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error updating profile:', error);
+    console.error('❌ Error updating profile:', error);
     
     if (error.name === 'ValidationError') {
+      console.error('❌ Validation error details:', error.errors);
       return res.status(400).json({
         success: false,
         message: 'Invalid input data',
@@ -259,18 +287,82 @@ const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     
+    console.log('🔑 Password change attempt for user:', req.user._id);
+    console.log('🔑 Request body:', { currentPassword: !!currentPassword, newPassword: !!newPassword });
+    
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both current and new password are required'
+      });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long'
+      });
+    }
+    
+    // Fetch user with password field for comparison
+    console.log('🔑 Fetching user from database...');
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      console.log('❌ User not found in database');
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    console.log('🔑 User found, checking if password field exists...');
+    if (!user.password) {
+      console.log('❌ User password field is missing');
+      return res.status(500).json({
+        success: false,
+        message: 'User password field is missing'
+      });
+    }
+    
+    console.log('🔑 User found, comparing passwords...');
+    
     // Verificar contraseña actual
-    const isCurrentPasswordValid = await req.user.comparePassword(currentPassword);
+    let isCurrentPasswordValid = false;
+    try {
+      isCurrentPasswordValid = await user.comparePassword(currentPassword);
+      console.log('🔑 Password comparison result:', isCurrentPasswordValid);
+    } catch (compareError) {
+      console.error('❌ Error during password comparison:', compareError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error during password comparison'
+      });
+    }
+    
     if (!isCurrentPasswordValid) {
+      console.log('❌ Current password is incorrect');
       return res.status(400).json({
         success: false,
         message: 'Current password is incorrect'
       });
     }
     
+    console.log('🔑 Current password verified, updating to new password...');
+    
     // Actualizar contraseña
-    req.user.password = newPassword;
-    await req.user.save();
+    try {
+      user.password = newPassword;
+      console.log('🔑 Password field set, saving user...');
+      await user.save();
+      console.log('✅ Password updated successfully');
+    } catch (saveError) {
+      console.error('❌ Error saving user:', saveError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error saving new password'
+      });
+    }
     
     res.json({
       success: true,
@@ -278,9 +370,11 @@ const changePassword = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error changing password:', error);
+    console.error('❌ Error changing password:', error);
+    console.error('❌ Error stack:', error.stack);
     
     if (error.name === 'ValidationError') {
+      console.log('❌ Validation error:', error.errors);
       return res.status(400).json({
         success: false,
         message: 'Invalid input data',
@@ -333,7 +427,7 @@ const getUserStats = async (req, res) => {
   try {
     const { userId } = req.params;
     
-    const user = await User.findById(userId).select('stats username displayName avatar');
+    const user = await User.findById(userId).select('stats username avatar');
     
     if (!user) {
       return res.status(404).json({
@@ -342,15 +436,14 @@ const getUserStats = async (req, res) => {
       });
     }
     
-    res.json({
-      success: true,
-      data: {
-        username: user.username,
-        displayName: user.displayName,
-        avatar: user.avatar,
-        stats: user.stats
-      }
-    });
+          res.json({
+        success: true,
+        data: {
+          username: user.username,
+          avatar: user.avatar,
+          stats: user.stats
+        }
+      });
     
   } catch (error) {
     console.error('Error getting user stats:', error);
@@ -375,13 +468,10 @@ const searchUsers = async (req, res) => {
     }
     
     const users = await User.find({
-      $or: [
-        { username: { $regex: search, $options: 'i' } },
-        { displayName: { $regex: search, $options: 'i' } }
-      ],
+      username: { $regex: search, $options: 'i' },
       isVerified: true
     })
-    .select('username displayName avatar bio stats')
+    .select('username avatar bio stats')
     .limit(parseInt(limit))
     .lean();
     
@@ -557,7 +647,7 @@ const findUserByReferralId = async (req, res) => {
   try {
     const { referralId } = req.params;
     
-    const user = await User.findOne({ referralId }).select('username displayName avatar');
+    const user = await User.findOne({ referralId }).select('username avatar');
     
     if (!user) {
       return res.status(404).json({
@@ -571,7 +661,6 @@ const findUserByReferralId = async (req, res) => {
       data: {
         user: {
           username: user.username,
-          displayName: user.displayName,
           avatar: user.avatar
         }
       }

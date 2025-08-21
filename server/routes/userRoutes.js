@@ -23,11 +23,7 @@ const validateRegistration = [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
   
-  body('displayName')
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 50 })
-    .withMessage('Display name must be between 1 and 50 characters')
+
 ];
 
 // Middleware de validación para login
@@ -60,11 +56,7 @@ const validateLogin = [
 
 // Middleware de validación para actualización de perfil
 const validateProfileUpdate = [
-  body('displayName')
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 50 })
-    .withMessage('Display name must be between 1 and 50 characters'),
+
   
   body('bio')
     .optional()

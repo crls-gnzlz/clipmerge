@@ -50,6 +50,14 @@ const Register = () => {
           console.log('🧹 Referral ID limpiado del localStorage');
         }
         
+        // También limpiar cualquier parámetro de URL de referral
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('ref') || urlParams.has('referral')) {
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+          console.log('🧹 Parámetros de URL de referral limpiados');
+        }
+        
         navigate('/');
       } else {
         console.log('❌ Register: Failed with error:', result.error);
@@ -102,17 +110,54 @@ const Register = () => {
         referralId: location.state.referralId,
         referrer: location.state.referrer
       });
+      console.log('📝 Register: Referral info from navigation state:', location.state.referralId);
     } else {
-      // Verificar si hay referralId en localStorage (fallback)
-      const storedReferralId = localStorage.getItem('referralId');
-      if (storedReferralId) {
-        setReferralInfo({
-          referralId: storedReferralId,
-          referrer: null
-        });
+      // Solo verificar localStorage si venimos de una URL con parámetro de referral
+      // Esto evita mostrar el mensaje cuando no hay referral real
+      const urlParams = new URLSearchParams(window.location.search);
+      const referralParam = urlParams.get('ref') || urlParams.get('referral');
+      
+      if (referralParam) {
+        // Si hay parámetro en la URL, usar el del localStorage como respaldo
+        const storedReferralId = localStorage.getItem('referralId');
+        if (storedReferralId) {
+          setReferralInfo({
+            referralId: storedReferralId,
+            referrer: null
+          });
+          console.log('📝 Register: Referral info from URL param + localStorage:', storedReferralId);
+        }
+      } else {
+        // No hay referral, limpiar cualquier información previa
+        setReferralInfo(null);
+        // También limpiar localStorage si no hay referral real
+        if (localStorage.getItem('referralId')) {
+          localStorage.removeItem('referralId');
+          console.log('🧹 Referral ID limpiado del localStorage (no hay referral real)');
+        }
+        console.log('📝 Register: No referral detected, clearing referral info');
       }
     }
   }, [location.state]);
+
+  // Efecto adicional para limpiar referral info cuando se navega directamente
+  useEffect(() => {
+    // Si no hay parámetros de URL de referral y no hay estado de navegación,
+    // limpiar cualquier información de referral residual
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasReferralParam = urlParams.has('ref') || urlParams.has('referral');
+    
+    if (!hasReferralParam && !location.state?.referralId) {
+      // Limpiar localStorage si no hay referral real
+      const storedReferralId = localStorage.getItem('referralId');
+      if (storedReferralId) {
+        localStorage.removeItem('referralId');
+        console.log('🧹 Referral ID limpiado del localStorage (navegación directa sin referral)');
+      }
+      // Asegurar que no se muestre información de referral
+      setReferralInfo(null);
+    }
+  }, [location.pathname, location.state]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -154,7 +199,7 @@ const Register = () => {
                 <div>
                   <p className="text-sm font-medium text-blue-800">
                     {referralInfo.referrer ? (
-                      <>Has sido invitado por <strong className="text-indigo-700">{referralInfo.referrer.displayName || referralInfo.referrer.username}</strong></>
+                      <>Has sido invitado por <strong className="text-indigo-700">{referralInfo.referrer.username}</strong></>
                     ) : (
                       <>Registrándote con referral <strong className="text-indigo-700">{referralInfo.referralId}</strong></>
                     )}

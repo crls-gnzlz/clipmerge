@@ -103,7 +103,7 @@ const DatabaseTest = () => {
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold text-gray-900">
-                    {user.displayName || user.username}
+                    {user.username}
                   </h3>
                   <p className="text-sm text-gray-600">@{user.username}</p>
                 </div>

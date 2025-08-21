@@ -45,7 +45,7 @@ const getAllChains = async (req, res) => {
     
     // Obtener chains con paginación
     const chains = await Chain.find(query)
-      .populate('author', 'username displayName avatar')
+      .populate('author', 'username avatar')
       .populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl')
       .sort({ [sort]: parseInt(order) })
       .skip((parseInt(page) - 1) * parseInt(limit))
@@ -86,7 +86,7 @@ const getChainById = async (req, res) => {
     const { id } = req.params;
     
     const chain = await Chain.findById(id)
-      .populate('author', 'username displayName avatar bio')
+      .populate('author', 'username avatar bio')
       .populate('clips.clip', 'title videoId videoUrl startTime endTime duration thumbnailUrl description tags');
     
     if (!chain) {
@@ -188,7 +188,7 @@ const createChain = async (req, res) => {
     await req.user.updateStats('chains');
     
     // Poblar información
-    await chain.populate('author', 'username displayName avatar');
+    await chain.populate('author', 'username avatar');
     await chain.populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl');
     
     res.status(201).json({
@@ -246,7 +246,7 @@ const updateChain = async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     )
-    .populate('author', 'username displayName avatar')
+    .populate('author', 'username avatar')
     .populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl');
     
     if (!chain) {
@@ -359,7 +359,7 @@ const addClipToChain = async (req, res) => {
     await chain.calculateTotalDuration();
     
     // Poblar información actualizada
-    await chain.populate('author', 'username displayName avatar');
+    await chain.populate('author', 'username avatar');
     await chain.populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl');
     
     res.json({
@@ -403,7 +403,7 @@ const reorderChainClips = async (req, res) => {
     await chain.reorderClips(clipOrders);
     
     // Poblar información actualizada
-    await chain.populate('author', 'username displayName avatar');
+    await chain.populate('author', 'username avatar');
     await chain.populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl');
     
     res.json({
@@ -447,10 +447,10 @@ const toggleReaction = async (req, res) => {
     await chain.toggleReaction(req.user._id, reactionType);
     
     // Poblar información actualizada
-    await chain.populate('author', 'username displayName avatar');
+    await chain.populate('author', 'username avatar');
     await chain.populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl');
-    await chain.populate('likes', 'username displayName avatar');
-    await chain.populate('dislikes', 'username displayName avatar');
+    await chain.populate('likes', 'username avatar');
+    await chain.populate('dislikes', 'username avatar');
     
     res.json({
       success: true,
@@ -484,7 +484,7 @@ const getUserChains = async (req, res) => {
     const total = await Chain.countDocuments(query);
     
     const chains = await Chain.find(query)
-      .populate('author', 'username displayName avatar')
+      .populate('author', 'username avatar')
       .populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl')
       .sort({ [pagination.sort]: pagination.order })
       .skip((pagination.page - 1) * pagination.limit)
@@ -520,7 +520,7 @@ const getPopularChains = async (req, res) => {
     const { limit = 10 } = req.query;
     
     const chains = await Chain.find({ isPublic: true })
-      .populate('author', 'username displayName avatar')
+      .populate('author', 'username avatar')
       .populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl')
       .sort({ views: -1, 'likes.length': -1 })
       .limit(parseInt(limit))
@@ -551,7 +551,7 @@ const getChainsByCategory = async (req, res) => {
       category,
       isPublic: true
     })
-    .populate('author', 'username displayName avatar')
+    .populate('author', 'username avatar')
     .populate('clips.clip', 'title videoId startTime endTime duration thumbnailUrl')
     .sort({ createdAt: -1 })
     .limit(parseInt(limit))

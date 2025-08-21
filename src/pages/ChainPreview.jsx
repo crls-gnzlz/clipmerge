@@ -215,7 +215,7 @@ const ChainPreview = () => {
                     </p>
                   )}
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>By {typeof chain.author === 'object' ? chain.author.displayName || chain.author.username || 'Unknown' : chain.author || 'Unknown'}</span>
+                    <span>By {typeof chain.author === 'object' ? chain.author.username || 'Unknown' : chain.author || 'Unknown'}</span>
                     <span>•</span>
                     <span>{new Date(chain.createdAt).toLocaleDateString()}</span>
                     <span>•</span>
@@ -278,7 +278,7 @@ const ChainPreview = () => {
                 title={chain.name}
                 description={chain.description || ''}
                 clips={clips}
-                author={typeof chain.author === 'object' ? chain.author.displayName || chain.author.username || 'Unknown' : chain.author || 'Unknown'}
+                author={typeof chain.author === 'object' ? chain.author.username || 'Unknown' : chain.author || 'Unknown'}
                 createdAt={chain.createdAt}
                 tags={chain.tags || []}
               />

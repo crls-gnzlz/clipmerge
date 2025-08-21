@@ -18,11 +18,20 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
       authLoading,
       user: user ? {
         username: user.username,
-        email: user.email,
-        displayName: user.displayName
+        email: user.email
       } : null
     });
   }, [isAuthenticated, authLoading, user]);
+
+  // Debug log for user changes
+  useEffect(() => {
+    if (user) {
+      console.log('🔍 Sidebar Debug - User Updated:', {
+        username: user.username,
+        email: user.email
+      });
+    }
+  }, [user]);
   
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
@@ -500,12 +509,12 @@ const Sidebar = ({ isOpen, onToggle, width, onWidthChange, isDesktop }) => {
                 >
                   <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center border-2 border-primary-200">
                     <span className="text-primary-700 text-sm font-semibold">
-                      {user?.displayName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                      {user?.username?.charAt(0) || 'U'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-gray-900 truncate">
-                      {user?.displayName || user?.username}
+                      {user?.username}
                     </p>
                     <p className="text-xs text-gray-500 truncate font-light">
                       {user?.email}

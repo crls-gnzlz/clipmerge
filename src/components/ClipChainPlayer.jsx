@@ -381,9 +381,10 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
     console.log('Clip change effect triggered:', { currentClipIndex, playerReady, hasCurrentClip: !!currentClip })
     
     if (currentClipIndex >= 0 && currentClip) {
-      // Clear any existing timers
+      // Clear any existing timers to prevent conflicts
       if (timerRef.current) {
         clearInterval(timerRef.current)
+        timerRef.current = null
       }
       
       // Reset current time to start of clip
@@ -473,8 +474,28 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
       const interval = setInterval(() => {
         setCurrentTime(prevTime => {
           const newTime = prevTime + 1
+          
+          // Check if clip has ended
           if (newTime >= currentClip.endTime) {
+            console.log('Clip ended at time:', newTime, 'end time:', currentClip.endTime)
             clearInterval(interval)
+            
+            // Stop the video immediately when clip ends
+            setIsPlaying(false)
+            sendPostMessage('pauseVideo')
+            
+            // Auto-advance to next clip if available
+            if (currentClipIndex < safeClips.length - 1) {
+              console.log('Auto-advancing to next clip')
+              setTimeout(() => {
+                const nextIndex = currentClipIndex + 1
+                setCurrentClipIndex(nextIndex)
+                updateVisibleClipRange(nextIndex)
+              }, 1000)
+            } else {
+              console.log('Last clip ended, video stopped')
+            }
+            
             return currentClip.endTime
           }
           return newTime
@@ -489,47 +510,48 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         timerRef.current = null
       }
     }
-  }, [isPlaying, currentClip])
+  }, [isPlaying, currentClip, currentClipIndex, safeClips.length, updateVisibleClipRange])
 
-  // Effect to handle clip changes and auto-advance
-  useEffect(() => {
-    if (isPlaying && currentClip && !isManualNavigation) {
-      // Clear any existing timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
-      
-      // Set up timer to check if clip has ended
-      timerRef.current = setInterval(() => {
-        if (currentTime >= currentClip.endTime) {
-          console.log('Clip ended, advancing to next')
-          clearInterval(timerRef.current)
-          
-          // Auto-advance to next clip if available
-          if (currentClipIndex < safeClips.length - 1) {
-            setTimeout(() => {
-              const nextIndex = currentClipIndex + 1
-              setCurrentClipIndex(nextIndex)
-              updateVisibleClipRange(nextIndex)
-            }, 1000)
-          } else {
-            // If we're at the last clip, stop
-            setIsPlaying(false)
-          }
-        }
-      }, 1000)
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
-    }
+  // Effect to handle clip changes and auto-advance - REMOVED DUPLICATE LOGIC
+  // This effect was causing conflicts with the time update effect above
+  // useEffect(() => {
+  //   if (isPlaying && currentClip && !isManualNavigation) {
+  //     // Clear any existing timer
+  //     if (timerRef.current) {
+  //       clearInterval(timerRef.current)
+  //     }
+  //     
+  //     // Set up timer to check if clip has ended
+  //     timerRef.current = setInterval(() => {
+  //       if (currentTime >= currentClip.endTime) {
+  //         console.log('Clip ended, advancing to next')
+  //         clearInterval(timerRef.current)
+  //         
+  //         // Auto-advance to next clip if available
+  //         if (currentClipIndex < safeClips.length - 1) {
+  //           setTimeout(() => {
+  //             const nextIndex = currentClipIndex + 1
+  //             setCurrentClipIndex(nextIndex)
+  //             updateVisibleClipRange(nextIndex)
+  //           }, 1000)
+  //         } else {
+  //           // If we're at the last clip, stop
+  //           setIsPlaying(false)
+  //         }
+  //       }
+  //     }, 1000)
+  //   } else {
+  //     if (timerRef.current) {
+  //       clearInterval(timerRef.current)
+  //     }
+  //   }
 
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current)
-      }
-    }
-  }, [isPlaying, currentClip?.endTime, currentClipIndex, safeClips, updateVisibleClipRange, isManualNavigation])
+  //   return () => {
+  //     if (timerRef.current) {
+  //       clearInterval(timerRef.current)
+  //     }
+  //   }
+  // }, [isPlaying, currentClip?.endTime, currentClipIndex, safeClips, updateVisibleClipRange, isManualNavigation])
 
   // Effect to periodically clean YouTube elements (especially when paused)
   useEffect(() => {
@@ -669,15 +691,36 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
               console.log('YouTube player playing')
               setIsPlaying(true)
             } else if (data.info === 0) { // Ended
-              console.log('YouTube player ended')
+              console.log('YouTube player ended - video reached natural end')
               setIsPlaying(false)
-              // Auto-advance to next clip if available
-              if (currentClipIndex < safeClips.length - 1) {
-                setTimeout(() => {
-                  const nextIndex = currentClipIndex + 1
-                  setCurrentClipIndex(nextIndex)
-                  updateVisibleClipRange(nextIndex)
-                }, 1000)
+              
+              // Stop the time tracking when YouTube detects end
+              if (timerRef.current) {
+                clearInterval(timerRef.current)
+                timerRef.current = null
+              }
+              
+              // Check if we should advance to next clip or stop
+              if (currentClip && currentTime >= currentClip.endTime) {
+                // Video ended at the right time, advance to next clip if available
+                if (currentClipIndex < safeClips.length - 1) {
+                  console.log('Video ended naturally, advancing to next clip')
+                  setTimeout(() => {
+                    const nextIndex = currentClipIndex + 1
+                    setCurrentClipIndex(nextIndex)
+                    updateVisibleClipRange(nextIndex)
+                  }, 1000)
+                } else {
+                  console.log('Video ended naturally on last clip, staying stopped')
+                }
+              } else {
+                // Video ended unexpectedly, try to seek to current clip time
+                console.log('Video ended unexpectedly, seeking to current clip time')
+                if (currentClip) {
+                  setTimeout(() => {
+                    sendPostMessage('seekTo', [currentTime, true])
+                  }, 500)
+                }
               }
             } else if (data.info === 3) { // Buffering
               console.log('YouTube player buffering')
@@ -876,6 +919,21 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
         }
       }, 500) // Wait 500ms for YouTube to process the pause
     } else {
+      // Check if we're at the end of the current clip
+      if (currentTime >= currentClip.endTime) {
+        console.log('At end of clip, advancing to next clip before playing')
+        if (currentClipIndex < safeClips.length - 1) {
+          const nextIndex = currentClipIndex + 1
+          setCurrentClipIndex(nextIndex)
+          updateVisibleClipRange(nextIndex)
+          // The new clip will start playing automatically due to the useEffect
+          return
+        } else {
+          console.log('At end of last clip, cannot play further')
+          return
+        }
+      }
+      
       // Seek to current time before playing to maintain sync
       sendPostMessage('seekTo', [currentTime, true])
       setTimeout(() => {
@@ -1575,7 +1633,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                            
                           {/* Right side - CC and Time */}
                           <div className="flex items-center space-x-3">
-                            {/* Captions Control */}
+                            {/* Captions Control 
                             <div className="w-16 flex justify-center">
                               <button
                                 onClick={() => {
@@ -1588,6 +1646,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                                 <span className="font-bold text-xs">CC</span>
                               </button>
                             </div>
+                            */}
                             
 
                             {/* Time info */}
@@ -1757,7 +1816,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                         </svg>
                       </button>
 
-                      {/* Captions Control - Fixed width to prevent jumping */}
+                      {/* Captions Control - Fixed width to prevent jumping 
                       <div className="w-16 flex justify-center">
                         {console.log('🔤 Rendering CC button:', { isCaptionsEnabled, currentClip: !!currentClip, playerReady })}
                         <button
@@ -1772,6 +1831,7 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
                           <span className={`font-bold ${compact ? 'text-xs' : 'text-xs'}`} style={{ lineHeight: 'normal', fontSize: '11px', display: 'block' }}>CC</span>
                         </button>
                       </div>
+                      */}
                       
                       {/* Time info - Fixed width to prevent jumping */}
                       <div className="w-12 text-right">
@@ -1808,6 +1868,12 @@ const ClipchainPlayer = ({ title, description, clips, id, author, createdAt, tag
             if (isPlaying) {
               setIsPlaying(false)
               sendPostMessage('pauseVideo')
+              
+              // Stop the time tracking when pausing to sync timeline
+              if (timerRef.current) {
+                clearInterval(timerRef.current)
+                timerRef.current = null
+              }
             } else if (currentClip) {
               setIsPlaying(true)
               sendPostMessage('playVideo')

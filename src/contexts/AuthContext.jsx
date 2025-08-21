@@ -131,8 +131,7 @@ export const AuthProvider = ({ children }) => {
       console.log('📝 AuthContext: User data received:', { 
         username: userData.username, 
         email: userData.email,
-        hasPassword: !!userData.password,
-        displayName: userData.displayName
+        hasPassword: !!userData.password
       });
       
       const response = await apiService.register(userData);

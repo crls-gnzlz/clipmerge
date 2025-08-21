@@ -57,7 +57,7 @@ const getAllClips = async (req, res) => {
     
     // Obtener clips con paginación
     const clips = await Clip.find(query)
-      .populate('author', 'username displayName avatar')
+      .populate('author', 'username avatar')
       .sort({ [sort]: parseInt(order) })
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
@@ -97,7 +97,7 @@ const getClipById = async (req, res) => {
     const { id } = req.params;
     
     const clip = await Clip.findById(id)
-      .populate('author', 'username displayName avatar bio');
+      .populate('author', 'username avatar bio');
     
     if (!clip) {
       return res.status(404).json({
@@ -152,7 +152,7 @@ const createClip = async (req, res) => {
     await req.user.updateStats('clips');
     
     // Poblar información del autor
-    await clip.populate('author', 'username displayName avatar');
+    await clip.populate('author', 'username avatar');
     
     res.status(201).json({
       success: true,
@@ -207,7 +207,7 @@ const updateClip = async (req, res) => {
       id,
       updateData,
       { new: true, runValidators: true }
-    ).populate('author', 'username displayName avatar');
+    ).populate('author', 'username avatar');
     if (!clip) {
       return res.status(404).json({
         success: false,
@@ -296,9 +296,9 @@ const toggleReaction = async (req, res) => {
     await clip.toggleReaction(req.user._id, reactionType);
     
     // Poblar información actualizada
-    await clip.populate('author', 'username displayName avatar');
-    await clip.populate('likes', 'username displayName avatar');
-    await clip.populate('dislikes', 'username displayName avatar');
+    await clip.populate('author', 'username avatar');
+    await clip.populate('likes', 'username avatar');
+    await clip.populate('dislikes', 'username avatar');
     
     res.json({
       success: true,
@@ -332,7 +332,7 @@ const getUserClips = async (req, res) => {
     const total = await Clip.countDocuments(query);
     
     const clips = await Clip.find(query)
-      .populate('author', 'username displayName avatar')
+      .populate('author', 'username avatar')
       .sort({ [pagination.sort]: pagination.order })
       .skip((pagination.page - 1) * pagination.limit)
       .limit(pagination.limit)
@@ -367,7 +367,7 @@ const getPopularClips = async (req, res) => {
     const { limit = 10 } = req.query;
     
     const clips = await Clip.find({ isPublic: true })
-      .populate('author', 'username displayName avatar')
+      .populate('author', 'username avatar')
       .sort({ views: -1, 'likes.length': -1 })
       .limit(parseInt(limit))
       .lean();
@@ -397,7 +397,7 @@ const getClipsByTags = async (req, res) => {
       tags: { $in: tagArray },
       isPublic: true
     })
-    .populate('author', 'username displayName avatar')
+    .populate('author', 'username avatar')
     .sort({ createdAt: -1 })
     .limit(20)
     .lean();
@@ -474,7 +474,7 @@ const analyzeVideo = async (req, res) => {
     // Try to use real YouTube API if key is available
     if (API_KEY) {
       try {
-        console.log(`🎥 Fetching real data for video: ${youtubeId}`);
+        console.log(`�� Fetching real data for video: ${youtubeId}`);
         console.log(`🔑 Using API key: ${API_KEY.substring(0, 10)}...`);
         
         const response = await youtube.videos.list({

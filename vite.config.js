@@ -9,7 +9,8 @@ export default defineConfig({
       'kinn-merger.dhaquantastic.onrender.com',
       'https://kinn-merger.dhaquantastic.onrender.com',
       '069fd8d69da5.ngrok-free.app',
-      'f77fbd4e18be.ngrok-free.app'
+      'f77fbd4e18be.ngrok-free.app',
+      '5028e67dda2f.ngrok-free.app'
     ],
   },
 })

@@ -57,10 +57,9 @@ const ApiTest = () => {
       console.log('🚀 Starting user registration...');
       
       const userData = {
-        username: 'test_user',
-        email: 'test@clipchain.com',
-        password: 'test123',
-        displayName: 'Test User'
+        username: 'testuser',
+        email: 'test@example.com',
+        password: 'password123'
       };
       
       console.log('📝 User data for registration:', userData);
@@ -119,11 +118,9 @@ const ApiTest = () => {
       console.log('🎨 Starting creator_user creation...');
       
       const userData = {
-        username: 'creator_user',
+        username: 'contentcreator',
         email: 'creator@clipchain.com',
-        password: 'creator123',
-        displayName: 'Content Creator',
-        bio: 'Professional content creator for testing'
+        password: 'creator123'
       };
       
       console.log('🎨 User data for creator_user:', userData);
@@ -547,7 +544,7 @@ ${isAuthenticated && userChainsResponse?.data?.length === 0 ? '• El usuario no
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">
-                    {user?.displayName || user?.username}
+                    {user?.username}
                   </h3>
                   <p className="text-sm text-gray-600">@{user?.username}</p>
                 </div>
